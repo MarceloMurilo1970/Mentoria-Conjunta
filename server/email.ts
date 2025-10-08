@@ -164,7 +164,7 @@ export async function sendRegistrationListEmail(
   `).join('');
 
   const msg = {
-    to: 'contato@marcelomurilo.com.br',
+    to: ['contato@marcelomurilo.com.br', 'faturamento@marcelomurilo.com.br', 'hamiltonfelix@gmail.com'],
     from: fromEmail,
     subject: `Nova Inscrição - Total: ${registrations.length} inscritos`,
     html: `

@@ -59,8 +59,9 @@ export async function sendRegistrationEmail(
 
   const installmentsInstructions = `
     <h3>Instruções para Pagamento Parcelado</h3>
-    <p>Para confirmar sua inscrição, realize o pagamento em 5x de R$ 1.250,00 (total R$ 6.250,00) através do link:</p>
-    <p><a href="https://mpago.li/2e8FvqE" style="background-color: #0070f3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Pagar com Cartão de Crédito</a></p>
+    <p>Para confirmar sua inscrição, realize o pagamento em 5x de R$ 1.250,00 (total R$ 6.250,00) através do link abaixo:</p>
+    <p><strong>Link de pagamento:</strong> https://mpago.li/2e8FvqE</p>
+    <p>Copie e cole o link acima no seu navegador para realizar o pagamento.</p>
     <p>Após a confirmação do pagamento, sua inscrição será confirmada e a nota fiscal será enviada em até 5 dias.</p>
   `;
 
@@ -112,6 +113,11 @@ export async function sendRegistrationEmail(
         </p>
       </div>
     `,
+    trackingSettings: {
+      clickTracking: {
+        enable: false
+      }
+    }
   };
 
   await client.send(msg);

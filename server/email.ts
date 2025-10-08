@@ -71,6 +71,9 @@ export async function sendRegistrationEmail(
     subject: 'Confirmação de Inscrição - Mentoria Marcelo Murilo e Hamilton Felix',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <img src="https://marcelomurilo.com.br/wp-content/uploads/2024/12/Adicionar-um-titulo-1.png" alt="Mentoria Marcelo Murilo e Hamilton Felix" style="max-width: 100%; height: auto; border-radius: 8px;" />
+        </div>
         <h2 style="color: #0070f3;">Inscrição Recebida com Sucesso!</h2>
         <p>Olá ${name},</p>
         <p>Sua inscrição para a Mentoria Conjunta de <strong>Marcelo Murilo e Hamilton Felix</strong> foi recebida com sucesso!</p>

@@ -195,13 +195,25 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
           <div className="space-y-4">
             <Label>Forma de Pagamento *</Label>
-            <div className="bg-muted/20 p-4 rounded-lg mb-4">
-              <p className="text-sm text-muted-foreground mb-2">
-                <span className="line-through">Valor normal: R$ 9.400,00</span>
-              </p>
-              <p className="text-sm font-semibold text-primary">
-                Promoção válida até 09/10/2025
-              </p>
+            <div className="bg-gradient-to-br from-primary/10 to-blue-600/5 p-6 rounded-lg mb-4 border border-primary/20">
+              <div className="text-center space-y-2">
+                <p className="text-sm text-muted-foreground uppercase tracking-wide font-medium">
+                  Valor Normal
+                </p>
+                <p className="text-4xl md:text-5xl font-bold text-muted-foreground/60 line-through">
+                  R$ 9.400
+                </p>
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <div className="h-px bg-primary/30 flex-1"></div>
+                  <span className="text-sm font-bold text-primary px-3 py-1 bg-primary/10 rounded-full">
+                    DESCONTO ESPECIAL
+                  </span>
+                  <div className="h-px bg-primary/30 flex-1"></div>
+                </div>
+                <p className="text-sm font-semibold text-primary">
+                  Promoção válida até 09/10/2025
+                </p>
+              </div>
             </div>
             
             <RadioGroup

@@ -8,8 +8,7 @@ export const registrations = pgTable("registrations", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone").notNull(),
-  company: text("company"),
-  position: text("position"),
+  paymentMethod: text("payment_method").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -20,8 +19,9 @@ export const insertRegistrationSchema = createInsertSchema(registrations).omit({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
-  company: z.string().optional(),
-  position: z.string().optional(),
+  paymentMethod: z.enum(["pix", "installments"], {
+    required_error: "Selecione uma forma de pagamento",
+  }),
 });
 
 export type InsertRegistration = z.infer<typeof insertRegistrationSchema>;

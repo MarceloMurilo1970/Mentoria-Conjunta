@@ -29,8 +29,6 @@ export class MemStorage implements IStorage {
     const registration: Registration = { 
       ...insertRegistration, 
       id,
-      company: insertRegistration.company || null,
-      position: insertRegistration.position || null,
       createdAt: new Date(),
     };
     this.registrations.set(id, registration);

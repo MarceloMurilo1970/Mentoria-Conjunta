@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@assets/image_1759888547750.png";
-import { Calendar } from "lucide-react";
+import heroImage from "@assets/image_1759890107941.png";
 
 interface HeroProps {
   onRegisterClick: () => void;
@@ -23,18 +22,9 @@ export default function Hero({ onRegisterClick }: HeroProps) {
           e conquistar <span className="text-blue-400">conselhos</span>
         </h1>
         
-        <p className="text-xl md:text-2xl text-gray-200 mb-4 font-medium">
-          Mentoria conjunta para conselheiros
-        </p>
-        
-        <p className="text-lg md:text-xl text-blue-300 mb-8">
+        <p className="text-xl md:text-2xl text-gray-200 mb-8 font-medium">
           COM MARCELO MURILO E HAMILTON FELIX
         </p>
-        
-        <div className="flex items-center justify-center gap-3 mb-8 text-white">
-          <Calendar className="w-5 h-5" />
-          <span className="text-lg font-mono">09.10.2025 às 20h</span>
-        </div>
         
         <Button 
           size="lg"

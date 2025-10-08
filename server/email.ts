@@ -105,10 +105,10 @@ export async function sendRegistrationEmail(
 
         <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix - 4H)</h4>
         <ul style="line-height: 1.8;">
-          <li><strong>Sessão 1 - 24/nov (19:00-20:00):</strong> Prospecção de empresas</li>
-          <li><strong>Sessão 2 - 24/nov (20:00-21:00):</strong> Fechamento de Projetos</li>
-          <li><strong>Sessão 3 - 01/dez (19:00-20:00):</strong> Implementando o Conselho</li>
-          <li><strong>Sessão 4 - 01/dez (20:00-21:00):</strong> Evoluindo o Conselho</li>
+          <li><strong>Sessão 1 - 08/dez (19:00-20:00):</strong> Prospecção de empresas</li>
+          <li><strong>Sessão 2 - 08/dez (20:00-21:00):</strong> Fechamento de Projetos</li>
+          <li><strong>Sessão 3 - 15/dez (19:00-20:00):</strong> Implementando o Conselho</li>
+          <li><strong>Sessão 4 - 15/dez (20:00-21:00):</strong> Evoluindo o Conselho</li>
         </ul>
 
         <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin-top: 20px;">

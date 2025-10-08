@@ -78,9 +78,32 @@ export async function sendRegistrationEmail(
         
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
         
-        <h3>Sobre a Mentoria</h3>
-        <p><strong>Tema:</strong> Como criar autoridade, construir oportunidades e conquistar conselhos</p>
-        <p><strong>Data de Início:</strong> 09/10/2025 às 20h</p>
+        <h3>Programa da Mentoria</h3>
+        
+        <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo - 8H)</h4>
+        <ul style="line-height: 1.8;">
+          <li><strong>Sessão 1 - 13/out (19:00-20:00):</strong> Definindo seu nicho e propósito</li>
+          <li><strong>Sessão 2 - 20/out (19:00-20:00):</strong> Perfil de conselheiro que vende</li>
+          <li><strong>Sessão 3 - 27/out (19:00-20:00):</strong> Posts que geram oportunidades</li>
+          <li><strong>Sessão 4 - 03/nov (19:00-20:00):</strong> Interações que multiplicam alcance</li>
+          <li><strong>Sessão 5 - 10/nov (19:00-20:00):</strong> Conectando com quem importa</li>
+          <li><strong>Sessão 6 - 17/nov (19:00-20:00):</strong> Vendas e eventos estratégicos</li>
+          <li><strong>Sessão 7 - 24/nov (19:00-20:00):</strong> Aspectos práticos dos conselhos</li>
+          <li><strong>Sessão 8 - 01/dez (19:00-20:00):</strong> Integração e planejamento futuros</li>
+        </ul>
+
+        <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix - 4H)</h4>
+        <ul style="line-height: 1.8;">
+          <li><strong>Sessão 1 - 24/nov (19:00-20:00):</strong> Prospecção de empresas</li>
+          <li><strong>Sessão 2 - 24/nov (20:00-21:00):</strong> Fechamento de Projetos</li>
+          <li><strong>Sessão 3 - 01/dez (19:00-20:00):</strong> Implementando o Conselho</li>
+          <li><strong>Sessão 4 - 01/dez (20:00-21:00):</strong> Evoluindo o Conselho</li>
+        </ul>
+
+        <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin-top: 20px;">
+          <h4 style="color: #0070f3; margin-top: 0;">Grupo de WhatsApp</h4>
+          <p style="margin: 0;">Um grupo de WhatsApp será criado com todos os participantes. Neste grupo você receberá as instruções para participação das lives e todas as informações importantes sobre a mentoria.</p>
+        </div>
         
         <p style="margin-top: 30px; color: #666; font-size: 14px;">
           Em caso de dúvidas, entre em contato conosco.<br/>

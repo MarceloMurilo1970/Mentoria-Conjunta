@@ -3,8 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertRegistrationSchema } from "@shared/schema";
 import { sendRegistrationEmail } from "./email";
+import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve the hero image for email
+  app.get("/email-assets/hero-image.png", (req, res) => {
+    const imagePath = path.join(process.cwd(), "attached_assets", "image_1759890107941.png");
+    res.sendFile(imagePath);
+  });
   app.post("/api/registrations", async (req, res) => {
     try {
       const validatedData = insertRegistrationSchema.parse(req.body);

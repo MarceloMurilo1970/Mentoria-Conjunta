@@ -45,6 +45,13 @@ export async function sendRegistrationEmail(
   paymentMethod: "pix" | "installments"
 ) {
   const { client, fromEmail } = await getUncachableSendGridClient();
+  
+  // Get the public URL for the email image
+  const replitDomain = process.env.REPLIT_DOMAINS || process.env.REPL_SLUG;
+  const baseUrl = replitDomain 
+    ? `https://${replitDomain.split(',')[0]}` 
+    : 'http://localhost:5000';
+  const heroImageUrl = `${baseUrl}/email-assets/hero-image.png`;
 
   const pixInstructions = `
     <h3>Instruções para Pagamento via PIX</h3>
@@ -72,7 +79,7 @@ export async function sendRegistrationEmail(
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <img src="https://marcelomurilo.com.br/wp-content/uploads/2024/12/Adicionar-um-titulo-1.png" alt="Mentoria Marcelo Murilo e Hamilton Felix" style="max-width: 100%; height: auto; border-radius: 8px;" />
+          <img src="${heroImageUrl}" alt="Mentoria Marcelo Murilo e Hamilton Felix" style="max-width: 100%; height: auto; border-radius: 8px;" />
         </div>
         <h2 style="color: #0070f3;">Inscrição Recebida com Sucesso!</h2>
         <p>Olá ${name},</p>

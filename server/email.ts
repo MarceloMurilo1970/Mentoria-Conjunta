@@ -116,7 +116,7 @@ export async function sendRegistrationEmail(
           <p style="margin: 0;">Um grupo de WhatsApp será criado com todos os participantes. Neste grupo você receberá as instruções para participação das lives e todas as informações importantes sobre a mentoria.</p>
         </div>
         
-        <p style="margin-top: 30px; color: #666; font-size: 14px;">
+        <p style="margin-top: 30px;">
           Em caso de dúvidas, entre em contato conosco.<br/>
           Atenciosamente,<br/>
           Equipe Marcelo Murilo & Hamilton Felix

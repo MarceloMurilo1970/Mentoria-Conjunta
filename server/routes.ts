@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertRegistrationSchema } from "@shared/schema";
-import { sendRegistrationEmail } from "./email";
+import { sendRegistrationEmail, sendRegistrationListEmail } from "./email";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -41,6 +41,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             paymentMethod: registration.paymentMethod
           }
         });
+      }
+
+      // Send registration list to admin
+      try {
+        const allRegistrations = await storage.getAllRegistrations();
+        await sendRegistrationListEmail(allRegistrations);
+      } catch (adminEmailError) {
+        console.error("Error sending admin email:", adminEmailError);
+        // Don't fail the registration if admin email fails
       }
 
       res.status(201).json({ 

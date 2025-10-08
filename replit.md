@@ -60,6 +60,9 @@ Preferred communication style: Simple, everyday language.
 - Replit Connectors API for secure credential management
 - Automated registration confirmation emails with payment instructions
 - Dynamic email content based on payment method (PIX vs installments)
+- Admin notification system: sends complete registration list to contato@marcelomurilo.com.br after each new registration
+- Hero image served from `/email-assets/hero-image.png` for email headers
+- Click tracking disabled to avoid SSL certificate issues
 
 **Database:**
 - Drizzle ORM configured for PostgreSQL

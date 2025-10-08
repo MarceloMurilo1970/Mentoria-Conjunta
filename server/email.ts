@@ -132,3 +132,76 @@ export async function sendRegistrationEmail(
 
   await client.send(msg);
 }
+
+export async function sendRegistrationListEmail(
+  registrations: Array<{
+    name: string;
+    email: string;
+    paymentMethod: string;
+    createdAt: Date;
+  }>
+) {
+  const { client, fromEmail } = await getUncachableSendGridClient();
+
+  const registrationRows = registrations.map((reg, index) => `
+    <tr style="border-bottom: 1px solid #eee;">
+      <td style="padding: 12px; text-align: center;">${index + 1}</td>
+      <td style="padding: 12px;">${reg.name}</td>
+      <td style="padding: 12px;">${reg.email}</td>
+      <td style="padding: 12px; text-align: center;">
+        ${reg.paymentMethod === 'pix' ? 'PIX à vista (R$ 6.975)' : '5x R$ 1.250 (Cartão)'}
+      </td>
+      <td style="padding: 12px; text-align: center;">
+        ${reg.createdAt.toLocaleString('pt-BR', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}
+      </td>
+    </tr>
+  `).join('');
+
+  const msg = {
+    to: 'contato@marcelomurilo.com.br',
+    from: fromEmail,
+    subject: `Nova Inscrição - Total: ${registrations.length} inscritos`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+        <h2 style="color: #0070f3;">Nova Inscrição Recebida!</h2>
+        <p>Uma nova inscrição foi realizada na Mentoria. Segue a lista atualizada de todos os inscritos:</p>
+        
+        <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #0070f3; margin-top: 0;">Total de Inscritos: ${registrations.length}</h3>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; border: 1px solid #eee;">
+          <thead>
+            <tr style="background-color: #0070f3; color: white;">
+              <th style="padding: 12px; text-align: center;">#</th>
+              <th style="padding: 12px; text-align: left;">Nome</th>
+              <th style="padding: 12px; text-align: left;">Email</th>
+              <th style="padding: 12px; text-align: center;">Forma de Pagamento</th>
+              <th style="padding: 12px; text-align: center;">Data de Inscrição</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${registrationRows}
+          </tbody>
+        </table>
+
+        <p style="margin-top: 30px; color: #666; font-size: 14px;">
+          Este email foi enviado automaticamente pelo sistema de inscrições.
+        </p>
+      </div>
+    `,
+    trackingSettings: {
+      clickTracking: {
+        enable: false
+      }
+    }
+  };
+
+  await client.send(msg);
+}

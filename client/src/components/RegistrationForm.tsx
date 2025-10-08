@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { insertRegistrationSchema, type InsertRegistration } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Loader2, CreditCard, Banknote } from "lucide-react";
+import { CheckCircle2, Loader2, CreditCard, Banknote, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface RegistrationFormProps {
   onSuccess?: () => void;
@@ -15,8 +18,9 @@ interface RegistrationFormProps {
 
 export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "installments" | null>(null);
+  const [emailError, setEmailError] = useState(false);
+  const { toast } = useToast();
 
   const {
     register,
@@ -30,18 +34,53 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
   const selectedPayment = watch("paymentMethod");
 
+  const registrationMutation = useMutation({
+    mutationFn: async (data: InsertRegistration) => {
+      const result = await apiRequest("POST", "/api/registrations", data);
+      return result.json();
+    },
+    onSuccess: (data, variables) => {
+      setPaymentMethod(variables.paymentMethod as "pix" | "installments");
+      setIsSubmitted(true);
+      onSuccess?.();
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || "Erro ao processar inscrição";
+      
+      if (errorMessage.includes("502")) {
+        setEmailError(true);
+        setPaymentMethod(null);
+        setIsSubmitted(true);
+      } else {
+        toast({
+          title: "Erro ao processar inscrição",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
   const onSubmit = async (data: InsertRegistration) => {
-    setIsLoading(true);
-    console.log("Form submitted:", data);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setPaymentMethod(data.paymentMethod as "pix" | "installments");
-    setIsLoading(false);
-    setIsSubmitted(true);
-    onSuccess?.();
+    registrationMutation.mutate(data);
   };
+
+  if (isSubmitted && emailError) {
+    return (
+      <Card className="max-w-2xl mx-auto border-card-border" data-testid="card-email-error">
+        <CardContent className="pt-12 pb-12 text-center">
+          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-6" />
+          <h3 className="text-2xl font-bold text-foreground mb-4">
+            Inscrição Registrada
+          </h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Sua inscrição foi registrada com sucesso, porém houve um problema ao enviar o email de confirmação. 
+            Por favor, entre em contato conosco para receber as instruções de pagamento.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isSubmitted && paymentMethod) {
     return (
@@ -55,7 +94,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           {paymentMethod === "pix" ? (
             <div className="space-y-4 max-w-md mx-auto">
               <p className="text-muted-foreground">
-                Sua inscrição será confirmada após o pagamento via PIX.
+                Enviamos um email com as instruções de pagamento via PIX.
               </p>
               <div className="bg-muted/30 p-6 rounded-lg space-y-3">
                 <p className="font-semibold text-foreground">Dados para pagamento PIX:</p>
@@ -81,7 +120,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           ) : (
             <div className="space-y-4 max-w-md mx-auto">
               <p className="text-muted-foreground mb-6">
-                Clique no botão abaixo para realizar o pagamento parcelado no cartão.
+                Enviamos um email com o link de pagamento. Clique no botão abaixo para pagar parcelado no cartão.
               </p>
               <Button
                 onClick={() => window.location.href = "https://mpago.li/2e8FvqE"}
@@ -210,10 +249,10 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
             type="submit" 
             className="w-full" 
             size="lg"
-            disabled={isLoading}
+            disabled={registrationMutation.isPending}
             data-testid="button-submit"
           >
-            {isLoading ? (
+            {registrationMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Processando...
@@ -224,7 +263,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           </Button>
 
           <p className="text-sm text-muted-foreground text-center">
-            Ao se inscrever, você receberá as instruções de pagamento
+            Ao se inscrever, você receberá as instruções de pagamento por email
           </p>
         </form>
       </CardContent>

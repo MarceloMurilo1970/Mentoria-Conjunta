@@ -1,15 +1,67 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { insertRegistrationSchema } from "@shared/schema";
+import { sendRegistrationEmail } from "./email";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  app.post("/api/registrations", async (req, res) => {
+    try {
+      const validatedData = insertRegistrationSchema.parse(req.body);
+      
+      const existingRegistration = await storage.getRegistrationByEmail(validatedData.email);
+      if (existingRegistration) {
+        return res.status(400).json({ 
+          error: "Este email já foi cadastrado" 
+        });
+      }
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+      const registration = await storage.createRegistration(validatedData);
+
+      try {
+        await sendRegistrationEmail(
+          registration.email,
+          registration.name,
+          registration.paymentMethod as "pix" | "installments"
+        );
+      } catch (emailError) {
+        console.error("Error sending email:", emailError);
+        return res.status(502).json({ 
+          error: "Inscrição registrada, mas houve um erro ao enviar o email de confirmação. Por favor, entre em contato conosco.",
+          registration: {
+            id: registration.id,
+            name: registration.name,
+            email: registration.email,
+            paymentMethod: registration.paymentMethod
+          }
+        });
+      }
+
+      res.status(201).json({ 
+        success: true, 
+        registration: {
+          id: registration.id,
+          name: registration.name,
+          email: registration.email,
+          paymentMethod: registration.paymentMethod
+        }
+      });
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          error: "Dados inválidos", 
+          details: error.errors 
+        });
+      }
+      
+      res.status(500).json({ 
+        error: "Erro ao processar inscrição" 
+      });
+    }
+  });
 
   const httpServer = createServer(app);
-
   return httpServer;
 }

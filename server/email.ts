@@ -66,7 +66,7 @@ export async function sendRegistrationEmail(
 
   const installmentsInstructions = `
     <h3>Instruções para Pagamento Parcelado</h3>
-    <p>Para confirmar sua inscrição, realize o pagamento em 5x de R$ 1.250,00 (total R$ 6.250,00) através do link abaixo:</p>
+    <p>Para confirmar sua inscrição, realize o pagamento em 5x de R$ 1.500,00 (total R$ 7.500,00) através do link abaixo:</p>
     <p><strong>Link de pagamento:</strong> https://mpago.li/2e8FvqE</p>
     <p>Copie e cole o link acima no seu navegador para realizar o pagamento.</p>
     <p>Após a confirmação do pagamento, sua inscrição será confirmada e a nota fiscal será enviada em até 5 dias.</p>
@@ -149,7 +149,7 @@ export async function sendRegistrationListEmail(
       <td style="padding: 12px;">${reg.name}</td>
       <td style="padding: 12px;">${reg.email}</td>
       <td style="padding: 12px; text-align: center;">
-        ${reg.paymentMethod === 'pix' ? 'PIX à vista (R$ 6.975)' : '5x R$ 1.250 (Cartão)'}
+        ${reg.paymentMethod === 'pix' ? 'PIX à vista (R$ 6.975)' : '5x R$ 1.500 (Cartão)'}
       </td>
       <td style="padding: 12px; text-align: center;">
         ${reg.createdAt.toLocaleString('pt-BR', { 

@@ -127,7 +127,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                 size="lg"
                 data-testid="button-payment"
               >
-                Pagar 5x R$ 1.250,00
+                Pagar 5x R$ 1.500,00
               </Button>
               <p className="text-sm text-muted-foreground">
                 Sua inscrição será confirmada após a aprovação do pagamento.<br />
@@ -243,9 +243,9 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                     <CreditCard className="w-5 h-5 mt-0.5 text-primary" />
                     <div>
                       <div className="font-semibold text-foreground">Cartão de Crédito</div>
-                      <div className="text-2xl font-bold text-primary mt-1">5x R$ 1.250,00</div>
+                      <div className="text-2xl font-bold text-primary mt-1">5x R$ 1.500,00</div>
                       <div className="text-sm text-muted-foreground mt-1">
-                        Total: R$ 6.250,00 (sem juros)
+                        Total: R$ 7.500,00 (sem juros)
                       </div>
                     </div>
                   </div>

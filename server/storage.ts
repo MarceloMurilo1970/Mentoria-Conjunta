@@ -1,5 +1,6 @@
-import { type Registration, type InsertRegistration } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { type Registration, type InsertRegistration, registrations } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   getRegistration(id: string): Promise<Registration | undefined>;
@@ -8,39 +9,25 @@ export interface IStorage {
   createRegistration(registration: InsertRegistration): Promise<Registration>;
 }
 
-export class MemStorage implements IStorage {
-  private registrations: Map<string, Registration>;
-
-  constructor() {
-    this.registrations = new Map();
-  }
-
+export class DbStorage implements IStorage {
   async getRegistration(id: string): Promise<Registration | undefined> {
-    return this.registrations.get(id);
+    const result = await db.select().from(registrations).where(eq(registrations.id, id)).limit(1);
+    return result[0];
   }
 
   async getRegistrationByEmail(email: string): Promise<Registration | undefined> {
-    return Array.from(this.registrations.values()).find(
-      (registration) => registration.email === email,
-    );
+    const result = await db.select().from(registrations).where(eq(registrations.email, email)).limit(1);
+    return result[0];
   }
 
   async getAllRegistrations(): Promise<Registration[]> {
-    return Array.from(this.registrations.values()).sort((a, b) => 
-      b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    return await db.select().from(registrations).orderBy(desc(registrations.createdAt));
   }
 
   async createRegistration(insertRegistration: InsertRegistration): Promise<Registration> {
-    const id = randomUUID();
-    const registration: Registration = { 
-      ...insertRegistration, 
-      id,
-      createdAt: new Date(),
-    };
-    this.registrations.set(id, registration);
-    return registration;
+    const result = await db.insert(registrations).values(insertRegistration).returning();
+    return result[0];
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DbStorage();

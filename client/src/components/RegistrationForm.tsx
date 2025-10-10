@@ -123,7 +123,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                 Enviamos um email com o link de pagamento. Clique no botão abaixo para pagar parcelado no cartão.
               </p>
               <Button
-                onClick={() => window.location.href = "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-7500,00"}
+                onClick={() => window.open("https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-7500,00", "_blank", "noopener,noreferrer")}
                 size="lg"
                 data-testid="button-payment"
               >

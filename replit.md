@@ -47,11 +47,14 @@ Preferred communication style: Simple, everyday language.
 - Interface-based storage abstraction (IStorage) allowing easy migration to database
 - Drizzle ORM configured for PostgreSQL (currently using Neon serverless)
 - Schema-first approach with database migrations support
+- **Important:** Registrations are stored in memory and will be lost on server restart
+- Admin page available at `/admin` to view all registrations (currently unauthenticated)
 
 **Key Design Decisions:**
 - The application uses an abstraction layer for storage, making it database-agnostic
 - Current implementation uses in-memory storage but is structured to easily switch to PostgreSQL via Drizzle ORM
 - All database schemas are defined in shared/schema.ts for type safety across client and server
+- Admin page provides real-time view of all registrations with GET /api/registrations endpoint
 
 ### External Dependencies
 

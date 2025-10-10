@@ -11,6 +11,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const imagePath = path.join(process.cwd(), "attached_assets", "image_1759890107941.png");
     res.sendFile(imagePath);
   });
+
+  // Get all registrations
+  app.get("/api/registrations", async (req, res) => {
+    try {
+      const registrations = await storage.getAllRegistrations();
+      res.json(registrations);
+    } catch (error) {
+      console.error("Error fetching registrations:", error);
+      res.status(500).json({ error: "Erro ao buscar inscrições" });
+    }
+  });
+
   app.post("/api/registrations", async (req, res) => {
     try {
       const validatedData = insertRegistrationSchema.parse(req.body);

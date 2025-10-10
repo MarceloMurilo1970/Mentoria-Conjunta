@@ -43,16 +43,22 @@ Preferred communication style: Simple, everyday language.
 - React Hook Form with Zod resolver for client-side form validation
 
 **Storage Strategy:**
-- In-memory storage implementation (MemStorage) for development
-- Interface-based storage abstraction (IStorage) allowing easy migration to database
-- Drizzle ORM configured for PostgreSQL (currently using Neon serverless)
-- Schema-first approach with database migrations support
-- **Important:** Registrations are stored in memory and will be lost on server restart
+- PostgreSQL database for persistent storage (Neon serverless)
+- Interface-based storage abstraction (IStorage) for flexibility
+- DbStorage implementation using Drizzle ORM
+- Schema-first approach with database migrations via drizzle-kit
+- All registrations persist across server restarts
 - Admin page available at `/admin` to view all registrations (currently unauthenticated)
+
+**Database Schema:**
+- Table: `registrations`
+- Columns: id (varchar UUID, auto-generated), name, email, phone, payment_method, created_at (timestamp)
+- Primary key: id with gen_random_uuid()
+- Automatic timestamp tracking with defaultNow()
 
 **Key Design Decisions:**
 - The application uses an abstraction layer for storage, making it database-agnostic
-- Current implementation uses in-memory storage but is structured to easily switch to PostgreSQL via Drizzle ORM
+- Current implementation uses PostgreSQL via Drizzle ORM for durable persistence
 - All database schemas are defined in shared/schema.ts for type safety across client and server
 - Admin page provides real-time view of all registrations with GET /api/registrations endpoint
 

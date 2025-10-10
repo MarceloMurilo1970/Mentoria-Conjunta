@@ -27,6 +27,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertRegistrationSchema.parse(req.body);
       
+      // Block test emails and specific admin email
+      if (validatedData.email.endsWith('@test.com') || 
+          validatedData.email === 'marcelo.murilo.silva@gmail.com') {
+        console.log(`Blocked registration attempt from: ${validatedData.email}`);
+        return res.status(400).json({ 
+          error: "Email não permitido para registro" 
+        });
+      }
+      
       const existingRegistration = await storage.getRegistrationByEmail(validatedData.email);
       if (existingRegistration) {
         return res.status(400).json({ 

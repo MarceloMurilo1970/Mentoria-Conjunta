@@ -67,7 +67,7 @@ export async function sendRegistrationEmail(
   const installmentsInstructions = `
     <h3>Instruções para Pagamento Parcelado</h3>
     <p>Para confirmar sua inscrição, realize o pagamento em 5x de R$ 1.500,00 (total R$ 7.500,00) através do link abaixo:</p>
-    <p><strong>Link de pagamento:</strong> https://mpago.li/2e8FvqE</p>
+    <p><strong>Link de pagamento:</strong> https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-7500,00</p>
     <p>Copie e cole o link acima no seu navegador para realizar o pagamento.</p>
     <p>Após a confirmação do pagamento, sua inscrição será confirmada e a nota fiscal será enviada em até 5 dias.</p>
   `;

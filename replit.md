@@ -60,9 +60,16 @@ Preferred communication style: Simple, everyday language.
 - Replit Connectors API for secure credential management
 - Automated registration confirmation emails with payment instructions
 - Dynamic email content based on payment method (PIX vs installments)
-- Admin notification system: sends complete registration list to contato@marcelomurilo.com.br after each new registration
+- Admin notification system: sends complete registration list to 3 admin emails (contato@marcelomurilo.com.br, faturamento@marcelomurilo.com.br, hamiltonfelix@gmail.com) after each new registration
 - Hero image served from `/email-assets/hero-image.png` for email headers
 - Click tracking disabled to avoid SSL certificate issues
+
+**Payment Integration:**
+- PIX payment: R$ 6.975,00 via CNPJ 17.840.516/0001-47 (Opes Informática Ltda)
+- Credit card installments: 5x R$ 1.500,00 (total R$ 7.500,00) via Infinite Pay
+- Infinite Pay payment link: https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-7500,00
+- Promotional pricing valid until 09/10/2025 (normal price R$ 9.400)
+- Payment instructions included in confirmation emails and success screen
 
 **Database:**
 - Drizzle ORM configured for PostgreSQL

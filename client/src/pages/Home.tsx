@@ -184,6 +184,10 @@ export default function Home() {
                   <span className="text-primary mr-2">•</span>
                   <span><strong className="text-foreground">Curadoria de competências:</strong> Skills que comunicam especialização, não generalismo</span>
                 </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Prompts personalizados:</strong> Receba prompts prontos para gerar insights e posts para o LinkedIn</span>
+                </li>
               </ul>
               <p className="text-sm text-muted-foreground mt-4 italic">
                 Insight: 80% das oportunidades de conselho começam digitalmente
@@ -218,6 +222,10 @@ export default function Home() {
                   <span className="text-primary mr-2">•</span>
                   <span><strong className="text-foreground">Algoritmo 2025:</strong> Comentários longos e dwell time {'>'}  curtidas e volume</span>
                 </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Prompts personalizados:</strong> Gere comentários estratégicos, respostas profissionais e Newsletters com prompts prontos</span>
+                </li>
               </ul>
             </div>
 
@@ -248,6 +256,10 @@ export default function Home() {
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
                   <span><strong className="text-foreground">Newsletters do LinkedIn:</strong> Canal direto com 100% de entrega</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Ferramentas de automação:</strong> Aprenda a usar ferramentas de automação de conexões de forma estratégica e ética</span>
                 </li>
               </ul>
               <p className="text-sm text-muted-foreground mt-4 italic">

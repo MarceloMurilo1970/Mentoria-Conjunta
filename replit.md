@@ -150,7 +150,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
-**Latest Updates - Módulo 2 Integration & Event Hero Refinement:**
+**Latest Updates - Personalized Prompts Enhancement:**
+- **Card #2 (LinkedIn Estratégico):** Added information about personalized prompts for generating insights and LinkedIn posts
+- **Card #3 (Autoridade por Conteúdo):** Added information about personalized prompts for generating comments, responding to comments, and creating Newsletters
+- **Card #4 (Interações que Constroem Autoridade):** Added information about learning to use connection automation tools strategically and ethically
+- All additions maintain professional tone and enhance value proposition
+
+**Previous Updates - Módulo 2 Integration & Event Hero Refinement:**
 - **Event Page Hero:** Updated to clearly communicate dual-mentor value proposition
   - Main headline: "Marcelo Murilo e Hamilton Felix vão contar sobre"
   - Focus: "Como criar AUTORIDADE como CONSELHEIRO" (both keywords highlighted)

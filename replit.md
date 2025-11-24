@@ -150,7 +150,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
-**Latest Updates - Personalized Prompts Enhancement:**
+**Latest Updates - Sessão 7 Addition & Methodology Expansion:**
+- **New Card #7 (Due Diligence e Entrada Estratégica em Conselhos):** Critical content about strategic entry into board positions
+  - Covers: Perguntas reveladoras (5 key questions for partners/CEO), Documentação obrigatória, Red flags decisivos, Blindagem contratual, Calendário estratégico
+  - Quote: "Entrar no conselho errado destrói reputação, energia e credibilidade"
+  - Content extracted from Sessão 7 PowerPoint presentation
+- **Renumbered Hamilton Felix cards from 7-9 to 8-10** to accommodate new Sessão 7 content
+- **Total methodology cards expanded from 9 to 10:**
+  - Cards 1-6: Módulo 1 (Marcelo Murilo) - Authority/LinkedIn frameworks
+  - Card 7: Módulo 1 (Marcelo Murilo) - Due Diligence & Strategic Entry
+  - Cards 8-10: Módulo 2 (Hamilton Felix) - Board implementation strategies
+- Logical progression: Authority building → Strategic entry → Board implementation
+
+**Previous Updates - Personalized Prompts Enhancement:**
 - **Card #2 (LinkedIn Estratégico):** Added information about personalized prompts for generating insights and LinkedIn posts
 - **Card #3 (Autoridade por Conteúdo):** Added information about personalized prompts for generating comments, responding to comments, and creating Newsletters
 - **Card #4 (Interações que Constroem Autoridade):** Added information about learning to use connection automation tools strategically and ethically

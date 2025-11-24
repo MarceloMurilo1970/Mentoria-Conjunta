@@ -14,6 +14,7 @@ const testimonials = [
     role: "Especialista em Healthtech",
     linkedin: "https://www.linkedin.com/in/rodrigopadovez/",
     photo: rodrigoPadovezPhoto,
+    videoUrl: "https://bennercombr-my.sharepoint.com/:v:/g/personal/marcelo_murilo_benner_com_br/IQA0tp_W3ncLT6BrC4Kxpj89AeCyq6MMJ7RPHmlTwnZi0lU?e=DLd88z",
     text: "Quando comecei a mentoria com o Marcelo, eu já tinha 25 anos de experiência em healthtech. Mas faltava transformar tudo isso em posicionamento claro.\n\nO que mais me surpreendeu foi a precisão. Nada genérico, nada teórico. Em poucas sessões ele me ajudou a enxergar onde eu realmente gero valor e como comunicar isso sem ruído.\n\nEu cheguei achando que precisava apenas organizar meu LinkedIn. Saí com algo muito maior: clareza de nicho, propósito lapidado, narrativa estruturada e um método para gerar conteúdo que conversa exatamente com fundadores e CEOs de healthtech.\n\nFoi um processo direto, prático e orientado à execução. Implementação imediata. E isso fez toda diferença.\n\nHoje meu posicionamento está muito mais estratégico. Meu conteúdo gera conexão real com quem eu quero apoiar. E o melhor: com autenticidade.\n\nSe você quer construir autoridade de um jeito sério, sem atalhos e sem fórmulas vazias, a mentoria do Marcelo entrega exatamente isso. Para mim fez toda a diferença.",
     highlightPhrase: "Se você quer construir autoridade de um jeito sério, sem atalhos e sem fórmulas vazias, a mentoria do Marcelo entrega exatamente isso. Para mim fez toda a diferença.",
   },
@@ -544,6 +545,7 @@ export default function Home() {
                 photo={testimonial.photo}
                 linkedin={testimonial.linkedin}
                 highlightPhrase={testimonial.highlightPhrase}
+                videoUrl={testimonial.videoUrl}
               />
             ))}
           </div>

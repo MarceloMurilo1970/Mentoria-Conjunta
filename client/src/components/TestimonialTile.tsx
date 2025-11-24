@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Quote, ChevronDown, ChevronUp, Linkedin } from "lucide-react";
+import { Quote, ChevronDown, ChevronUp, Linkedin, Play } from "lucide-react";
 
 interface TestimonialTileProps {
   name: string;
@@ -11,6 +11,7 @@ interface TestimonialTileProps {
   photo?: string;
   linkedin?: string;
   highlightPhrase?: string;
+  videoUrl?: string;
 }
 
 export default function TestimonialTile({
@@ -20,6 +21,7 @@ export default function TestimonialTile({
   photo,
   linkedin,
   highlightPhrase,
+  videoUrl,
 }: TestimonialTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isLongText = text.length > 300;
@@ -65,7 +67,43 @@ export default function TestimonialTile({
       <CardContent className="pt-6 pb-6 flex flex-col flex-1">
         <Quote className="w-8 h-8 text-primary mb-4" />
         
-        <div className="flex-1 mb-6">
+        {videoUrl && (
+          <div className="mb-6">
+            <a
+              href={videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block relative group overflow-hidden rounded-lg"
+              data-testid={`link-video-${name.toLowerCase().replace(/\s+/g, '-')}`}
+            >
+              {/* Video Thumbnail */}
+              <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
+                {photo && (
+                  <img
+                    src={photo}
+                    alt={`${name} - Vídeo Depoimento`}
+                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-70 transition-opacity"
+                  />
+                )}
+                
+                {/* Dark Overlay */}
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors"></div>
+                
+                {/* Play Button */}
+                <div className="relative z-10 flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary transition-colors border-2 border-white/20">
+                    <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                  </div>
+                  <span className="text-white font-semibold text-sm uppercase tracking-wide">
+                    Assista o Depoimento
+                  </span>
+                </div>
+              </div>
+            </a>
+          </div>
+        )}
+        
+        <div className="flex-1 mb-6" data-testid={`text-${name.toLowerCase().replace(/\s+/g, '-')}`}>
           {renderText()}
         </div>
 

@@ -44,12 +44,12 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       setIsSubmitted(true);
       onSuccess?.();
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
       const errorMessage = error.message || "Erro ao processar inscrição";
       
-      if (errorMessage.includes("502")) {
+      if (errorMessage.startsWith("502:")) {
         setEmailError(true);
-        setPaymentMethod(null);
+        setPaymentMethod(variables.paymentMethod as "pix" | "installments");
         setIsSubmitted(true);
       } else {
         toast({
@@ -65,18 +65,56 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     registrationMutation.mutate(data);
   };
 
-  if (isSubmitted && emailError) {
+  if (isSubmitted && emailError && paymentMethod) {
     return (
       <Card className="max-w-2xl mx-auto border-card-border" data-testid="card-email-error">
-        <CardContent className="pt-12 pb-12 text-center">
+        <CardContent className="pt-12 pb-12">
           <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-6" />
-          <h3 className="text-2xl font-bold text-foreground mb-4">
+          <h3 className="text-2xl font-bold text-foreground mb-4 text-center">
             Inscrição Registrada
           </h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Sua inscrição foi registrada com sucesso, porém houve um problema ao enviar o email de confirmação. 
-            Por favor, entre em contato conosco para receber as instruções de pagamento.
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto text-center">
+            Sua inscrição foi registrada com sucesso! O email de confirmação pode ter falhado, mas aqui estão suas instruções de pagamento:
           </p>
+          
+          {paymentMethod === "pix" ? (
+            <div className="space-y-4 max-w-md mx-auto">
+              <div className="bg-muted/30 p-6 rounded-lg space-y-3">
+                <p className="font-semibold text-foreground">Dados para pagamento PIX:</p>
+                <div className="space-y-2 text-sm">
+                  <p className="text-foreground">
+                    <span className="text-muted-foreground">Chave PIX (CNPJ):</span><br />
+                    <span className="font-mono text-base">17.840.516/0001-47</span>
+                  </p>
+                  <p className="text-foreground">
+                    <span className="text-muted-foreground">Beneficiário:</span><br />
+                    Opes Informática Ltda
+                  </p>
+                  <p className="text-foreground">
+                    <span className="text-muted-foreground">Valor:</span><br />
+                    <span className="font-bold text-lg text-primary">R$ 8.000,00</span>
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                A nota fiscal será enviada em até 5 dias após a confirmação do pagamento.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-md mx-auto text-center">
+              <Button
+                onClick={() => window.open("https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-8750,00", "_blank", "noopener,noreferrer")}
+                size="lg"
+                data-testid="button-payment"
+              >
+                Pagar 5x R$ 1.750,00
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Sua inscrição será confirmada após a aprovação do pagamento.<br />
+                A nota fiscal será enviada em até 5 dias após a confirmação.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     );

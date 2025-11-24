@@ -19,6 +19,7 @@ import { Users, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
+import CountdownTimer from "@/components/CountdownTimer";
 
 const eventFormSchema = z.object({
   name: z.string().min(3, "Nome completo é obrigatório"),
@@ -153,13 +154,18 @@ export default function EventPage() {
           </p>
 
           {/* Date Box - Modern Style */}
-          <div className="inline-block bg-primary/90 backdrop-blur-sm rounded-xl p-8 mb-12 border border-primary/30">
+          <div className="inline-block bg-primary/90 backdrop-blur-sm rounded-xl p-8 mb-6 border border-primary/30">
             <p className="text-white text-4xl md:text-5xl font-bold mb-2" data-testid="event-date">
               04.12.2025
             </p>
             <p className="text-white/90 text-xl md:text-2xl" data-testid="event-time">
               Início às 20:00hs
             </p>
+          </div>
+
+          {/* Countdown Timer */}
+          <div className="mb-12">
+            <CountdownTimer />
           </div>
 
           <p className="text-white/70 text-sm md:text-base mb-12">

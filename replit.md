@@ -129,6 +129,7 @@ Preferred communication style: Simple, everyday language.
 - **This is the first page visitors see**
 - Event details: Dec 4, 2025, 8 PM BRT
 - Topic: "Criar Autoridade, Construir Oportunidades e Conquistar Conselhos"
+- Countdown timer showing time remaining until live event (days, hours, minutes, seconds)
 - Testimonials section featuring Rodrigo Padovez and generic examples
 - Registration form: Name, Phone, LinkedIn, Certification status, Board count, Interests
 - Direct Google Sheets integration (no database storage)
@@ -150,7 +151,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
-**Latest Updates - Sessão 7 Addition & Methodology Expansion:**
+**Latest Updates - Countdown Timer:**
+- **Event Page Countdown:** Added real-time countdown timer to event landing page
+  - Positioned directly below date/time box on hero section
+  - Displays time remaining until Dec 4, 2025, 8:00 PM BRT
+  - Four units: Days, Hours, Minutes, Seconds (all with leading zeros)
+  - Updates every second with proper cleanup on unmount
+  - Dark theme styling: white/10 background with backdrop blur, white/20 borders
+  - Monospace font for numbers, uppercase labels
+  - Fully responsive design (tested on mobile and desktop)
+  - Component: CountdownTimer.tsx with timezone-aware calculation (-03:00 GMT)
+
+**Previous Updates - Sessão 7 Addition & Methodology Expansion:**
 - **New Card #7 (Due Diligence e Entrada Estratégica em Conselhos):** Critical content about strategic entry into board positions
   - Covers: Perguntas reveladoras (5 key questions for partners/CEO), Documentação obrigatória, Red flags decisivos, Blindagem contratual, Calendário estratégico
   - Quote: "Entrar no conselho errado destrói reputação, energia e credibilidade"

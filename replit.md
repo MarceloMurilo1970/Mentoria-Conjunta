@@ -150,11 +150,28 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
-**Latest Updates - Sales Copy Enhancement:**
+**Latest Updates - Módulo 2 Integration & Event Hero Refinement:**
+- **Event Page Hero:** Updated to clearly communicate dual-mentor value proposition
+  - Main headline: "Marcelo Murilo e Hamilton Felix vão contar sobre"
+  - Focus: "Como criar AUTORIDADE como CONSELHEIRO" (both keywords highlighted)
+  - Subtitle: "E depois construir oportunidades em empresas para conquistar sua posição em conselhos estratégicos"
+- **Framework PREP Enhanced (Módulo 1):**
+  - Added "Módulo 1 - Marcelo Murilo" label for clarity
+  - New intro: "O primeiro passo: definir seu nicho, propósito, personas e dores"
+  - Added bullet: "Definição estratégica: Nicho, propósito, personas e suas dores específicas"
+- **Módulo 2 Content Added (Hamilton Felix) - 3 New Methodology Cards:**
+  - Card #7: A Experiência de Construir Conselhos (journey, board types, preparation, dynamics)
+  - Card #8: Fomentar a Implementação de Conselhos (maturity stages, composition, governance, metrics)
+  - Card #9: Implementar Conselhos e Criar Seu Espaço (mapping, approach, negotiation, portfolio)
+- **Total methodology cards expanded from 6 to 9:**
+  - Cards 1-6: Módulo 1 (Marcelo Murilo) - Authority/LinkedIn frameworks
+  - Cards 7-9: Módulo 2 (Hamilton Felix) - Board implementation strategies
+
+**Previous Updates - Sales Copy Enhancement:**
 - Updated Rodrigo Padovez highlight phrase to emphasize core value proposition
 - Pre-filled LinkedIn field with "https://linkedin.com/in/" for better UX
 - Added personalization details: participants receive completely personalized reports and prompts
-- Created comprehensive "A Jornada Completa da Mentoria" section with 6 frameworks:
+- Created comprehensive "A Jornada Completa da Mentoria" section with frameworks:
   1. Framework PREP (Propósito, Reputação, Experiência, Presença)
   2. LinkedIn Estratégico (Headline, Sobre, CAI format)
   3. Autoridade por Conteúdo (Post architecture, Golden Hour)
@@ -162,7 +179,7 @@ Preferred communication style: Simple, everyday language.
   5. Networking com Propósito (Curation and automation)
   6. Framework 5C (Competência, Caráter, Contexto, Contribuição, Credibilidade)
 - Added "O Que CEOs Compram" section highlighting value propositions
-- All content extracted from actual session presentations (Sessions 1-6)
+- All content extracted from actual session presentations
 
 ## Previous Changes
 

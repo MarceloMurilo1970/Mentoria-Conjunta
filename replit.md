@@ -176,7 +176,17 @@ Preferred communication style: Simple, everyday language.
 **Route Structure Finalized:**
 - `/` → Event landing page (primary entry point for promotional live)
 - `/mentoria` → Mentorship registration with testimonials, program details, payment
+  - Back button to return to event page
+  - Auto-scroll to top on page load
+  - Section order: Hero → About (Para Quem) → Testimonials → Program → Registration
 - `/admin` → Admin dashboard for viewing registrations
+
+**Mentoria Page Enhancements:**
+- Back button with proper accessibility (uses asChild pattern)
+- "Para Quem é Esta Mentoria" section explains target audience and benefits
+- Corrected Rodrigo Padovez LinkedIn URL: https://www.linkedin.com/in/rodrigopadovez/
+- Page scrolls to top when navigating from event page
+- Reorganized content flow for better user experience
 
 **Email Error Handling Enhancement:**
 - Improved UX when SendGrid fails (502 errors)

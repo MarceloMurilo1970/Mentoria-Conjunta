@@ -15,9 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calendar, Clock, Users, CheckCircle, Quote, Linkedin, AlertCircle } from "lucide-react";
+import { Users, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
 
 const eventFormSchema = z.object({
   name: z.string().min(3, "Nome completo é obrigatório"),
@@ -29,27 +30,6 @@ const eventFormSchema = z.object({
 });
 
 type EventFormData = z.infer<typeof eventFormSchema>;
-
-const testimonials = [
-  {
-    name: "Rodrigo Padovez",
-    role: "Especialista em Healthtech",
-    linkedin: "#",
-    text: "Quando comecei a mentoria com o Marcelo, eu já tinha 25 anos de experiência em healthtech. Mas faltava transformar tudo isso em posicionamento claro.\n\nO que mais me surpreendeu foi a precisão. Nada genérico, nada teórico. Em poucas sessões ele me ajudou a enxergar onde eu realmente gero valor e como comunicar isso sem ruído.\n\nEu cheguei achando que precisava apenas organizar meu LinkedIn. Saí com algo muito maior: clareza de nicho, propósito lapidado, narrativa estruturada e um método para gerar conteúdo que conversa exatamente com fundadores e CEOs de healthtech.\n\nFoi um processo direto, prático e orientado à execução. Implementação imediata. E isso fez toda diferença.\n\nHoje meu posicionamento está muito mais estratégico. Meu conteúdo gera conexão real com quem eu quero apoiar. E o melhor: com autenticidade.\n\nSe você quer construir autoridade de um jeito sério, sem atalhos e sem fórmulas vazias, a mentoria do Marcelo entrega exatamente isso. Para mim fez toda a diferença.",
-  },
-  {
-    name: "Maria Silva",
-    role: "Conselheira Estratégica",
-    linkedin: "#",
-    text: "A mentoria me ajudou a estruturar minha comunicação e posicionamento no mercado. Em poucos meses consegui conquistar meu primeiro conselho remunerado.",
-  },
-  {
-    name: "Carlos Eduardo",
-    role: "CEO & Conselheiro",
-    linkedin: "#",
-    text: "Transformei minha experiência executiva em autoridade reconhecida. A metodologia é prática e os resultados aparecem rapidamente.",
-  },
-];
 
 export default function EventPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -138,77 +118,82 @@ export default function EventPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <section className="relative py-24 px-6 bg-gradient-to-br from-primary/10 via-background to-background">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-            Criar Autoridade, Construir Oportunidades e Conquistar Conselhos
+    <div className="min-h-screen bg-black">
+      {/* Hero Section with Promo Image */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Image with Dark Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={promoImage}
+            alt="Marcelo Murilo e Hamilton Felix"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/70 to-black"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
+          <p className="text-white/80 text-sm md:text-base tracking-widest uppercase mb-8">
+            Encontro On-line
+          </p>
+
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight">
+            Convidamos Conselheiros para um papo sobre
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-            Bate-papo online com <span className="text-primary font-semibold">Hamilton Felix</span> e <span className="text-primary font-semibold">Marcelo Murilo</span>
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8">
-            <div className="flex items-center gap-3 text-foreground" data-testid="event-date">
-              <Calendar className="w-6 h-6 text-primary" />
-              <span className="text-lg font-semibold">04 de Dezembro de 2025</span>
-            </div>
-            <div className="flex items-center gap-3 text-foreground" data-testid="event-time">
-              <Clock className="w-6 h-6 text-primary" />
-              <span className="text-lg font-semibold">20:00h (horário de Brasília)</span>
-            </div>
-          </div>
 
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Evento gratuito para Conselheiros (atuantes ou em transição) que buscam conhecer mais sobre como criar autoridade e conquistar oportunidades no mercado de conselhos.
-          </p>
-        </div>
-      </section>
-
-      <section className="py-16 px-6 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-12">
-            Depoimentos de Mentorados
+          <h2 className="text-3xl md:text-5xl lg:text-7xl font-bold mb-12 leading-tight">
+            <span className="text-white">Como criar </span>
+            <span className="text-yellow-400">AUTORIDADE</span>
+            <span className="text-white">,</span>
+            <br />
+            <span className="text-white">construir </span>
+            <span className="text-yellow-400">OPORTUNIDADES</span>
+            <br />
+            <span className="text-white">e conquistar </span>
+            <span className="text-yellow-400">CONSELHOS</span>
           </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-card-border hover-elevate" data-testid={`card-testimonial-${index}`}>
-                <CardContent className="pt-6 pb-6">
-                  <Quote className="w-8 h-8 text-primary mb-4" />
-                  <p className="text-muted-foreground mb-6 whitespace-pre-line text-sm leading-relaxed">
-                    {testimonial.text}
-                  </p>
-                  <div className="border-t border-border pt-4">
-                    <p className="font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground mb-2">{testimonial.role}</p>
-                    <a
-                      href={testimonial.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-primary hover:text-primary/80 text-sm"
-                    >
-                      <Linkedin className="w-4 h-4" />
-                      Ver perfil
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+
+          {/* Date Box - Modern Style */}
+          <div className="inline-block bg-primary/90 backdrop-blur-sm rounded-xl p-8 mb-12 border border-primary/30">
+            <p className="text-white text-4xl md:text-5xl font-bold mb-2" data-testid="event-date">
+              04.12.2025
+            </p>
+            <p className="text-white/90 text-xl md:text-2xl" data-testid="event-time">
+              Início às 20:00hs
+            </p>
+          </div>
+
+          <p className="text-white/70 text-sm md:text-base mb-12">
+            Inscreva-se no link para convite de cortesia individual
+          </p>
+
+          {/* CTA Button */}
+          <a href="#inscricao">
+            <Button size="lg" className="text-lg px-8 py-6 h-auto" data-testid="button-scroll-to-form">
+              Garantir Minha Vaga Gratuita
+            </Button>
+          </a>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center p-2">
+            <div className="w-1 h-3 bg-white/50 rounded-full"></div>
           </div>
         </div>
       </section>
 
-      <section className="py-16 px-6" id="inscricao">
+      {/* Registration Form Section */}
+      <section className="py-20 px-6 bg-gradient-to-b from-black via-gray-950 to-black" id="inscricao">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
             Inscreva-se Gratuitamente
           </h2>
-          <p className="text-muted-foreground text-center mb-12">
+          <p className="text-gray-400 text-center mb-12">
             Preencha o formulário abaixo para garantir sua vaga no evento
           </p>
 
-          <Card className="border-card-border" data-testid="card-registration-form">
+          <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm" data-testid="card-registration-form">
             <CardContent className="pt-8 pb-8">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -217,11 +202,12 @@ export default function EventPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome e Sobrenome *</FormLabel>
+                        <FormLabel className="text-gray-200">Nome e Sobrenome *</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="Seu nome completo"
+                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
                             data-testid="input-name"
                           />
                         </FormControl>
@@ -235,11 +221,12 @@ export default function EventPage() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Celular (WhatsApp) *</FormLabel>
+                        <FormLabel className="text-gray-200">Celular (WhatsApp) *</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="(11) 98765-4321"
+                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
                             data-testid="input-phone"
                           />
                         </FormControl>
@@ -253,12 +240,13 @@ export default function EventPage() {
                     name="linkedin"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>LinkedIn *</FormLabel>
+                        <FormLabel className="text-gray-200">LinkedIn *</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             type="url"
                             placeholder="https://linkedin.com/in/seu-perfil"
+                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
                             data-testid="input-linkedin"
                           />
                         </FormControl>
@@ -272,7 +260,7 @@ export default function EventPage() {
                     name="hasCertification"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Possui formação de Conselheiro? *</FormLabel>
+                        <FormLabel className="text-gray-200">Possui formação de Conselheiro? *</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
@@ -281,14 +269,14 @@ export default function EventPage() {
                             data-testid="radio-certification"
                           >
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="sim" id="sim" />
-                              <label htmlFor="sim" className="cursor-pointer">
+                              <RadioGroupItem value="sim" id="sim" className="border-gray-600 text-primary" />
+                              <label htmlFor="sim" className="cursor-pointer text-gray-200">
                                 Sim
                               </label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="nao" id="nao" />
-                              <label htmlFor="nao" className="cursor-pointer">
+                              <RadioGroupItem value="nao" id="nao" className="border-gray-600 text-primary" />
+                              <label htmlFor="nao" className="cursor-pointer text-gray-200">
                                 Não
                               </label>
                             </div>
@@ -304,13 +292,14 @@ export default function EventPage() {
                     name="boardCount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
+                        <FormLabel className="text-gray-200">
                           Quantos Conselhos remunerados participa atualmente? (ex: 0, 1, 2) *
                         </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="0"
+                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
                             data-testid="input-board-count"
                           />
                         </FormControl>
@@ -324,14 +313,14 @@ export default function EventPage() {
                     name="interests"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
+                        <FormLabel className="text-gray-200">
                           O que desejaria ouvir neste bate-papo onde compartilharemos nossa experiência de como Criar Autoridade, Criar Oportunidades e Conquistar Conselhos? *
                         </FormLabel>
                         <FormControl>
                           <Textarea
                             {...field}
                             placeholder="Compartilhe suas expectativas e interesses..."
-                            className="min-h-24 resize-none"
+                            className="min-h-24 resize-none bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
                             data-testid="textarea-interests"
                           />
                         </FormControl>
@@ -343,14 +332,14 @@ export default function EventPage() {
                   <Button
                     type="submit"
                     size="lg"
-                    className="w-full"
+                    className="w-full text-lg"
                     disabled={form.formState.isSubmitting}
                     data-testid="button-submit"
                   >
                     {form.formState.isSubmitting ? "Enviando..." : "Confirmar Inscrição Gratuita"}
                   </Button>
 
-                  <p className="text-xs text-muted-foreground text-center">
+                  <p className="text-xs text-gray-500 text-center">
                     Seus dados serão tratados para inscrição, confirmação e comunicações sobre este evento. 
                     Você pode exercer seus direitos (acesso, correção, exclusão etc.) no e-mail hamilton@felixempresarial.com.br
                   </p>
@@ -361,16 +350,17 @@ export default function EventPage() {
         </div>
       </section>
 
-      <section className="py-16 px-6 bg-primary/10">
+      {/* CTA Section - Mentoria */}
+      <section className="py-20 px-6 bg-gradient-to-b from-black to-primary/10">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Quer ir além?
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-lg text-gray-300 mb-8">
             Conheça nossa mentoria completa para Conselheiros que desejam construir autoridade e conquistar oportunidades no mercado.
           </p>
           <Link href="/mentoria">
-            <Button size="lg" variant="default" data-testid="button-learn-more">
+            <Button size="lg" variant="default" className="text-lg px-8" data-testid="button-learn-more">
               Conhecer a Mentoria Completa
             </Button>
           </Link>

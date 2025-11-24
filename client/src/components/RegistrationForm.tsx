@@ -109,7 +109,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                   </p>
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Valor:</span><br />
-                    <span className="font-bold text-lg text-primary">R$ 6.975,00</span>
+                    <span className="font-bold text-lg text-primary">R$ 8.000,00</span>
                   </p>
                 </div>
               </div>
@@ -123,11 +123,11 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                 Enviamos um email com o link de pagamento. Clique no botão abaixo para pagar parcelado no cartão.
               </p>
               <Button
-                onClick={() => window.open("https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-7500,00", "_blank", "noopener,noreferrer")}
+                onClick={() => window.open("https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-8750,00", "_blank", "noopener,noreferrer")}
                 size="lg"
                 data-testid="button-payment"
               >
-                Pagar 5x R$ 1.500,00
+                Pagar 5x R$ 1.750,00
               </Button>
               <p className="text-sm text-muted-foreground">
                 Sua inscrição será confirmada após a aprovação do pagamento.<br />
@@ -211,7 +211,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                   <div className="h-px bg-primary/30 flex-1"></div>
                 </div>
                 <p className="text-sm font-semibold text-primary">
-                  Promoção válida até 09/10/2025
+                  Turma 2 - Início em Janeiro 2026
                 </p>
               </div>
             </div>
@@ -227,7 +227,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                     <Banknote className="w-5 h-5 mt-0.5 text-primary" />
                     <div>
                       <div className="font-semibold text-foreground">PIX à vista</div>
-                      <div className="text-2xl font-bold text-primary mt-1">R$ 6.975,00</div>
+                      <div className="text-2xl font-bold text-primary mt-1">R$ 8.000,00</div>
                       <div className="text-sm text-muted-foreground mt-1">
                         Pagamento instantâneo via PIX
                       </div>
@@ -243,9 +243,9 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                     <CreditCard className="w-5 h-5 mt-0.5 text-primary" />
                     <div>
                       <div className="font-semibold text-foreground">Cartão de Crédito</div>
-                      <div className="text-2xl font-bold text-primary mt-1">5x R$ 1.500,00</div>
+                      <div className="text-2xl font-bold text-primary mt-1">5x R$ 1.750,00</div>
                       <div className="text-sm text-muted-foreground mt-1">
-                        Total: R$ 7.500,00 (sem juros)
+                        Total: R$ 8.750,00 (sem juros)
                       </div>
                     </div>
                   </div>

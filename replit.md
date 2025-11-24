@@ -2,7 +2,12 @@
 
 ## Overview
 
-This is a mentorship program registration landing page for a joint mentorship by Marcelo Murilo and Hamilton Felix. The application allows users to view program details, session schedules, and register for the mentorship with payment method selection (PIX or installments). The system sends automated confirmation emails via SendGrid upon successful registration.
+This is a mentorship program registration landing page for a joint mentorship by Marcelo Murilo and Hamilton Felix (Turma 2 - Starting January 2026). The application allows users to view program details, session schedules, and register for the mentorship with payment method selection (PIX or installments). The system sends automated confirmation emails via SendGrid upon successful registration.
+
+**Program Schedule (Turma 2):**
+- Module 1 (Marcelo Murilo - 8H): January 19 to March 16, 2026
+- Module 2 (Hamilton Felix - 4H): March 9 and 16, 2026
+- All sessions: 7:00 PM - 8:00 PM or 8:00 PM - 9:00 PM BRT
 
 ## User Preferences
 
@@ -74,10 +79,10 @@ Preferred communication style: Simple, everyday language.
 - Click tracking disabled to avoid SSL certificate issues
 
 **Payment Integration:**
-- PIX payment: R$ 6.975,00 via CNPJ 17.840.516/0001-47 (Opes Informática Ltda)
-- Credit card installments: 5x R$ 1.500,00 (total R$ 7.500,00) via Infinite Pay
-- Infinite Pay payment link: https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-7500,00
-- Promotional pricing valid until 09/10/2025 (normal price R$ 9.400)
+- PIX payment: R$ 8.000,00 via CNPJ 17.840.516/0001-47 (Opes Informática Ltda)
+- Credit card installments: 5x R$ 1.750,00 (total R$ 8.750,00) via Infinite Pay
+- Infinite Pay payment link: https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-8750,00
+- Turma 2 - Starting January 2026 (normal price R$ 9.400)
 - Payment instructions included in confirmation emails and success screen
 
 **Database:**

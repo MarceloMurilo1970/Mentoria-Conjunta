@@ -118,18 +118,25 @@ export default function Home() {
           </p>
 
           <div className="grid md:grid-cols-2 gap-8 mb-16">
-            {/* Framework PREP */}
+            {/* Framework PREP - Módulo 1 */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <span className="text-2xl font-bold text-primary">1</span>
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Framework PREP</h3>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Framework PREP</h3>
+                  <p className="text-sm text-muted-foreground font-mono">Módulo 1 - Marcelo Murilo</p>
+                </div>
               </div>
               <p className="text-muted-foreground mb-4">
-                Estruturação do posicionamento estratégico através de quatro pilares fundamentais:
+                O primeiro passo: definir seu nicho, propósito, personas e dores. Estruturação do posicionamento estratégico através de quatro pilares fundamentais:
               </p>
               <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Definição estratégica:</strong> Nicho, propósito, personas e suas dores específicas</span>
+                </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
                   <span><strong className="text-foreground">Propósito:</strong> Clareza individual, valor diferenciado e comunicação impactante</span>
@@ -310,6 +317,108 @@ export default function Home() {
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
                   <span><strong className="text-foreground">Credibilidade:</strong> Sua moeda definitiva no mercado</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Módulo 2 - Hamilton Felix - Construindo Conselhos */}
+            <div className="bg-background border border-border rounded-lg p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">7</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">A Experiência de Construir Conselhos</h3>
+                  <p className="text-sm text-muted-foreground font-mono">Módulo 2 - Hamilton Felix</p>
+                </div>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Como transformar sua trajetória executiva em posições de conselho estratégico:
+              </p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Jornada do conselheiro:</strong> Da primeira oportunidade à consolidação da prática</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Tipos de conselho:</strong> Consultivo, deliberativo, fiscal - quando cada um faz sentido</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Preparação estruturada:</strong> O que estudar antes da primeira reunião</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Dinâmica de reuniões:</strong> Como contribuir de forma assertiva sem sobrepor a gestão</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Fomentar Implementação de Conselhos */}
+            <div className="bg-background border border-border rounded-lg p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">8</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Fomentar a Implementação de Conselhos</h3>
+                  <p className="text-sm text-muted-foreground font-mono">Módulo 2 - Hamilton Felix</p>
+                </div>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Como empresas estruturam e implementam conselhos que realmente funcionam:
+              </p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Estágios de maturidade:</strong> De startups a empresas estabelecidas</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Composição ideal:</strong> Diversidade de experiências e complementaridade de competências</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Governança efetiva:</strong> Cadência, rituais e documentação que geram valor</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Métricas de impacto:</strong> Como medir a contribuição do conselho</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Implementar Conselhos e Criar Espaço */}
+            <div className="bg-background border border-border rounded-lg p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">9</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Implementar Conselhos e Criar Seu Espaço</h3>
+                  <p className="text-sm text-muted-foreground font-mono">Módulo 2 - Hamilton Felix</p>
+                </div>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Estratégias práticas para criar e ocupar posições em conselhos de empresas:
+              </p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Mapeamento de oportunidades:</strong> Onde estão as empresas que precisam do seu perfil</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Abordagem estratégica:</strong> Como posicionar sua candidatura e demonstrar valor</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Negociação de mandato:</strong> Escopo, remuneração, tempo e expectativas claras</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Construção de portfólio:</strong> Da primeira cadeira à prática consolidada de conselheiro</span>
                 </li>
               </ul>
             </div>

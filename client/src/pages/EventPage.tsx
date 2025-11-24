@@ -137,21 +137,20 @@ export default function EventPage() {
             Encontro On-line
           </p>
 
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight">
-            Convidamos Conselheiros para um papo sobre
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+            Marcelo Murilo e Hamilton Felix vão contar sobre
           </h1>
 
-          <h2 className="text-3xl md:text-5xl lg:text-7xl font-bold mb-12 leading-tight">
+          <h2 className="text-3xl md:text-5xl lg:text-7xl font-bold mb-8 leading-tight">
             <span className="text-white">Como criar </span>
             <span className="text-yellow-400">AUTORIDADE</span>
-            <span className="text-white">,</span>
-            <br />
-            <span className="text-white">construir </span>
-            <span className="text-yellow-400">OPORTUNIDADES</span>
-            <br />
-            <span className="text-white">e conquistar </span>
-            <span className="text-yellow-400">CONSELHOS</span>
+            <span className="text-white"> como </span>
+            <span className="text-yellow-400">CONSELHEIRO</span>
           </h2>
+
+          <p className="text-white/90 text-xl md:text-3xl mb-12 max-w-4xl mx-auto leading-relaxed font-medium">
+            E depois construir oportunidades em empresas para conquistar sua posição em conselhos estratégicos
+          </p>
 
           {/* Date Box - Modern Style */}
           <div className="inline-block bg-primary/90 backdrop-blur-sm rounded-xl p-8 mb-12 border border-primary/30">

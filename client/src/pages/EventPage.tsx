@@ -125,7 +125,7 @@ export default function EventPage() {
               <p className="text-muted-foreground mb-4">
                 Interessado na mentoria completa?
               </p>
-              <Link href="/">
+              <Link href="/mentoria">
                 <Button variant="outline" size="lg" data-testid="button-mentorship">
                   Conhecer a Mentoria
                 </Button>
@@ -369,7 +369,7 @@ export default function EventPage() {
           <p className="text-lg text-muted-foreground mb-8">
             Conheça nossa mentoria completa para Conselheiros que desejam construir autoridade e conquistar oportunidades no mercado.
           </p>
-          <Link href="/">
+          <Link href="/mentoria">
             <Button size="lg" variant="default" data-testid="button-learn-more">
               Conhecer a Mentoria Completa
             </Button>

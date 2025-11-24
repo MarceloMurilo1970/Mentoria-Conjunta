@@ -125,25 +125,28 @@ Preferred communication style: Simple, everyday language.
 
 ## Application Routes
 
-**`/` (Home)** - Mentorship registration page
-- Full program details with session schedules
-- Registration form with email, name, phone, payment method selection
-- SendGrid email confirmations with payment instructions
-- PostgreSQL persistence via Drizzle ORM
-- Admin notification emails after each registration
-
-**`/evento` (Event Page)** - Live event pre-registration
+**`/` (Home - Event Landing Page)** - Live event pre-registration (PRIMARY PAGE)
+- **This is the first page visitors see**
 - Event details: Dec 4, 2025, 8 PM BRT
+- Topic: "Criar Autoridade, Construir Oportunidades e Conquistar Conselhos"
 - Testimonials section featuring Rodrigo Padovez and generic examples
 - Registration form: Name, Phone, LinkedIn, Certification status, Board count, Interests
 - Direct Google Sheets integration (no database storage)
 - Success screen with WhatsApp group invite link
-- CTA button to mentorship page
+- CTA buttons to mentorship page (`/mentoria`)
 
-**`/admin` (Admin Dashboard)** - View all mentorship registrations
-- Displays all PostgreSQL registrations in table format
-- Currently unauthenticated (internal use only)
+**`/mentoria`** - Mentorship registration and payment
+- Full program details with session schedules (Turma 2 - Jan-Mar 2026)
+- Registration form with email, name, phone, payment method selection
+- SendGrid email confirmations with payment instructions
+- PostgreSQL persistence via Drizzle ORM
+- Admin notification emails after each registration
+- Payment options: PIX R$ 8.000 or 5x R$ 1.750 (total R$ 8.750)
+
+**`/admin`** - Admin dashboard (unauthenticated)
+- Displays all PostgreSQL mentorship registrations in table format
 - Real-time data via GET /api/registrations endpoint
+- Internal use only
 
 ## Recent Changes (November 24, 2025)
 

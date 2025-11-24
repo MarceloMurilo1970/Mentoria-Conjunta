@@ -3,7 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertRegistrationSchema } from "@shared/schema";
 import { sendRegistrationEmail, sendRegistrationListEmail } from "./email";
+import { addEventRegistration, type EventRegistration } from "./googleSheets";
 import path from "path";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve the hero image for email
@@ -20,6 +22,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching registrations:", error);
       res.status(500).json({ error: "Erro ao buscar inscrições" });
+    }
+  });
+
+  const eventRegistrationSchema = z.object({
+    name: z.string().min(3),
+    phone: z.string().min(10),
+    linkedin: z.string().url(),
+    hasCertification: z.enum(["sim", "nao"]),
+    boardCount: z.string().min(1),
+    interests: z.string().min(10),
+  });
+
+  app.post("/api/event-registrations", async (req, res) => {
+    try {
+      const validatedData = eventRegistrationSchema.parse(req.body);
+      
+      const timestamp = new Date().toLocaleString('pt-BR', { 
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      const eventRegistration: EventRegistration = {
+        timestamp,
+        name: validatedData.name,
+        phone: validatedData.phone,
+        linkedin: validatedData.linkedin,
+        hasCertification: validatedData.hasCertification === "sim" ? "Sim" : "Não",
+        boardCount: validatedData.boardCount,
+        interests: validatedData.interests,
+      };
+
+      await addEventRegistration(eventRegistration);
+
+      res.status(201).json({ 
+        success: true,
+        message: "Inscrição registrada com sucesso"
+      });
+    } catch (error: any) {
+      console.error("Event registration error:", error);
+      
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          error: "Dados inválidos", 
+          details: error.errors 
+        });
+      }
+      
+      res.status(500).json({ 
+        error: "Erro ao processar inscrição" 
+      });
     }
   });
 

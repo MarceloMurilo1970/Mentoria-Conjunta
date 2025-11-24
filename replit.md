@@ -2,12 +2,20 @@
 
 ## Overview
 
-This is a mentorship program registration landing page for a joint mentorship by Marcelo Murilo and Hamilton Felix (Turma 2 - Starting January 2026). The application allows users to view program details, session schedules, and register for the mentorship with payment method selection (PIX or installments). The system sends automated confirmation emails via SendGrid upon successful registration.
+This is a dual-purpose platform for Marcelo Murilo and Hamilton Felix's mentorship program:
+
+1. **Event Landing Page (`/evento`):** Pre-registration for promotional live event (Dec 4, 2025, 8 PM BRT) with Google Sheets integration and WhatsApp group invite
+2. **Mentorship Registration (`/`):** Main registration page for Turma 2 mentorship program with payment processing and SendGrid confirmations
 
 **Program Schedule (Turma 2):**
 - Module 1 (Marcelo Murilo - 8H): January 19 to March 16, 2026
 - Module 2 (Hamilton Felix - 4H): March 9 and 16, 2026
 - All sessions: 7:00 PM - 8:00 PM or 8:00 PM - 9:00 PM BRT
+
+**Event Details (Live):**
+- Date: December 4, 2025, 8:00 PM BRT
+- Topic: "Criar Autoridade, Construir Oportunidades e Conquistar Conselhos"
+- Target audience: Board members (active or transitioning)
 
 ## User Preferences
 
@@ -106,3 +114,48 @@ Preferred communication style: Simple, everyday language.
 - Lucide React for consistent iconography
 - Embla Carousel (via dependencies) for potential carousel functionality
 - CMDK for command palette interface
+
+**Google Sheets Integration:**
+- Replit's native Google Sheets connector for secure OAuth credential management
+- Event registrations saved directly to Google Sheets spreadsheet
+- Spreadsheet ID: 1-fCalJZRLnerVeTsPQhetEOiM816FxLWquS6kX47o1k
+- Automatic timestamp in Brazilian timezone format
+- Columns: Timestamp, Name, Phone, LinkedIn, Has Certification, Board Count, Interests
+- Access token refresh handled automatically by Replit connector
+
+## Application Routes
+
+**`/` (Home)** - Mentorship registration page
+- Full program details with session schedules
+- Registration form with email, name, phone, payment method selection
+- SendGrid email confirmations with payment instructions
+- PostgreSQL persistence via Drizzle ORM
+- Admin notification emails after each registration
+
+**`/evento` (Event Page)** - Live event pre-registration
+- Event details: Dec 4, 2025, 8 PM BRT
+- Testimonials section featuring Rodrigo Padovez and generic examples
+- Registration form: Name, Phone, LinkedIn, Certification status, Board count, Interests
+- Direct Google Sheets integration (no database storage)
+- Success screen with WhatsApp group invite link
+- CTA button to mentorship page
+
+**`/admin` (Admin Dashboard)** - View all mentorship registrations
+- Displays all PostgreSQL registrations in table format
+- Currently unauthenticated (internal use only)
+- Real-time data via GET /api/registrations endpoint
+
+## Recent Changes (November 24, 2025)
+
+**Event Landing Page Implementation:**
+- Created `/evento` route with complete event registration flow
+- Integrated Google Sheets API for direct data persistence
+- Implemented testimonials section with real testimonial from Rodrigo Padovez
+- Added success screen with WhatsApp group invite automation
+- Fixed date display (2025 instead of 2024)
+- Backend endpoint: POST /api/event-registrations with Zod validation
+
+**Email Error Handling Enhancement:**
+- Improved UX when SendGrid fails (502 errors)
+- Payment instructions now display even when email sending fails
+- Users see complete payment details in error state (PIX or installments)

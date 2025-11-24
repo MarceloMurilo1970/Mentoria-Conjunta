@@ -15,8 +15,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calendar, Clock, Users, CheckCircle, Quote, Linkedin } from "lucide-react";
+import { Calendar, Clock, Users, CheckCircle, Quote, Linkedin, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 const eventFormSchema = z.object({
   name: z.string().min(3, "Nome completo é obrigatório"),
@@ -52,6 +53,7 @@ const testimonials = [
 
 export default function EventPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
@@ -67,26 +69,27 @@ export default function EventPage() {
 
   const onSubmit = async (data: EventFormData) => {
     try {
-      const formData = new FormData();
-      
-      const formId = "1FAIpQLSfRwWZGAKVEiYaMAT1EacLijBaGdYH6apXJ6wFfHpNsq9NS0A";
-      
-      formData.append("entry.2005620554", data.name);
-      formData.append("entry.1045781291", data.phone);
-      formData.append("entry.1166974658", data.linkedin);
-      formData.append("entry.1065046570", data.hasCertification === "sim" ? "Sim" : "Não");
-      formData.append("entry.1166974658", data.boardCount);
-      formData.append("entry.839337160", data.interests);
-
-      await fetch(`https://docs.google.com/forms/d/e/${formId}/formResponse`, {
+      const response = await fetch("/api/event-registrations", {
         method: "POST",
-        body: formData,
-        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
 
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao processar inscrição");
+      }
+
       setIsSubmitted(true);
-    } catch (error) {
-      setIsSubmitted(true);
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast({
+        title: "Erro ao processar inscrição",
+        description: error.message || "Ocorreu um erro ao registrar sua inscrição. Por favor, tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 

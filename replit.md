@@ -150,13 +150,33 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
-**Event Landing Page Implementation:**
-- Created `/evento` route with complete event registration flow
-- Integrated Google Sheets API for direct data persistence
-- Implemented testimonials section with real testimonial from Rodrigo Padovez
-- Added success screen with WhatsApp group invite automation
-- Fixed date display (2025 instead of 2024)
-- Backend endpoint: POST /api/event-registrations with Zod validation
+**Event Landing Page Redesign (Final):**
+- Completely redesigned `/` (event page) with modern dark theme using promo image (IMG_7577) as hero
+- Full-screen hero section with gradient overlays for readability
+- Highlighted keywords (AUTORIDADE, OPORTUNIDADES, CONSELHOS) in yellow/gold
+- Modern date/time display: "04.12.2025" and "Início às 20:00hs"
+- Dark-themed registration form with proper contrast
+- Removed testimonials from event page (moved to mentoria page)
+- Smooth scroll animation to registration form
+- Google Sheets integration maintained for event registrations
+
+**Testimonials System Redesign:**
+- Created reusable TestimonialTile component with modern design
+- Moved testimonials from event page to mentoria page (/mentoria)
+- Features:
+  - Italic text styling for testimonial content
+  - Avatar with photo or initials fallback
+  - Expand/collapse functionality for long testimonials (>300 chars)
+  - Highlight phrase feature for key quotes
+  - LinkedIn link integration
+  - Responsive grid layout (1 col mobile, 2 tablet, 3 desktop)
+- Integrated Rodrigo Padovez photo (IMG_7578) in his testimonial tile
+- Three testimonials: Rodrigo Padovez (long, with photo), Maria Silva, Carlos Eduardo
+
+**Route Structure Finalized:**
+- `/` → Event landing page (primary entry point for promotional live)
+- `/mentoria` → Mentorship registration with testimonials, program details, payment
+- `/admin` → Admin dashboard for viewing registrations
 
 **Email Error Handling Enhancement:**
 - Improved UX when SendGrid fails (502 errors)

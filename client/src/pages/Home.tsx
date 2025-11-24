@@ -333,11 +333,49 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Módulo 2 - Hamilton Felix - Construindo Conselhos */}
+            {/* Due Diligence e Entrada Estratégica em Conselhos */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <span className="text-2xl font-bold text-primary">7</span>
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Due Diligence e Entrada Estratégica em Conselhos</h3>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                A etapa crítica antes de aceitar qualquer posição em conselho:
+              </p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Perguntas reveladoras:</strong> As 5 perguntas para sócios e CEO que expõem maturidade real</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Documentação obrigatória:</strong> Demonstrações financeiras, atas, mapa de riscos e plano estratégico</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Red flags decisivos:</strong> Sinais de alerta que inviabilizam seu impacto e protegem sua reputação</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Blindagem contratual:</strong> Cláusulas de proteção, limitação de responsabilidade e indenização</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Calendário estratégico:</strong> Sazonalidade dos conselhos e anatomia mensal da governança</span>
+                </li>
+              </ul>
+              <p className="text-sm text-muted-foreground mt-4 italic">
+                "Entrar no conselho errado destrói reputação, energia e credibilidade"
+              </p>
+            </div>
+
+            {/* Módulo 2 - Hamilton Felix - Construindo Conselhos */}
+            <div className="bg-background border border-border rounded-lg p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">8</span>
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-foreground">A Experiência de Construir Conselhos</h3>
@@ -371,7 +409,7 @@ export default function Home() {
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary">8</span>
+                  <span className="text-2xl font-bold text-primary">9</span>
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-foreground">Fomentar a Implementação de Conselhos</h3>
@@ -405,7 +443,7 @@ export default function Home() {
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary">9</span>
+                  <span className="text-2xl font-bold text-primary">10</span>
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-foreground">Implementar Conselhos e Criar Seu Espaço</h3>

@@ -150,6 +150,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
+**Latest Updates - Sales Copy Enhancement:**
+- Updated Rodrigo Padovez highlight phrase to emphasize core value proposition
+- Pre-filled LinkedIn field with "https://linkedin.com/in/" for better UX
+- Added personalization details: participants receive completely personalized reports and prompts
+- Created comprehensive "A Jornada Completa da Mentoria" section with 6 frameworks:
+  1. Framework PREP (Propósito, Reputação, Experiência, Presença)
+  2. LinkedIn Estratégico (Headline, Sobre, CAI format)
+  3. Autoridade por Conteúdo (Post architecture, Golden Hour)
+  4. Interações que Constroem Autoridade (Strategic comments)
+  5. Networking com Propósito (Curation and automation)
+  6. Framework 5C (Competência, Caráter, Contexto, Contribuição, Credibilidade)
+- Added "O Que CEOs Compram" section highlighting value propositions
+- All content extracted from actual session presentations (Sessions 1-6)
+
+## Previous Changes
+
 **Event Landing Page Redesign (Final):**
 - Completely redesigned `/` (event page) with modern dark theme using promo image (IMG_7577) as hero
 - Full-screen hero section with gradient overlays for readability

@@ -40,7 +40,7 @@ export default function EventPage() {
     defaultValues: {
       name: "",
       phone: "",
-      linkedin: "",
+      linkedin: "https://linkedin.com/in/",
       hasCertification: "nao",
       boardCount: "",
       interests: "",

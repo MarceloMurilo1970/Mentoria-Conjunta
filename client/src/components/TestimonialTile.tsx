@@ -36,18 +36,28 @@ export default function TestimonialTile({
   };
 
   const renderText = () => {
-    if (!isLongText) {
+    if (isExpanded) {
       return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
     }
 
-    if (isExpanded) {
+    if (!isLongText) {
+      if (highlightPhrase) {
+        const parts = text.split(highlightPhrase);
+        return (
+          <p className="italic leading-relaxed whitespace-pre-line">
+            <span className="text-muted-foreground">{parts[0]}</span>
+            <span className="font-semibold text-primary">{highlightPhrase}</span>
+            <span className="text-muted-foreground">{parts[1]}</span>
+          </p>
+        );
+      }
       return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
     }
 
     if (highlightPhrase) {
       return (
         <div className="space-y-4">
-          <p className="text-lg font-semibold text-foreground italic">"{highlightPhrase}"</p>
+          <p className="text-lg font-semibold text-primary italic">"{highlightPhrase}"</p>
           <p className="text-sm text-muted-foreground italic">
             {text.slice(0, 150)}...
           </p>

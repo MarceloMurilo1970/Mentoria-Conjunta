@@ -19,14 +19,19 @@ const testimonials = [
     highlightPhrase: "Se você quer construir autoridade de um jeito sério, sem atalhos e sem fórmulas vazias, a mentoria do Marcelo entrega exatamente isso. Para mim fez toda a diferença.",
   },
   {
-    name: "Maria Silva",
-    role: "Conselheira Estratégica",
-    text: "A mentoria me ajudou a estruturar minha comunicação e posicionamento no mercado. Em poucos meses consegui conquistar meu primeiro conselho remunerado.",
+    name: "Marcelo Martin",
+    role: "Conselheiro",
+    linkedin: "https://www.linkedin.com/in/marcelomartin-advisor/",
+    videoUrl: "https://bennercombr-my.sharepoint.com/:v:/g/personal/marcelo_murilo_benner_com_br/IQBw9_t10mjLRJN_GIq7q3P0ARFE9RDna_GPRXGcx4mvy8w?e=rca4kA",
+    text: "A mentoria do Marcelo Murilo traz toda sua experiência e conhecimento na trilha para orientar futuros membros de conselho a desempenhar a função de forma profissional e assertiva, com técnica e domínio dos fatores de sucesso, em complemento às suas expertises. Realmente uma oportunidade fantástica!",
+    highlightPhrase: "Realmente uma oportunidade fantástica!",
   },
   {
-    name: "Carlos Eduardo",
-    role: "CEO & Conselheiro",
-    text: "Transformei minha experiência executiva em autoridade reconhecida. A metodologia é prática e os resultados aparecem rapidamente.",
+    name: "Isabella Salton",
+    role: "Conselheira",
+    linkedin: "https://www.linkedin.com/in/isabellasalton/",
+    videoUrl: "https://bennercombr-my.sharepoint.com/:v:/g/personal/marcelo_murilo_benner_com_br/IQCdjGqbuYLGRa8Wscsv9zu9AZ0n8as8rXxw3uyQf7zjpKo?e=le4Cjm",
+    text: "Aguardando o depoimento",
   },
 ];
 

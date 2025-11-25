@@ -51,3 +51,46 @@ Preferred communication style: Simple, everyday language.
 - **Development Tools:** Replit-specific Vite plugins for error overlay and development banner, Cartographer plugin.
 - **Third-Party UI Libraries:** Radix UI for accessible components, Lucide React for iconography, Embla Carousel, CMDK.
 - **Google Sheets Integration:** Replit's native Google Sheets connector for secure OAuth, used to save event registrations to a specific spreadsheet (ID: 1-fCalJZRLnerVeTsPQhetEOiM816FxLWquS6kX47o1k) with automatic timestamping.
+
+## Recent Changes (November 25, 2025)
+
+**Latest Updates - New Video Testimonials (Marcelo Martin & Isabella Salton):**
+- **Two New Testimonials Added:** Replaced generic placeholder testimonials with real mentorados
+  - **Marcelo Martin** (Conselheiro):
+    - LinkedIn: https://www.linkedin.com/in/marcelomartin-advisor/
+    - Video: SharePoint testimonial (IQBw9_t10mjLRJN_GIq7q3P0ARFE9RDna_GPRXGcx4mvy8w)
+    - Full testimonial text (299 chars)
+    - Highlighted phrase: "Realmente uma oportunidade fantástica!" (styled in vibrant blue)
+  - **Isabella Salton** (Conselheira):
+    - LinkedIn: https://www.linkedin.com/in/isabellasalton/
+    - Video: SharePoint testimonial (IQCdjGqbuYLGRa8Wscsv9zu9AZ0n8as8rXxw3uyQf7zjpKo)
+    - Placeholder text: "Aguardando o depoimento" (pending full testimonial)
+- **TestimonialTile Logic Fix:** Refactored `renderText()` function to properly handle highlighted phrases for ALL text lengths
+  - Previous bug: highlightPhrase only worked for texts > 300 chars
+  - Fixed: Now works for both short texts (≤ 300 chars) and long texts (> 300 chars)
+  - Short text with highlight: splits text and renders phrase with `font-semibold text-primary` (vibrant blue)
+  - Long text with highlight: shows large highlighted quote + text preview
+  - Verified color: rgb(0, 122, 245) - vibrant blue primary color
+  - Works on both desktop and mobile viewports
+- **Current Testimonials:** Site now features 3 real testimonials with video links:
+  1. Rodrigo Padovez (Especialista em Healthtech) - with photo
+  2. Marcelo Martin (Conselheiro) - no photo, avatar with initials
+  3. Isabella Salton (Conselheira) - no photo, avatar with initials
+- All testimonials include video thumbnails, LinkedIn links, and responsive design
+
+**Previous Updates - Video Testimonials Feature (November 24, 2025):**
+- **Video Thumbnail Feature:** Added support for video testimonials on mentoria page
+  - Enhanced TestimonialTile component with optional `videoUrl` prop
+  - When videoUrl is present, displays clickable video thumbnail above testimonial text
+  - Video thumbnail design: 16:9 aspect ratio, gradient background, play button, hover effects
+  - Opens in new tab (target="_blank", rel="noopener noreferrer")
+  - Full backward compatibility maintained
+
+**Previous Updates - Countdown Timer (November 24, 2025):**
+- **Event Page Countdown:** Added real-time countdown timer to event landing page
+  - Displays time remaining until Dec 4, 2025, 8:00 PM BRT
+  - Four units: Days, Hours, Minutes, Seconds (all with leading zeros)
+  - Updates every second with proper cleanup on unmount
+  - Dark theme styling with backdrop blur
+  - Fully responsive design
+  - Component: CountdownTimer.tsx with timezone-aware calculation (-03:00 GMT)

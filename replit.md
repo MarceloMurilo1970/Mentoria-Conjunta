@@ -54,33 +54,32 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 25, 2025)
 
-**Latest Updates - Photo Thumbnails for Video Testimonials:**
-- **Added Real Photos for Video Thumbnails and Avatars:**
-  - **Marcelo Martin** (Conselheiro):
-    - Photo added: `attached_assets/image_1764036231605.png`
-    - Used for both video thumbnail and avatar
-    - Follows Rodrigo's pattern: highlighted phrase displayed prominently first
-    - LinkedIn: https://www.linkedin.com/in/marcelomartin-advisor/
-    - Video: SharePoint testimonial (IQBw9_t10mjLRJN_GIq7q3P0ARFE9RDna_GPRXGcx4mvy8w)
-    - Full testimonial text (299 chars)
-    - Highlighted phrase: "Realmente uma oportunidade fantástica!" (styled in vibrant blue)
-  - **Isabella Salton** (Conselheira):
-    - Photo added: `attached_assets/image_1764036258435.png`
-    - Used for both video thumbnail and avatar
-    - LinkedIn: https://www.linkedin.com/in/isabellasalton/
-    - Video: SharePoint testimonial (IQCdjGqbuYLGRa8Wscsv9zu9AZ0n8as8rXxw3uyQf7zjpKo)
-    - Placeholder text: "Aguardando o depoimento" (pending full testimonial)
-- **TestimonialTile Component Enhanced:**
+**Latest Updates - Smart Expand/Collapse Logic & Isabella's Full Testimonial:**
+- **Isabella Salton's Complete Testimonial:**
+  - Updated from placeholder to full testimonial text (~900 chars)
+  - Highlighted phrase: "O trabalho é muito personalizado e com entregas de alto valor."
+  - Professional testimonial focusing on personalized mentorship, methodology clarity, and transformative results
+- **Refined Expand/Collapse Logic:**
+  - Changed `isLongText` threshold from `text.length > 300 || Boolean(highlightPhrase)` to `text.length > 500`
+  - Expand button now only appears for truly long texts (>500 chars), regardless of highlighted phrase
+  - **New Behavior:**
+    - **Long text (>500 chars) with highlightPhrase**: Shows large quote + preview, has expand button
+    - **Short text (≤500 chars) with highlightPhrase**: Shows full text with inline highlighted phrase (bold, primary color), NO expand button
+    - **Long text without highlightPhrase**: Shows truncated preview, has expand button
+    - **Short text without highlightPhrase**: Shows full text, NO expand button
+- **Current Testimonials Display:**
+  - **Rodrigo Padovez** (~900 chars): Expand button, large quote when collapsed
+  - **Marcelo Martin** (~299 chars): NO expand button, full text visible with inline highlighted phrase
+  - **Isabella Salton** (~900 chars): Expand button, large quote when collapsed
+- All three testimonials include real photos for video thumbnails and avatars, LinkedIn links, and responsive design
+
+**Previous Updates - Photo Thumbnails for Video Testimonials (November 25, 2025):**
+- **Added Real Photos:**
+  - Marcelo Martin: `attached_assets/image_1764036231605.png`
+  - Isabella Salton: `attached_assets/image_1764036258435.png`
+- **TestimonialTile Component:**
   - Added separate `videoThumbnail` prop (distinct from `photo` prop for avatars)
-  - Modified `isLongText` calculation: `text.length > 300 || Boolean(highlightPhrase)`
-  - Updated `renderText()` to ALWAYS display large highlighted phrase first when `highlightPhrase` exists (regardless of text length)
-  - Short text with highlight now triggers expand/collapse behavior (like Rodrigo's long text pattern)
   - All video thumbnails now show real photos instead of gray placeholders
-- **Current Testimonials:** Site now features 3 real testimonials with photos and video links:
-  1. Rodrigo Padovez (Especialista em Healthtech) - with photo
-  2. Marcelo Martin (Conselheiro) - with photo (NEW)
-  3. Isabella Salton (Conselheira) - with photo (NEW)
-- All testimonials include video thumbnails with real photos, avatars with photos, LinkedIn links, and responsive design
 
 **Previous Updates - Video Testimonials Feature (November 24, 2025):**
 - **Video Thumbnail Feature:** Added support for video testimonials on mentoria page

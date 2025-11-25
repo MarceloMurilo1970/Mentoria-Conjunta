@@ -54,13 +54,13 @@ export default function TestimonialTile({
     }
 
     if (highlightPhrase && !isLongText) {
-      const parts = text.split(highlightPhrase);
       return (
-        <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">
-          {parts[0]}
-          <span className="font-semibold text-primary">{highlightPhrase}</span>
-          {parts[1]}
-        </p>
+        <div className="space-y-4">
+          <p className="text-lg font-semibold text-primary italic">"{highlightPhrase}"</p>
+          <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">
+            {text}
+          </p>
+        </div>
       );
     }
 

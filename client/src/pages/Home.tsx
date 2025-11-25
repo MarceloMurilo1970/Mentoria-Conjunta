@@ -7,6 +7,8 @@ import ProgramSection from "@/components/ProgramSection";
 import RegistrationForm from "@/components/RegistrationForm";
 import TestimonialTile from "@/components/TestimonialTile";
 import rodrigoPadovezPhoto from "@assets/IMG_7578_1763994202676.jpeg";
+import marceloMartinPhoto from "@assets/image_1764036231605.png";
+import isabellaSaltonPhoto from "@assets/image_1764036258435.png";
 
 const testimonials = [
   {
@@ -14,6 +16,7 @@ const testimonials = [
     role: "Especialista em Healthtech",
     linkedin: "https://www.linkedin.com/in/rodrigopadovez/",
     photo: rodrigoPadovezPhoto,
+    videoThumbnail: rodrigoPadovezPhoto,
     videoUrl: "https://bennercombr-my.sharepoint.com/:v:/g/personal/marcelo_murilo_benner_com_br/IQA0tp_W3ncLT6BrC4Kxpj89AeCyq6MMJ7RPHmlTwnZi0lU?e=DLd88z",
     text: "Quando comecei a mentoria com o Marcelo, eu já tinha 25 anos de experiência em healthtech. Mas faltava transformar tudo isso em posicionamento claro.\n\nO que mais me surpreendeu foi a precisão. Nada genérico, nada teórico. Em poucas sessões ele me ajudou a enxergar onde eu realmente gero valor e como comunicar isso sem ruído.\n\nEu cheguei achando que precisava apenas organizar meu LinkedIn. Saí com algo muito maior: clareza de nicho, propósito lapidado, narrativa estruturada e um método para gerar conteúdo que conversa exatamente com fundadores e CEOs de healthtech.\n\nFoi um processo direto, prático e orientado à execução. Implementação imediata. E isso fez toda diferença.\n\nHoje meu posicionamento está muito mais estratégico. Meu conteúdo gera conexão real com quem eu quero apoiar. E o melhor: com autenticidade.\n\nSe você quer construir autoridade de um jeito sério, sem atalhos e sem fórmulas vazias, a mentoria do Marcelo entrega exatamente isso. Para mim fez toda a diferença.",
     highlightPhrase: "Se você quer construir autoridade de um jeito sério, sem atalhos e sem fórmulas vazias, a mentoria do Marcelo entrega exatamente isso. Para mim fez toda a diferença.",
@@ -22,6 +25,8 @@ const testimonials = [
     name: "Marcelo Martin",
     role: "Conselheiro",
     linkedin: "https://www.linkedin.com/in/marcelomartin-advisor/",
+    photo: marceloMartinPhoto,
+    videoThumbnail: marceloMartinPhoto,
     videoUrl: "https://bennercombr-my.sharepoint.com/:v:/g/personal/marcelo_murilo_benner_com_br/IQBw9_t10mjLRJN_GIq7q3P0ARFE9RDna_GPRXGcx4mvy8w?e=rca4kA",
     text: "A mentoria do Marcelo Murilo traz toda sua experiência e conhecimento na trilha para orientar futuros membros de conselho a desempenhar a função de forma profissional e assertiva, com técnica e domínio dos fatores de sucesso, em complemento às suas expertises. Realmente uma oportunidade fantástica!",
     highlightPhrase: "Realmente uma oportunidade fantástica!",
@@ -30,6 +35,8 @@ const testimonials = [
     name: "Isabella Salton",
     role: "Conselheira",
     linkedin: "https://www.linkedin.com/in/isabellasalton/",
+    photo: isabellaSaltonPhoto,
+    videoThumbnail: isabellaSaltonPhoto,
     videoUrl: "https://bennercombr-my.sharepoint.com/:v:/g/personal/marcelo_murilo_benner_com_br/IQCdjGqbuYLGRa8Wscsv9zu9AZ0n8as8rXxw3uyQf7zjpKo?e=le4Cjm",
     text: "Aguardando o depoimento",
   },
@@ -551,6 +558,7 @@ export default function Home() {
                 linkedin={testimonial.linkedin}
                 highlightPhrase={testimonial.highlightPhrase}
                 videoUrl={testimonial.videoUrl}
+                videoThumbnail={testimonial.videoThumbnail}
               />
             ))}
           </div>

@@ -12,6 +12,7 @@ interface TestimonialTileProps {
   linkedin?: string;
   highlightPhrase?: string;
   videoUrl?: string;
+  videoThumbnail?: string;
 }
 
 export default function TestimonialTile({
@@ -22,9 +23,10 @@ export default function TestimonialTile({
   linkedin,
   highlightPhrase,
   videoUrl,
+  videoThumbnail,
 }: TestimonialTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isLongText = text.length > 300;
+  const isLongText = text.length > 300 || Boolean(highlightPhrase);
   
   const getInitials = (name: string) => {
     return name
@@ -40,20 +42,6 @@ export default function TestimonialTile({
       return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
     }
 
-    if (!isLongText) {
-      if (highlightPhrase) {
-        const parts = text.split(highlightPhrase);
-        return (
-          <p className="italic leading-relaxed whitespace-pre-line">
-            <span className="text-muted-foreground">{parts[0]}</span>
-            <span className="font-semibold text-primary">{highlightPhrase}</span>
-            <span className="text-muted-foreground">{parts[1]}</span>
-          </p>
-        );
-      }
-      return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
-    }
-
     if (highlightPhrase) {
       return (
         <div className="space-y-4">
@@ -65,11 +53,15 @@ export default function TestimonialTile({
       );
     }
 
-    return (
-      <p className="italic text-muted-foreground leading-relaxed">
-        {text.slice(0, 250)}...
-      </p>
-    );
+    if (text.length > 300) {
+      return (
+        <p className="italic text-muted-foreground leading-relaxed">
+          {text.slice(0, 250)}...
+        </p>
+      );
+    }
+
+    return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
   };
 
   return (
@@ -88,9 +80,9 @@ export default function TestimonialTile({
             >
               {/* Video Thumbnail */}
               <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
-                {photo && (
+                {videoThumbnail && (
                   <img
-                    src={photo}
+                    src={videoThumbnail}
                     alt={`${name} - Vídeo Depoimento`}
                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-70 transition-opacity"
                   />

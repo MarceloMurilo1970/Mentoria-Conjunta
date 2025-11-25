@@ -38,7 +38,8 @@ const testimonials = [
     photo: isabellaSaltonPhoto,
     videoThumbnail: isabellaSaltonPhoto,
     videoUrl: "https://bennercombr-my.sharepoint.com/:v:/g/personal/marcelo_murilo_benner_com_br/IQCdjGqbuYLGRa8Wscsv9zu9AZ0n8as8rXxw3uyQf7zjpKo?e=le4Cjm",
-    text: "Aguardando o depoimento",
+    text: "Sou Isabella Salton, conselheira e mentora especializada em apoiar empresas familiares e de médio porte a profissionalizarem sua governança e integrarem ESG como estratégia real de crescimento — sem perder a essência que as trouxe até aqui.\n\nParticipar da primeira turma de Mentoria Coletiva do Marcelo Murilo tem sido uma experiência extremamente rica.\n\nAlém de ter um formato muito dinâmico, algo que realmente me motiva — encontrei aqui um espaço seguro para aprofundar meu propósito, testar novas abordagens, aprender sobre novas ferramentas e usar tudo na prática!\n\nO trabalho é muito personalizado e com entregas de alto valor. A metodologia tem muita clareza, precisão dos conteúdos e com uma condução impecável por parte do Marcelo Murilo.\n\nIsso torna o processo leve, consistente e transformador.\n\nEsse programa me ajudou a estruturar ainda mais meu posicionamento e minha atuação como conselheira.\n\nRecomendo com entusiasmo para quem deseja evoluir de verdade, com profundidade, propósito e método.",
+    highlightPhrase: "O trabalho é muito personalizado e com entregas de alto valor.",
   },
 ];
 

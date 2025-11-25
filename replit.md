@@ -54,23 +54,26 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 25, 2025)
 
-**Latest Updates - Smart Expand/Collapse Logic & Isabella's Full Testimonial:**
+**Latest Updates - Consistent Highlighted Phrase Display:**
+- **Unified Testimonial Pattern:** ALL testimonials with `highlightPhrase` now follow the same visual pattern
+  - **Highlighted phrase displayed as large quote at top** (text-lg, font-semibold, text-primary, italic, with quotes)
+  - **Followed by testimonial text below** (preview for long texts, full text for short texts)
+  - This ensures consistent styling regardless of text length
 - **Isabella Salton's Complete Testimonial:**
-  - Updated from placeholder to full testimonial text (~900 chars)
+  - Updated from placeholder to full testimonial text (~1008 chars)
   - Highlighted phrase: "O trabalho é muito personalizado e com entregas de alto valor."
   - Professional testimonial focusing on personalized mentorship, methodology clarity, and transformative results
-- **Refined Expand/Collapse Logic:**
-  - Changed `isLongText` threshold from `text.length > 300 || Boolean(highlightPhrase)` to `text.length > 500`
-  - Expand button now only appears for truly long texts (>500 chars), regardless of highlighted phrase
-  - **New Behavior:**
-    - **Long text (>500 chars) with highlightPhrase**: Shows large quote + preview, has expand button
-    - **Short text (≤500 chars) with highlightPhrase**: Shows full text with inline highlighted phrase (bold, primary color), NO expand button
-    - **Long text without highlightPhrase**: Shows truncated preview, has expand button
-    - **Short text without highlightPhrase**: Shows full text, NO expand button
+- **Smart Expand/Collapse Logic:**
+  - Expand button appears only for texts >500 characters
+  - **Display Patterns:**
+    - **Long text (>500 chars) with highlightPhrase**: Large quote at top + preview text + expand button
+    - **Short text (≤500 chars) with highlightPhrase**: Large quote at top + full text + NO expand button
+    - **Long text without highlightPhrase**: Truncated preview + expand button
+    - **Short text without highlightPhrase**: Full text + NO expand button
 - **Current Testimonials Display:**
-  - **Rodrigo Padovez** (~900 chars): Expand button, large quote when collapsed
-  - **Marcelo Martin** (~299 chars): NO expand button, full text visible with inline highlighted phrase
-  - **Isabella Salton** (~900 chars): Expand button, large quote when collapsed
+  - **Rodrigo Padovez** (~987 chars): Large quote at top, preview text, expand button
+  - **Marcelo Martin** (~299 chars): Large quote at top, full text visible, NO expand button
+  - **Isabella Salton** (~1008 chars): Large quote at top, preview text, expand button
 - All three testimonials include real photos for video thumbnails and avatars, LinkedIn links, and responsive design
 
 **Previous Updates - Photo Thumbnails for Video Testimonials (November 25, 2025):**

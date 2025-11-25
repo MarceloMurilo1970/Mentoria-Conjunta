@@ -26,7 +26,7 @@ export default function TestimonialTile({
   videoThumbnail,
 }: TestimonialTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isLongText = text.length > 300 || Boolean(highlightPhrase);
+  const isLongText = text.length > 500;
   
   const getInitials = (name: string) => {
     return name
@@ -42,7 +42,7 @@ export default function TestimonialTile({
       return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
     }
 
-    if (highlightPhrase) {
+    if (highlightPhrase && isLongText) {
       return (
         <div className="space-y-4">
           <p className="text-lg font-semibold text-primary italic">"{highlightPhrase}"</p>
@@ -53,7 +53,18 @@ export default function TestimonialTile({
       );
     }
 
-    if (text.length > 300) {
+    if (highlightPhrase && !isLongText) {
+      const parts = text.split(highlightPhrase);
+      return (
+        <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">
+          {parts[0]}
+          <span className="font-semibold text-primary">{highlightPhrase}</span>
+          {parts[1]}
+        </p>
+      );
+    }
+
+    if (text.length > 500) {
       return (
         <p className="italic text-muted-foreground leading-relaxed">
           {text.slice(0, 250)}...

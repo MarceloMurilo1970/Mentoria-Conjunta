@@ -54,29 +54,33 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 25, 2025)
 
-**Latest Updates - New Video Testimonials (Marcelo Martin & Isabella Salton):**
-- **Two New Testimonials Added:** Replaced generic placeholder testimonials with real mentorados
+**Latest Updates - Photo Thumbnails for Video Testimonials:**
+- **Added Real Photos for Video Thumbnails and Avatars:**
   - **Marcelo Martin** (Conselheiro):
+    - Photo added: `attached_assets/image_1764036231605.png`
+    - Used for both video thumbnail and avatar
+    - Follows Rodrigo's pattern: highlighted phrase displayed prominently first
     - LinkedIn: https://www.linkedin.com/in/marcelomartin-advisor/
     - Video: SharePoint testimonial (IQBw9_t10mjLRJN_GIq7q3P0ARFE9RDna_GPRXGcx4mvy8w)
     - Full testimonial text (299 chars)
     - Highlighted phrase: "Realmente uma oportunidade fantástica!" (styled in vibrant blue)
   - **Isabella Salton** (Conselheira):
+    - Photo added: `attached_assets/image_1764036258435.png`
+    - Used for both video thumbnail and avatar
     - LinkedIn: https://www.linkedin.com/in/isabellasalton/
     - Video: SharePoint testimonial (IQCdjGqbuYLGRa8Wscsv9zu9AZ0n8as8rXxw3uyQf7zjpKo)
     - Placeholder text: "Aguardando o depoimento" (pending full testimonial)
-- **TestimonialTile Logic Fix:** Refactored `renderText()` function to properly handle highlighted phrases for ALL text lengths
-  - Previous bug: highlightPhrase only worked for texts > 300 chars
-  - Fixed: Now works for both short texts (≤ 300 chars) and long texts (> 300 chars)
-  - Short text with highlight: splits text and renders phrase with `font-semibold text-primary` (vibrant blue)
-  - Long text with highlight: shows large highlighted quote + text preview
-  - Verified color: rgb(0, 122, 245) - vibrant blue primary color
-  - Works on both desktop and mobile viewports
-- **Current Testimonials:** Site now features 3 real testimonials with video links:
+- **TestimonialTile Component Enhanced:**
+  - Added separate `videoThumbnail` prop (distinct from `photo` prop for avatars)
+  - Modified `isLongText` calculation: `text.length > 300 || Boolean(highlightPhrase)`
+  - Updated `renderText()` to ALWAYS display large highlighted phrase first when `highlightPhrase` exists (regardless of text length)
+  - Short text with highlight now triggers expand/collapse behavior (like Rodrigo's long text pattern)
+  - All video thumbnails now show real photos instead of gray placeholders
+- **Current Testimonials:** Site now features 3 real testimonials with photos and video links:
   1. Rodrigo Padovez (Especialista em Healthtech) - with photo
-  2. Marcelo Martin (Conselheiro) - no photo, avatar with initials
-  3. Isabella Salton (Conselheira) - no photo, avatar with initials
-- All testimonials include video thumbnails, LinkedIn links, and responsive design
+  2. Marcelo Martin (Conselheiro) - with photo (NEW)
+  3. Isabella Salton (Conselheira) - with photo (NEW)
+- All testimonials include video thumbnails with real photos, avatars with photos, LinkedIn links, and responsive design
 
 **Previous Updates - Video Testimonials Feature (November 24, 2025):**
 - **Video Thumbnail Feature:** Added support for video testimonials on mentoria page

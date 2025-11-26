@@ -52,9 +52,31 @@ Preferred communication style: Simple, everyday language.
 - **Third-Party UI Libraries:** Radix UI for accessible components, Lucide React for iconography, Embla Carousel, CMDK.
 - **Google Sheets Integration:** Replit's native Google Sheets connector for secure OAuth, used to save event registrations to a specific spreadsheet (ID: 1-fCalJZRLnerVeTsPQhetEOiM816FxLWquS6kX47o1k) with automatic timestamping.
 
-## Recent Changes (November 25, 2025)
+## Recent Changes (November 26, 2025)
 
-**Latest Updates - Consistent Highlighted Phrase Display:**
+**Latest Updates - Session Deliverables & Module Restructure:**
+- **Session Cards with Deliverables:** Each of the 8 Módulo 1 sessions now includes a dedicated "Entregas" section with document icon
+  - Common deliverables: Session summary, recording access, weekly action plan
+  - Session-specific deliverables highlighted in primary color:
+    - Session 1: PREP-MM analysis + LinkedIn assessment + suggested companies, purpose, personas, and pain points
+    - Session 2: Deep LinkedIn profile analysis with ready-to-copy Headline, About section, and experience descriptions
+    - Session 3: Personalized prompts for insights, posts, and images + AI customization instructions
+    - Session 4: Personalized prompts for comments, replies, and newsletter content + AI customization instructions
+    - Session 5: Automation tools instructions for strategic connections and business conversations
+    - Session 6: 5C Assessment measuring competencies with complete development plan
+    - Session 7: Impact Assessment for measuring and demonstrating board value
+    - Session 8: Complete Module 1 consolidation and Module 2 preparation checklist
+- **New Session 8 Added:** "Revisão Completa do Módulo 1" - Complete review and Q&A session
+- **Module 2 Restructured:** Now features 4 focused cards from Hamilton Felix:
+  1. Prospecção de Empresas (company prospecting)
+  2. Fechamento de Projetos (project closing)
+  3. Implementando o Conselho (implementing the board)
+  4. Evoluindo o Conselho (evolving the board)
+- **Updated Video URLs:** All testimonial videos now use marcelomurilo SharePoint domain
+- **Testimonials Reordered:** Now alphabetically ordered (Isabella, Luiz, Marcelo, Rodrigo)
+- **Fourth Testimonial Added:** Luiz Fernando Bueno with photo, video, and LinkedIn
+
+**Previous Updates - Consistent Highlighted Phrase Display (November 25, 2025):**
 - **Unified Testimonial Pattern:** ALL testimonials with `highlightPhrase` now follow the same visual pattern
   - **Highlighted phrase displayed as large quote at top** (text-lg, font-semibold, text-primary, italic, with quotes)
   - **Followed by testimonial text below** (preview for long texts, full text for short texts)

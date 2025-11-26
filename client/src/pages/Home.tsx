@@ -138,21 +138,25 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-4">
             A Jornada Completa da Mentoria
           </h2>
-          <p className="text-muted-foreground text-center mb-16 max-w-3xl mx-auto text-lg">
-            Sete sessões estruturadas com frameworks comprovados para transformar experiência executiva em autoridade reconhecida no mercado de conselhos
+          <p className="text-muted-foreground text-center mb-8 max-w-3xl mx-auto text-lg">
+            10 sessões estruturadas com frameworks comprovados para transformar experiência executiva em autoridade reconhecida no mercado de conselhos
           </p>
+          
+          {/* Módulo 1 Header */}
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-px flex-1 bg-border"></div>
+            <h3 className="text-xl font-bold text-primary">Módulo 1 — Marcelo Murilo</h3>
+            <div className="h-px flex-1 bg-border"></div>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-16">
-            {/* Framework PREP - Módulo 1 */}
+            {/* Sessão 1 - Framework PREP */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <span className="text-2xl font-bold text-primary">1</span>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">Framework PREP</h3>
-                  <p className="text-sm text-muted-foreground font-mono">Módulo 1 - Marcelo Murilo</p>
-                </div>
+                <h3 className="text-xl font-bold text-foreground">Framework PREP-MM</h3>
               </div>
               <p className="text-muted-foreground mb-4">
                 O primeiro passo: definir seu nicho, propósito, personas e dores. Estruturação do posicionamento estratégico através de quatro pilares fundamentais:
@@ -179,9 +183,23 @@ export default function Home() {
                   <span><strong className="text-foreground">Presença:</strong> Influenciar sem autoridade formal</span>
                 </li>
               </ul>
+              
+              {/* Entregas da Sessão */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                </div>
+                <ul className="space-y-1 text-sm text-muted-foreground ml-7">
+                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li className="text-primary font-medium">Análise completa da sua avaliação PREP-MM e do seu LinkedIn atual, com sugestões de tipos de empresas para focar, seu propósito sugerido, personas prioritárias e suas prováveis dores</li>
+                </ul>
+              </div>
             </div>
 
-            {/* LinkedIn Estratégico */}
+            {/* Sessão 2 - LinkedIn Estratégico */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -209,17 +227,27 @@ export default function Home() {
                   <span className="text-primary mr-2">•</span>
                   <span><strong className="text-foreground">Curadoria de competências:</strong> Skills que comunicam especialização, não generalismo</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Prompts personalizados:</strong> Receba prompts prontos para gerar insights e posts para o LinkedIn</span>
-                </li>
               </ul>
               <p className="text-sm text-muted-foreground mt-4 italic">
                 Insight: 80% das oportunidades de conselho começam digitalmente
               </p>
+              
+              {/* Entregas da Sessão */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                </div>
+                <ul className="space-y-1 text-sm text-muted-foreground ml-7">
+                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li className="text-primary font-medium">Análise profunda do seu perfil do LinkedIn com sugestões personalizadas: sua Headline ideal, seção "Sobre" pronta para copiar e colar, e descrição otimizada de cada experiência — tudo alinhado ao seu propósito definido na sessão anterior</li>
+                </ul>
+              </div>
             </div>
 
-            {/* Autoridade por Conteúdo */}
+            {/* Sessão 3 - Autoridade por Conteúdo */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -245,16 +273,26 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Algoritmo 2025:</strong> Comentários longos e dwell time {'>'}  curtidas e volume</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Prompts personalizados:</strong> Gere comentários estratégicos, respostas profissionais e Newsletters com prompts prontos</span>
+                  <span><strong className="text-foreground">Algoritmo 2025:</strong> Comentários longos e dwell time {'>'} curtidas e volume</span>
                 </li>
               </ul>
+              
+              {/* Entregas da Sessão */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                </div>
+                <ul className="space-y-1 text-sm text-muted-foreground ml-7">
+                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li className="text-primary font-medium">Seus prompts personalizados para gerar insights, posts e imagens para publicar — tudo alinhado ao seu propósito, personas e dores. Inclui instruções para criar sua IA personalizada usando os prompts enviados</li>
+                </ul>
+              </div>
             </div>
 
-            {/* Comentários Estratégicos */}
+            {/* Sessão 4 - Interações Estratégicas */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -282,17 +320,27 @@ export default function Home() {
                   <span className="text-primary mr-2">•</span>
                   <span><strong className="text-foreground">Newsletters do LinkedIn:</strong> Canal direto com 100% de entrega</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Ferramentas de automação:</strong> Aprenda a usar ferramentas de automação de conexões de forma estratégica e ética</span>
-                </li>
               </ul>
               <p className="text-sm text-muted-foreground mt-4 italic">
                 "Comentar gera mais autoridade que postar"
               </p>
+              
+              {/* Entregas da Sessão */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                </div>
+                <ul className="space-y-1 text-sm text-muted-foreground ml-7">
+                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li className="text-primary font-medium">Seus prompts personalizados para gerar comentários em posts de terceiros, respostas aos comentários em seus posts, e insights e artigos para sua newsletter. Inclui instruções para criar sua IA personalizada</li>
+                </ul>
+              </div>
             </div>
 
-            {/* Networking com Propósito */}
+            {/* Sessão 5 - Networking com Propósito */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -321,9 +369,23 @@ export default function Home() {
                   <span><strong className="text-foreground">Follow-up inteligente:</strong> Transformar interações em relacionamentos</span>
                 </li>
               </ul>
+              
+              {/* Entregas da Sessão */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                </div>
+                <ul className="space-y-1 text-sm text-muted-foreground ml-7">
+                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li className="text-primary font-medium">Instruções detalhadas de como usar ferramentas para automatizar sua conexão com as personas certas e iniciar conversas estratégicas que geram oportunidades de negócio</li>
+                </ul>
+              </div>
             </div>
 
-            {/* Framework 5C */}
+            {/* Sessão 6 - Framework 5C */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -356,15 +418,29 @@ export default function Home() {
                   <span><strong className="text-foreground">Credibilidade:</strong> Sua moeda definitiva no mercado</span>
                 </li>
               </ul>
+              
+              {/* Entregas da Sessão */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                </div>
+                <ul className="space-y-1 text-sm text-muted-foreground ml-7">
+                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li className="text-primary font-medium">Acesso à sua Avaliação 5C personalizada que mede suas competências atuais e estabelece um plano de trabalho completo para maximizar seus resultados como conselheiro</li>
+                </ul>
+              </div>
             </div>
 
-            {/* Due Diligence e Entrada Estratégica em Conselhos */}
+            {/* Sessão 7 - Due Diligence e Entrada Estratégica */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <span className="text-2xl font-bold text-primary">7</span>
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Due Diligence e Entrada Estratégica em Conselhos</h3>
+                <h3 className="text-xl font-bold text-foreground">Due Diligence e Entrada Estratégica</h3>
               </div>
               <p className="text-muted-foreground mb-4">
                 A etapa crítica antes de aceitar qualquer posição em conselho:
@@ -386,114 +462,201 @@ export default function Home() {
                   <span className="text-primary mr-2">•</span>
                   <span><strong className="text-foreground">Blindagem contratual:</strong> Cláusulas de proteção, limitação de responsabilidade e indenização</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Calendário estratégico:</strong> Sazonalidade dos conselhos e anatomia mensal da governança</span>
-                </li>
               </ul>
               <p className="text-sm text-muted-foreground mt-4 italic">
                 "Entrar no conselho errado destrói reputação, energia e credibilidade"
               </p>
+              
+              {/* Entregas da Sessão */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                </div>
+                <ul className="space-y-1 text-sm text-muted-foreground ml-7">
+                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li className="text-primary font-medium">Acesso à sua Avaliação de Impacto personalizada que permite medir e demonstrar aos seus contratantes como você gera valor e resultados concretos no conselho</li>
+                </ul>
+              </div>
             </div>
 
-            {/* Módulo 2 - Hamilton Felix - Construindo Conselhos */}
+            {/* Sessão 8 - Revisão Completa */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <span className="text-2xl font-bold text-primary">8</span>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">A Experiência de Construir Conselhos</h3>
-                  <p className="text-sm text-muted-foreground font-mono">Módulo 2 - Hamilton Felix</p>
-                </div>
+                <h3 className="text-xl font-bold text-foreground">Revisão Completa do Módulo 1</h3>
               </div>
               <p className="text-muted-foreground mb-4">
-                Como transformar sua trajetória executiva em posições de conselho estratégico:
+                Sessão de consolidação e esclarecimento de todas as dúvidas:
               </p>
               <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Jornada do conselheiro:</strong> Da primeira oportunidade à consolidação da prática</span>
+                  <span><strong className="text-foreground">Revisão completa:</strong> Percorremos todo o conteúdo do Módulo 1</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Tipos de conselho:</strong> Consultivo, deliberativo, fiscal - quando cada um faz sentido</span>
+                  <span><strong className="text-foreground">Esclarecimento de dúvidas:</strong> Espaço aberto para sanar todas as questões pendentes</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Preparação estruturada:</strong> O que estudar antes da primeira reunião</span>
+                  <span><strong className="text-foreground">Ajustes finais:</strong> Refinamento do seu posicionamento e materiais</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Dinâmica de reuniões:</strong> Como contribuir de forma assertiva sem sobrepor a gestão</span>
+                  <span><strong className="text-foreground">Preparação para o Módulo 2:</strong> Transição para a fase de conquista de conselhos</span>
+                </li>
+              </ul>
+              
+              {/* Entregas da Sessão */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                </div>
+                <ul className="space-y-1 text-sm text-muted-foreground ml-7">
+                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li className="text-primary font-medium">Consolidação de todos os materiais do Módulo 1 e checklist de preparação para o Módulo 2</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          {/* Módulo 2 Header */}
+          <div className="flex items-center gap-4 mb-8 mt-16">
+            <div className="h-px flex-1 bg-border"></div>
+            <h3 className="text-xl font-bold text-primary">Módulo 2 — Hamilton Felix</h3>
+            <div className="h-px flex-1 bg-border"></div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-16">
+
+            {/* Sessão 1 Módulo 2 - Prospecção de Empresas */}
+            <div className="bg-background border border-border rounded-lg p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">1</span>
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Prospecção de Empresas</h3>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Identificar e abordar empresas com potencial real para sua atuação como conselheiro:
+              </p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Mapeamento estratégico:</strong> Identificar empresas alinhadas ao seu perfil e expertise</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Sinais de maturidade:</strong> Reconhecer empresas prontas para governança estruturada</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Abordagem inicial:</strong> Como estabelecer contato de forma profissional e assertiva</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Construção de pipeline:</strong> Gestão sistemática de oportunidades em potencial</span>
                 </li>
               </ul>
             </div>
 
-            {/* Fomentar Implementação de Conselhos */}
+            {/* Sessão 2 Módulo 2 - Fechamento de Projetos */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary">9</span>
+                  <span className="text-2xl font-bold text-primary">2</span>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">Fomentar a Implementação de Conselhos</h3>
-                  <p className="text-sm text-muted-foreground font-mono">Módulo 2 - Hamilton Felix</p>
-                </div>
+                <h3 className="text-xl font-bold text-foreground">Fechamento de Projetos</h3>
               </div>
               <p className="text-muted-foreground mb-4">
-                Como empresas estruturam e implementam conselhos que realmente funcionam:
+                Converter oportunidades em posições concretas de conselho:
               </p>
               <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Estágios de maturidade:</strong> De startups a empresas estabelecidas</span>
+                  <span><strong className="text-foreground">Proposta de valor:</strong> Articular claramente o que você entrega como conselheiro</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Composição ideal:</strong> Diversidade de experiências e complementaridade de competências</span>
+                  <span><strong className="text-foreground">Negociação de termos:</strong> Remuneração, escopo, dedicação e expectativas mútuas</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Governança efetiva:</strong> Cadência, rituais e documentação que geram valor</span>
+                  <span><strong className="text-foreground">Formalização:</strong> Contratos, cláusulas de proteção e acordos de confidencialidade</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Métricas de impacto:</strong> Como medir a contribuição do conselho</span>
+                  <span><strong className="text-foreground">Onboarding estruturado:</strong> Primeiros 90 dias para consolidar sua presença</span>
                 </li>
               </ul>
             </div>
 
-            {/* Implementar Conselhos e Criar Espaço */}
+            {/* Sessão 3 Módulo 2 - Implementando o Conselho */}
             <div className="bg-background border border-border rounded-lg p-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary">10</span>
+                  <span className="text-2xl font-bold text-primary">3</span>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">Implementar Conselhos e Criar Seu Espaço</h3>
-                  <p className="text-sm text-muted-foreground font-mono">Módulo 2 - Hamilton Felix</p>
-                </div>
+                <h3 className="text-xl font-bold text-foreground">Implementando o Conselho</h3>
               </div>
               <p className="text-muted-foreground mb-4">
-                Estratégias práticas para criar e ocupar posições em conselhos de empresas:
+                Estruturar e operacionalizar conselhos que geram valor real:
               </p>
               <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Mapeamento de oportunidades:</strong> Onde estão as empresas que precisam do seu perfil</span>
+                  <span><strong className="text-foreground">Estrutura de governança:</strong> Regimento, rituais e documentação essencial</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Abordagem estratégica:</strong> Como posicionar sua candidatura e demonstrar valor</span>
+                  <span><strong className="text-foreground">Dinâmica de reuniões:</strong> Pauta, preparação e condução de sessões produtivas</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Negociação de mandato:</strong> Escopo, remuneração, tempo e expectativas claras</span>
+                  <span><strong className="text-foreground">Relacionamento com gestão:</strong> Equilibrar governança e operação sem conflitos</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Construção de portfólio:</strong> Da primeira cadeira à prática consolidada de conselheiro</span>
+                  <span><strong className="text-foreground">Geração de valor:</strong> Contribuições tangíveis que justificam sua presença</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Sessão 4 Módulo 2 - Evoluindo o Conselho */}
+            <div className="bg-background border border-border rounded-lg p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">4</span>
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Evoluindo o Conselho</h3>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Elevar a maturidade do conselho e consolidar sua prática como conselheiro:
+              </p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Avaliação de desempenho:</strong> Métricas e indicadores de efetividade do conselho</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Evolução da governança:</strong> De consultivo para deliberativo — quando e como</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Portfólio de conselhos:</strong> Construir prática diversificada e sustentável</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span><strong className="text-foreground">Legado e sucessão:</strong> Deixar marcas positivas e preparar transições</span>
                 </li>
               </ul>
             </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Users, CheckCircle } from "lucide-react";
+import { Users, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
@@ -34,7 +34,20 @@ type EventFormData = z.infer<typeof eventFormSchema>;
 
 export default function EventPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showStickyBanner, setShowStickyBanner] = useState(false);
   const { toast } = useToast();
+
+  // Show sticky banner when user scrolls past the hero section
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const heroHeight = window.innerHeight * 0.5; // 50% of viewport height
+      setShowStickyBanner(scrollPosition > heroHeight);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
@@ -76,44 +89,94 @@ export default function EventPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <Card className="max-w-2xl mx-auto border-card-border" data-testid="card-success">
-          <CardContent className="pt-12 pb-12 text-center">
-            <CheckCircle className="w-20 h-20 text-primary mx-auto mb-6" />
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Inscrição Confirmada!
-            </h2>
-            <p className="text-muted-foreground mb-8 text-lg">
-              Você está confirmado para o evento dia <span className="font-bold text-foreground">04/12 às 20h</span>
-            </p>
-            
-            <div className="bg-primary/10 border border-primary/20 rounded-lg p-6 mb-8">
-              <p className="text-foreground font-semibold mb-4">
-                Entre no grupo de WhatsApp para receber o link da live:
+      <div className="min-h-screen bg-black">
+        {/* Success Section */}
+        <div className="flex items-center justify-center p-6 py-16">
+          <Card className="max-w-2xl mx-auto bg-gray-900/50 border-gray-800" data-testid="card-success">
+            <CardContent className="pt-12 pb-12 text-center">
+              <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
+              <h2 className="text-3xl font-bold text-white mb-4">
+                Inscrição Confirmada!
+              </h2>
+              <p className="text-gray-300 mb-8 text-lg">
+                Você está confirmado para o evento dia <span className="font-bold text-yellow-400">04/12 às 20h</span>
               </p>
-              <Button
-                onClick={() => window.open("https://chat.whatsapp.com/FytYBXUIDbDAFzcQDCQfSO?mode=hqrt3", "_blank", "noopener,noreferrer")}
-                size="lg"
-                data-testid="button-whatsapp"
-                className="w-full sm:w-auto"
-              >
-                <Users className="w-5 h-5 mr-2" />
-                Entrar no Grupo do WhatsApp
-              </Button>
-            </div>
-
-            <div className="pt-6 border-t border-border">
-              <p className="text-muted-foreground mb-4">
-                Interessado na mentoria completa?
-              </p>
-              <Link href="/mentoria">
-                <Button variant="outline" size="lg" data-testid="button-mentorship">
-                  Conhecer a Mentoria
+              
+              {/* WhatsApp Group - Primary CTA */}
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6 mb-6">
+                <p className="text-white font-semibold mb-2 text-lg">
+                  Próximo passo importante:
+                </p>
+                <p className="text-gray-300 mb-4">
+                  Entre no grupo de WhatsApp para receber o link da live e participar das discussões:
+                </p>
+                <Button
+                  onClick={() => window.open("https://chat.whatsapp.com/FytYBXUIDbDAFzcQDCQfSO?mode=hqrt3", "_blank", "noopener,noreferrer")}
+                  size="lg"
+                  data-testid="button-whatsapp"
+                  className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+                >
+                  <Users className="w-5 h-5 mr-2" />
+                  Entrar no Grupo do WhatsApp
                 </Button>
-              </Link>
+                <p className="text-gray-400 text-sm mt-3">
+                  Link do grupo: <span className="text-green-400">chat.whatsapp.com/FytYBXUIDbDAFzcQDCQfSO</span>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Mentoria CTA Section - High Visibility */}
+        <div className="bg-gradient-to-b from-primary/20 via-primary/10 to-black py-16 px-6">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+              <Sparkles className="w-4 h-4" />
+              Oportunidade Exclusiva
             </div>
-          </CardContent>
-        </Card>
+            
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Quer acelerar sua jornada como Conselheiro?
+            </h2>
+            
+            <p className="text-lg text-gray-300 mb-6 max-w-2xl mx-auto">
+              Enquanto aguarda a live, conheça nossa <span className="text-yellow-400 font-semibold">Mentoria Completa</span> para Conselheiros que desejam construir autoridade e conquistar posições em conselhos estratégicos.
+            </p>
+
+            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mb-8 max-w-xl mx-auto">
+              <h3 className="text-white font-semibold mb-3">O que você vai descobrir:</h3>
+              <ul className="text-gray-300 text-left space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Metodologia completa para criar autoridade no LinkedIn</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Framework PREP-MM para posicionamento estratégico</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Estratégias de prospecção e fechamento de conselhos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Depoimentos de conselheiros que já passaram pela mentoria</span>
+                </li>
+              </ul>
+            </div>
+            
+            <Link href="/mentoria">
+              <Button size="lg" className="text-lg px-8 py-6 h-auto group" data-testid="button-mentorship">
+                Conhecer a Mentoria Completa
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            
+            <p className="text-gray-500 text-sm mt-4">
+              Turma 2: Janeiro a Março de 2026
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -371,6 +434,36 @@ export default function EventPage() {
           </Link>
         </div>
       </section>
+
+      {/* Sticky Banner - Always visible when scrolling */}
+      <div 
+        className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ${
+          showStickyBanner ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        <div className="bg-gradient-to-r from-primary via-primary to-yellow-500 py-3 px-4 shadow-lg shadow-black/50">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-white">
+              <Sparkles className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm sm:text-base font-medium text-center sm:text-left">
+                <span className="hidden sm:inline">Quer ir além da live? </span>
+                Conheça a Mentoria Completa para Conselheiros
+              </span>
+            </div>
+            <Link href="/mentoria">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="whitespace-nowrap group bg-white text-primary hover:bg-gray-100"
+                data-testid="button-sticky-mentoria"
+              >
+                Conhecer Mentoria
+                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

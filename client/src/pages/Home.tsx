@@ -1,10 +1,11 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Hero from "@/components/Hero";
 import ProgramSection from "@/components/ProgramSection";
 import RegistrationForm from "@/components/RegistrationForm";
+import MentoriaCountdown from "@/components/MentoriaCountdown";
 import TestimonialTile from "@/components/TestimonialTile";
 import rodrigoPadovezPhoto from "@assets/IMG_7578_1763994202676.jpeg";
 import marceloMartinPhoto from "@assets/image_1764036231605.png";
@@ -56,9 +57,16 @@ const testimonials = [
 
 export default function Home() {
   const registrationRef = useRef<HTMLDivElement>(null);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Check if countdown already ended (after Dec 4, 2025 20:45 BRT)
+    const targetDate = new Date("2025-12-04T20:45:00-03:00");
+    if (new Date() >= targetDate) {
+      setShowRegistrationForm(true);
+    }
   }, []);
 
   const scrollToRegistration = () => {
@@ -746,7 +754,11 @@ export default function Home() {
       {/* Registration Section */}
       <section className="py-20 md:py-24 bg-card" id="inscricao" ref={registrationRef}>
         <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <RegistrationForm />
+          {showRegistrationForm ? (
+            <RegistrationForm />
+          ) : (
+            <MentoriaCountdown onCountdownEnd={() => setShowRegistrationForm(true)} />
+          )}
         </div>
       </section>
 

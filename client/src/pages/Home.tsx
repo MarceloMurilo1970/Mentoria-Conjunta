@@ -9,6 +9,7 @@ import TestimonialTile from "@/components/TestimonialTile";
 import rodrigoPadovezPhoto from "@assets/IMG_7578_1763994202676.jpeg";
 import marceloMartinPhoto from "@assets/image_1764036231605.png";
 import isabellaSaltonPhoto from "@assets/image_1764036258435.png";
+import luizBuenoPhoto from "@assets/image_1764117861153.png";
 
 const testimonials = [
   {
@@ -40,6 +41,16 @@ const testimonials = [
     videoUrl: "https://bennercombr-my.sharepoint.com/:v:/g/personal/marcelo_murilo_benner_com_br/IQCdjGqbuYLGRa8Wscsv9zu9AZ0n8as8rXxw3uyQf7zjpKo?e=le4Cjm",
     text: "Sou Isabella Salton, conselheira e mentora especializada em apoiar empresas familiares e de médio porte a profissionalizarem sua governança e integrarem ESG como estratégia real de crescimento — sem perder a essência que as trouxe até aqui.\n\nParticipar da primeira turma de Mentoria Coletiva do Marcelo Murilo tem sido uma experiência extremamente rica.\n\nAlém de ter um formato muito dinâmico, algo que realmente me motiva — encontrei aqui um espaço seguro para aprofundar meu propósito, testar novas abordagens, aprender sobre novas ferramentas e usar tudo na prática!\n\nO trabalho é muito personalizado e com entregas de alto valor. A metodologia tem muita clareza, precisão dos conteúdos e com uma condução impecável por parte do Marcelo Murilo.\n\nIsso torna o processo leve, consistente e transformador.\n\nEsse programa me ajudou a estruturar ainda mais meu posicionamento e minha atuação como conselheira.\n\nRecomendo com entusiasmo para quem deseja evoluir de verdade, com profundidade, propósito e método.",
     highlightPhrase: "O trabalho é muito personalizado e com entregas de alto valor.",
+  },
+  {
+    name: "Luiz Fernando Bueno",
+    role: "Conselheiro",
+    linkedin: "https://www.linkedin.com/in/luiz-fernando-araújo-bueno-7300439/",
+    photo: luizBuenoPhoto,
+    videoThumbnail: luizBuenoPhoto,
+    videoUrl: "https://marcelomurilo-my.sharepoint.com/:v:/g/personal/contato_marcelomurilo_com_br/IQCLXRKz11CXT4GMkGo4HcdvAXEmPYcFAuHFPGLym-rVNNU?e=GfK2JW",
+    text: "Gostaria de deixar aqui o meu depoimento sobre a mentoria que estou fazendo com Hamilton Félix e Marcelo Murilo.\n\nSe você quer um caminho para vencer como conselheiro e um jeito de falar com mais gente sobre a sua trajetória, não perca a oportunidade de estar com essa dupla.\n\nSerão 10 encontros com muita teoria, mas muita prática também.\n\nMentoria coletiva, mas com foco individual através de relatórios encaminhados.\n\nHamilton e Marcelo além de muito conhecimento tem uma network invejável.\n\nLuiz Fernando de Araújo Bueno",
+    highlightPhrase: "Se você quer um caminho para vencer como conselheiro e um jeito de falar com mais gente sobre a sua trajetória, não perca a oportunidade de estar com essa dupla.",
   },
 ];
 

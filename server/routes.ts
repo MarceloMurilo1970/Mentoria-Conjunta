@@ -155,6 +155,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete a registration
+  app.delete("/api/registrations/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteRegistration(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      res.json({ success: true, message: "Inscrição excluída com sucesso" });
+    } catch (error) {
+      console.error("Error deleting registration:", error);
+      res.status(500).json({ error: "Erro ao excluir inscrição" });
+    }
+  });
+
+  // Update payment received status
+  app.patch("/api/registrations/:id/payment", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { received } = req.body;
+      
+      if (typeof received !== 'boolean') {
+        return res.status(400).json({ error: "Campo 'received' deve ser boolean" });
+      }
+      
+      const updated = await storage.updatePaymentReceived(id, received);
+      
+      if (!updated) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      res.status(500).json({ error: "Erro ao atualizar status de pagamento" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

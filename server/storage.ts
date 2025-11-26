@@ -7,6 +7,8 @@ export interface IStorage {
   getRegistrationByEmail(email: string): Promise<Registration | undefined>;
   getAllRegistrations(): Promise<Registration[]>;
   createRegistration(registration: InsertRegistration): Promise<Registration>;
+  deleteRegistration(id: string): Promise<boolean>;
+  updatePaymentReceived(id: string, received: boolean): Promise<Registration | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -26,6 +28,19 @@ export class DbStorage implements IStorage {
 
   async createRegistration(insertRegistration: InsertRegistration): Promise<Registration> {
     const result = await db.insert(registrations).values(insertRegistration).returning();
+    return result[0];
+  }
+
+  async deleteRegistration(id: string): Promise<boolean> {
+    const result = await db.delete(registrations).where(eq(registrations.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async updatePaymentReceived(id: string, received: boolean): Promise<Registration | undefined> {
+    const result = await db.update(registrations)
+      .set({ paymentReceived: received })
+      .where(eq(registrations.id, id))
+      .returning();
     return result[0];
   }
 }

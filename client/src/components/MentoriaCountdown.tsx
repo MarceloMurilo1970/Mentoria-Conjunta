@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Clock, Sparkles, CheckCircle, ArrowRight } from "lucide-react";
+import { Clock, Sparkles, CheckCircle, ArrowRight, Users, AlertTriangle } from "lucide-react";
 
 interface TimeLeft {
   days: number;
@@ -134,9 +134,20 @@ export default function MentoriaCountdown({ onCountdownEnd }: MentoriaCountdownP
             <span className="text-lg font-semibold text-foreground">O valor será revelado durante a live</span>
           </div>
           
-          <p className="text-muted-foreground mb-8">
+          <p className="text-muted-foreground mb-6">
             Dia 04/12 às 20:45 as inscrições serão liberadas
           </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <div className="flex items-center gap-2 bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold">
+              <Users className="w-4 h-4" />
+              Poucas vagas disponíveis
+            </div>
+            <div className="flex items-center gap-2 bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-semibold">
+              <AlertTriangle className="w-4 h-4" />
+              Valor promocional só na live
+            </div>
+          </div>
 
           <div className="flex justify-center gap-4 md:gap-6 mb-8">
             <div className="text-center">

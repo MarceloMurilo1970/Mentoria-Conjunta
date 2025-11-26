@@ -11,8 +11,19 @@ import rodrigoPadovezPhoto from "@assets/IMG_7578_1763994202676.jpeg";
 import marceloMartinPhoto from "@assets/image_1764036231605.png";
 import isabellaSaltonPhoto from "@assets/image_1764036258435.png";
 import luizBuenoPhoto from "@assets/image_1764117861153.png";
+import elizaCoralPhoto from "@assets/image_1764192966736.png";
 
 const testimonials = [
+  {
+    name: "Eliza Coral",
+    role: "Conselheira",
+    linkedin: "https://www.linkedin.com/in/elizacoral/",
+    photo: elizaCoralPhoto,
+    videoThumbnail: elizaCoralPhoto,
+    videoUrl: "https://marcelomurilo-my.sharepoint.com/:v:/g/personal/contato_marcelomurilo_com_br/IQBJLpH2UKSkTZlSmulTOJZEASSapXm0obuhEB8eOdsGqOo?e=B0gPA9",
+    text: "A Mentoria do Marcelo Murilo e do Hamilton Felix superou as minhas expectativas. Com ferramentas avançadas e relatórios personalizados, em pouco tempo já tenho resultados positivos. A troca de experiências com os outros participantes também é muito rica.\n\nO que mais gostei na Mentoria foi a clareza do caminho que preciso percorrer ainda. Além disso aprendi a usar ferramentas que aceleram os resultados. Hoje sei que quanto mais cedo iniciarmos a preparação para atuação em conselhos maiores são as chances de termos sucesso como conselheiros de alto impacto. Muitas dicas valiosas, muita prática, muita troca. Vale a pena e eu recomendo.",
+    highlightPhrase: "A Mentoria do Marcelo Murilo e do Hamilton Felix superou as minhas expectativas. Vale a pena e eu recomendo.",
+  },
   {
     name: "Isabella Salton",
     role: "Conselheira",

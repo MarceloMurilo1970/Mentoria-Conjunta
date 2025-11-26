@@ -190,10 +190,10 @@ export default function Home() {
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você terá acesso à plataforma da mentoria, onde encontrará sempre todos os seus materiais, gravações e relatórios personalizados:</span>
                 </div>
                 <ul className="space-y-1 text-sm text-muted-foreground ml-7">
-                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li>Resumo completo da sessão, gravação e plano de ação semanal</li>
                   <li className="text-primary font-medium">Análise completa da sua avaliação PREP-MM e do seu LinkedIn atual, com sugestões de tipos de empresas para focar, seu propósito sugerido, personas prioritárias e suas prováveis dores</li>
                 </ul>
               </div>
@@ -238,11 +238,11 @@ export default function Home() {
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você encontrará na plataforma:</span>
                 </div>
                 <ul className="space-y-1 text-sm text-muted-foreground ml-7">
-                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
-                  <li className="text-primary font-medium">Análise profunda do seu perfil do LinkedIn com sugestões personalizadas: sua Headline ideal, seção "Sobre" pronta para copiar e colar, e descrição otimizada de cada experiência — tudo alinhado ao seu propósito definido na sessão anterior</li>
+                  <li>Resumo completo da sessão, gravação e plano de ação semanal</li>
+                  <li className="text-primary font-medium">Análise profunda do seu perfil do LinkedIn com sugestões personalizadas: sua Headline ideal, seção "Sobre" pronta para copiar e colar, e descrição otimizada de cada experiência, tudo alinhado ao seu propósito definido na sessão anterior</li>
                 </ul>
               </div>
             </div>
@@ -283,11 +283,11 @@ export default function Home() {
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você encontrará na plataforma:</span>
                 </div>
                 <ul className="space-y-1 text-sm text-muted-foreground ml-7">
-                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
-                  <li className="text-primary font-medium">Seus prompts personalizados para gerar insights, posts e imagens para publicar — tudo alinhado ao seu propósito, personas e dores. Inclui instruções para criar sua IA personalizada usando os prompts enviados</li>
+                  <li>Resumo completo da sessão, gravação e plano de ação semanal</li>
+                  <li className="text-primary font-medium">Seus prompts personalizados para gerar insights, posts e imagens para publicar, tudo alinhado ao seu propósito, personas e dores. Inclui instruções para criar sua IA personalizada usando os prompts enviados</li>
                 </ul>
               </div>
             </div>
@@ -331,10 +331,10 @@ export default function Home() {
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você encontrará na plataforma:</span>
                 </div>
                 <ul className="space-y-1 text-sm text-muted-foreground ml-7">
-                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li>Resumo completo da sessão, gravação e plano de ação semanal</li>
                   <li className="text-primary font-medium">Seus prompts personalizados para gerar comentários em posts de terceiros, respostas aos comentários em seus posts, e insights e artigos para sua newsletter. Inclui instruções para criar sua IA personalizada</li>
                 </ul>
               </div>
@@ -376,10 +376,10 @@ export default function Home() {
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você encontrará na plataforma:</span>
                 </div>
                 <ul className="space-y-1 text-sm text-muted-foreground ml-7">
-                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li>Resumo completo da sessão, gravação e plano de ação semanal</li>
                   <li className="text-primary font-medium">Instruções detalhadas de como usar ferramentas para automatizar sua conexão com as personas certas e iniciar conversas estratégicas que geram oportunidades de negócio</li>
                 </ul>
               </div>
@@ -425,10 +425,10 @@ export default function Home() {
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você encontrará na plataforma:</span>
                 </div>
                 <ul className="space-y-1 text-sm text-muted-foreground ml-7">
-                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li>Resumo completo da sessão, gravação e plano de ação semanal</li>
                   <li className="text-primary font-medium">Acesso à sua Avaliação 5C personalizada que mede suas competências atuais e estabelece um plano de trabalho completo para maximizar seus resultados como conselheiro</li>
                 </ul>
               </div>
@@ -473,10 +473,10 @@ export default function Home() {
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você encontrará na plataforma:</span>
                 </div>
                 <ul className="space-y-1 text-sm text-muted-foreground ml-7">
-                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li>Resumo completo da sessão, gravação e plano de ação semanal</li>
                   <li className="text-primary font-medium">Acesso à sua Avaliação de Impacto personalizada que permite medir e demonstrar aos seus contratantes como você gera valor e resultados concretos no conselho</li>
                 </ul>
               </div>
@@ -518,10 +518,10 @@ export default function Home() {
                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você receberá na plataforma:</span>
+                  <span className="font-semibold text-foreground text-sm">Após esta sessão, você encontrará na plataforma:</span>
                 </div>
                 <ul className="space-y-1 text-sm text-muted-foreground ml-7">
-                  <li>Resumo completo da sessão + gravação + plano de ação semanal</li>
+                  <li>Resumo completo da sessão, gravação e plano de ação semanal</li>
                   <li className="text-primary font-medium">Consolidação de todos os materiais do Módulo 1 e checklist de preparação para o Módulo 2</li>
                 </ul>
               </div>
@@ -648,7 +648,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>
-                  <span><strong className="text-foreground">Evolução da governança:</strong> De consultivo para deliberativo — quando e como</span>
+                  <span><strong className="text-foreground">Evolução da governança:</strong> De consultivo para deliberativo, quando e como</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-primary mr-2">•</span>

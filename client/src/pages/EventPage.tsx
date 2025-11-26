@@ -190,7 +190,7 @@ export default function EventPage() {
           <img
             src={promoImage}
             alt="Marcelo Murilo e Hamilton Felix"
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-top"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/70 to-black"></div>
         </div>

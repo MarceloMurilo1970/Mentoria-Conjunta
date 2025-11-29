@@ -251,6 +251,60 @@ export default function EventPage() {
         </div>
       </section>
 
+      {/* Mentoria Highlight Section - Before Form */}
+      <section className="py-16 px-6 bg-gradient-to-b from-black via-primary/10 to-black">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <Sparkles className="w-4 h-4" />
+              Mentoria Turma 2 - Janeiro a Março 2026
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Quer ir além da Live?
+            </h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Conheça nossa <span className="text-primary font-semibold">Mentoria Completa</span> para Conselheiros que desejam construir autoridade e conquistar posições estratégicas em conselhos.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 text-center">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-white font-semibold mb-2">Metodologia PREP-MM</h3>
+              <p className="text-gray-400 text-sm">Framework exclusivo para posicionamento estratégico</p>
+            </div>
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 text-center">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-white font-semibold mb-2">Acompanhamento Individual</h3>
+              <p className="text-gray-400 text-sm">Relatórios personalizados e mentorias focadas</p>
+            </div>
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 text-center">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ArrowRight className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-white font-semibold mb-2">Do LinkedIn ao Conselho</h3>
+              <p className="text-gray-400 text-sm">Jornada completa: autoridade, oportunidades e conquista</p>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <Link href="/mentoria">
+              <Button size="lg" className="text-lg px-8 py-6 h-auto group" data-testid="button-mentorship-highlight">
+                Conhecer a Mentoria Completa
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            <p className="text-gray-500 text-sm mt-4">
+              Preço promocional exclusivo durante a live de 04/12
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Registration Form Section */}
       <section className="py-20 px-6 bg-gradient-to-b from-black via-gray-950 to-black" id="inscricao">
         <div className="max-w-2xl mx-auto">

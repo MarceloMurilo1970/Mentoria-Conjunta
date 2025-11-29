@@ -12,6 +12,7 @@ import marceloMartinPhoto from "@assets/image_1764036231605.png";
 import isabellaSaltonPhoto from "@assets/image_1764036258435.png";
 import luizBuenoPhoto from "@assets/image_1764117861153.png";
 import elizaCoralPhoto from "@assets/image_1764192966736.png";
+import ronaldoCarneiroPhoto from "@assets/image_1764434298472.png";
 
 const testimonials = [
   {
@@ -63,6 +64,16 @@ const testimonials = [
     videoUrl: "https://marcelomurilo-my.sharepoint.com/:v:/g/personal/contato_marcelomurilo_com_br/IQAVO4vgVbeiQqpL9H1hg2UXATnb2c7NmjoRWL6f9f3dWrQ?e=hh8RlZ",
     text: "Quando comecei a mentoria com o Marcelo, eu já tinha 25 anos de experiência em healthtech. Mas faltava transformar tudo isso em posicionamento claro.\n\nO que mais me surpreendeu foi a precisão. Nada genérico, nada teórico. Em poucas sessões ele me ajudou a enxergar onde eu realmente gero valor e como comunicar isso sem ruído.\n\nEu cheguei achando que precisava apenas organizar meu LinkedIn. Saí com algo muito maior: clareza de nicho, propósito lapidado, narrativa estruturada e um método para gerar conteúdo que conversa exatamente com fundadores e CEOs de healthtech.\n\nFoi um processo direto, prático e orientado à execução. Implementação imediata. E isso fez toda diferença.\n\nHoje meu posicionamento está muito mais estratégico. Meu conteúdo gera conexão real com quem eu quero apoiar. E o melhor: com autenticidade.\n\nSe você quer construir autoridade de um jeito sério, sem atalhos e sem fórmulas vazias, a mentoria do Marcelo entrega exatamente isso. Para mim fez toda a diferença.",
     highlightPhrase: "Se você quer construir autoridade de um jeito sério, sem atalhos e sem fórmulas vazias, a mentoria do Marcelo entrega exatamente isso. Para mim fez toda a diferença.",
+  },
+  {
+    name: "Ronaldo Carneiro",
+    role: "Conselheiro",
+    linkedin: "https://www.linkedin.com/in/ronaldocarneirobr/",
+    photo: ronaldoCarneiroPhoto,
+    videoThumbnail: ronaldoCarneiroPhoto,
+    videoUrl: "https://marcelomurilo-my.sharepoint.com/:v:/g/personal/contato_marcelomurilo_com_br/IQCIaHgiaB8YQ5zEAsGeu8LzAd-qj36gJXa9RYbXzp2hVsI?e=hxUtdy",
+    text: "(Depoimento em elaboração)",
+    highlightPhrase: "",
   },
 ];
 

@@ -58,7 +58,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         interests: validatedData.interests,
       };
 
-      await addEventRegistration(eventRegistration);
+      console.log("Adding registration to Google Sheets:", eventRegistration);
+      
+      try {
+        await addEventRegistration(eventRegistration);
+        console.log("Successfully added to Google Sheets");
+      } catch (sheetsError: any) {
+        console.error("Google Sheets error:", sheetsError);
+        console.error("Error details:", JSON.stringify(sheetsError, null, 2));
+        throw sheetsError;
+      }
 
       res.status(201).json({ 
         success: true,

@@ -57,10 +57,11 @@ export interface EventRegistration {
   interests: string;
 }
 
+const SPREADSHEET_ID = '1-fCalJZRLnerVeTsPQhetEOiM816FxLWquS6kX47o1k';
+
 export async function addEventRegistration(registration: EventRegistration): Promise<void> {
   const sheets = await getUncachableGoogleSheetClient();
   
-  const spreadsheetId = '1-fCalJZRLnerVeTsPQhetEOiM816FxLWquS6kX47o1k';
   const range = 'A:G';
   
   const values = [[
@@ -74,11 +75,37 @@ export async function addEventRegistration(registration: EventRegistration): Pro
   ]];
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId,
+    spreadsheetId: SPREADSHEET_ID,
     range,
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values,
     },
   });
+}
+
+export async function getAllEventRegistrations(): Promise<EventRegistration[]> {
+  const sheets = await getUncachableGoogleSheetClient();
+  
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: 'A:G',
+  });
+
+  const rows = response.data.values || [];
+  
+  // Skip header row if exists (check if first row looks like headers)
+  const dataRows = rows.length > 0 && rows[0][0]?.toLowerCase().includes('data') 
+    ? rows.slice(1) 
+    : rows;
+
+  return dataRows.map(row => ({
+    timestamp: row[0] || '',
+    name: row[1] || '',
+    phone: row[2] || '',
+    linkedin: row[3] || '',
+    hasCertification: row[4] || '',
+    boardCount: row[5] || '',
+    interests: row[6] || '',
+  }));
 }

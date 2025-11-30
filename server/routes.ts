@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertRegistrationSchema } from "@shared/schema";
 import { sendRegistrationEmail, sendRegistrationListEmail } from "./email";
-import { addEventRegistration, type EventRegistration } from "./googleSheets";
+import { addEventRegistration, getAllEventRegistrations, type EventRegistration } from "./googleSheets";
 import path from "path";
 import { z } from "zod";
 
@@ -22,6 +22,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching registrations:", error);
       res.status(500).json({ error: "Erro ao buscar inscrições" });
+    }
+  });
+
+  // Get all event registrations from Google Sheets
+  app.get("/api/event-registrations", async (req, res) => {
+    try {
+      const registrations = await getAllEventRegistrations();
+      res.json(registrations);
+    } catch (error) {
+      console.error("Error fetching event registrations:", error);
+      res.status(500).json({ error: "Erro ao buscar inscrições do evento" });
     }
   });
 

@@ -113,6 +113,8 @@ function analyzeTopics(registrations: EventRegistration[]): TopicSuggestion[] {
 function EventRegistrationsSection() {
   const { data: registrations, isLoading, error } = useQuery<EventRegistration[]>({
     queryKey: ['/api/event-registrations'],
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
 
   if (isLoading) {
@@ -360,6 +362,8 @@ function MentorshipRegistrationsSection() {
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ['/api/registrations'],
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
 
   const deleteMutation = useMutation({

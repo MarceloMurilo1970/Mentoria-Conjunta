@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Registration } from "@shared/schema";
@@ -17,6 +17,97 @@ interface EventRegistration {
   hasCertification: string;
   boardCount: string;
   interests: string;
+}
+
+interface TopicSuggestion {
+  topic: string;
+  keywords: string[];
+  count: number;
+  relevantComments: string[];
+}
+
+function analyzeTopics(registrations: EventRegistration[]): TopicSuggestion[] {
+  const topicPatterns: { topic: string; keywords: string[] }[] = [
+    { 
+      topic: "Como conseguir a primeira posição em conselho", 
+      keywords: ["primeiro", "primeira", "começar", "iniciar", "entrada", "entrar", "conquistar", "conseguir", "oportunidade", "vaga", "posição"]
+    },
+    { 
+      topic: "Construção de autoridade e posicionamento no LinkedIn", 
+      keywords: ["linkedin", "autoridade", "posicionamento", "visibilidade", "marca pessoal", "personal branding", "conteúdo", "posts", "publicar"]
+    },
+    { 
+      topic: "Networking estratégico para conselhos", 
+      keywords: ["networking", "rede", "contatos", "conexões", "relacionamento", "network", "conectar"]
+    },
+    { 
+      topic: "Transição de carreira executiva para conselheiro", 
+      keywords: ["transição", "carreira", "executivo", "c-level", "ceo", "diretor", "mudança", "migrar"]
+    },
+    { 
+      topic: "Certificações e qualificações para conselhos", 
+      keywords: ["certificação", "certificado", "curso", "formação", "ibgc", "qualificação", "preparação"]
+    },
+    { 
+      topic: "Remuneração e precificação de conselheiros", 
+      keywords: ["remuneração", "salário", "valor", "preço", "quanto", "pagamento", "honorários", "ganhar", "cobrar"]
+    },
+    { 
+      topic: "Governança corporativa na prática", 
+      keywords: ["governança", "corporativa", "prática", "implementar", "estrutura", "compliance", "boas práticas"]
+    },
+    { 
+      topic: "Empresas familiares e conselhos consultivos", 
+      keywords: ["familiar", "família", "consultivo", "advisory", "pme", "pequena", "média empresa"]
+    },
+    { 
+      topic: "Due diligence e avaliação de empresas", 
+      keywords: ["due diligence", "avaliar", "avaliação", "análise", "riscos", "oportunidades", "empresa"]
+    },
+    { 
+      topic: "Desenvolvimento de competências de conselheiro", 
+      keywords: ["competência", "habilidade", "skill", "desenvolver", "capacidade", "preparar", "aprender"]
+    },
+    { 
+      topic: "Uso de IA e tecnologia para conselheiros", 
+      keywords: ["ia", "inteligência artificial", "tecnologia", "digital", "inovação", "prompt", "chatgpt", "automação"]
+    },
+    { 
+      topic: "Cases práticos e experiências reais", 
+      keywords: ["case", "exemplo", "prático", "real", "experiência", "história", "resultado"]
+    },
+  ];
+
+  const suggestions: TopicSuggestion[] = [];
+  const allTexts = registrations.map(r => r.interests.toLowerCase()).join(" ");
+
+  for (const pattern of topicPatterns) {
+    const matchingComments: string[] = [];
+    let totalMatches = 0;
+
+    for (const reg of registrations) {
+      const text = reg.interests.toLowerCase();
+      const hasMatch = pattern.keywords.some(keyword => text.includes(keyword));
+      if (hasMatch) {
+        totalMatches++;
+        if (matchingComments.length < 3) {
+          matchingComments.push(`${reg.name}: "${reg.interests.substring(0, 150)}${reg.interests.length > 150 ? '...' : ''}"`);
+        }
+      }
+    }
+
+    if (totalMatches > 0) {
+      suggestions.push({
+        topic: pattern.topic,
+        keywords: pattern.keywords.filter(k => allTexts.includes(k)),
+        count: totalMatches,
+        relevantComments: matchingComments,
+      });
+    }
+  }
+
+  // Sort by count descending
+  return suggestions.sort((a, b) => b.count - a.count);
 }
 
 function EventRegistrationsSection() {
@@ -53,6 +144,9 @@ function EventRegistrationsSection() {
 
   // Aggregate interests/topics
   const allInterests = registrations?.map(r => r.interests).filter(Boolean) || [];
+
+  // Analyze topics for suggestions
+  const topicSuggestions = registrations ? analyzeTopics(registrations) : [];
 
   return (
     <div className="space-y-6">
@@ -112,16 +206,76 @@ function EventRegistrationsSection() {
         </Card>
       </div>
 
-      {/* Topics Summary */}
+      {/* Consolidated Topic Suggestions */}
+      {topicSuggestions.length > 0 && (
+        <Card className="border-primary/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              Sugestões Consolidadas para a Live
+            </CardTitle>
+            <CardDescription>
+              Temas identificados a partir dos interesses dos participantes, ordenados por relevância
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {topicSuggestions.map((suggestion, index) => (
+                <div 
+                  key={index} 
+                  className="border rounded-lg p-4 hover-elevate"
+                  data-testid={`suggestion-${index}`}
+                >
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        #{index + 1}
+                      </Badge>
+                      <h4 className="font-semibold">{suggestion.topic}</h4>
+                    </div>
+                    <Badge className="flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      {suggestion.count} {suggestion.count === 1 ? 'menção' : 'menções'}
+                    </Badge>
+                  </div>
+                  
+                  {suggestion.keywords.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {suggestion.keywords.slice(0, 5).map((keyword, kIndex) => (
+                        <Badge key={kIndex} variant="secondary" className="text-xs">
+                          {keyword}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {suggestion.relevantComments.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs text-muted-foreground font-medium">Comentários relacionados:</p>
+                      {suggestion.relevantComments.map((comment, cIndex) => (
+                        <p key={cIndex} className="text-xs text-muted-foreground italic border-l-2 border-muted pl-2">
+                          {comment}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Individual Topics List */}
       {allInterests.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              Tópicos de Interesse dos Participantes
+              Tópicos Individuais dos Participantes
             </CardTitle>
             <CardDescription>
-              O que os inscritos gostariam de ver no evento ao vivo
+              Todos os comentários dos inscritos sobre o que gostariam de ver no evento
             </CardDescription>
           </CardHeader>
           <CardContent>

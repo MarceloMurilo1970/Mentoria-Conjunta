@@ -30,66 +30,83 @@ function analyzeTopics(registrations: EventRegistration[]): TopicSuggestion[] {
   const topicPatterns: { topic: string; keywords: string[] }[] = [
     { 
       topic: "Como conseguir a primeira posição em conselho", 
-      keywords: ["primeiro", "primeira", "começar", "iniciar", "entrada", "entrar", "conquistar", "conseguir", "oportunidade", "vaga", "posição"]
+      keywords: ["primeiro conselho", "primeira posição", "primeiro", "primeira", "começar", "iniciar", "entrada em conselho", "entrar em conselho"]
     },
     { 
       topic: "Construção de autoridade e posicionamento no LinkedIn", 
-      keywords: ["linkedin", "autoridade", "posicionamento", "visibilidade", "marca pessoal", "personal branding", "conteúdo", "posts", "publicar"]
+      keywords: ["linkedin", "autoridade", "posicionamento", "visibilidade", "marca pessoal", "personal branding", "conteúdo", "posts", "publicar", "perfil"]
     },
     { 
       topic: "Networking estratégico para conselhos", 
-      keywords: ["networking", "rede", "contatos", "conexões", "relacionamento", "network", "conectar"]
+      keywords: ["networking", "rede de contatos", "contatos", "conexões", "relacionamento", "network"]
     },
     { 
       topic: "Transição de carreira executiva para conselheiro", 
-      keywords: ["transição", "carreira", "executivo", "c-level", "ceo", "diretor", "mudança", "migrar"]
+      keywords: ["transição", "carreira", "executivo", "c-level", "ceo", "diretor", "mudança de carreira", "migrar"]
     },
     { 
       topic: "Certificações e qualificações para conselhos", 
-      keywords: ["certificação", "certificado", "curso", "formação", "ibgc", "qualificação", "preparação"]
+      keywords: ["certificação", "certificado", "curso", "formação", "ibgc", "qualificação", "preparação", "capacitação"]
     },
     { 
       topic: "Remuneração e precificação de conselheiros", 
-      keywords: ["remuneração", "salário", "valor", "preço", "quanto", "pagamento", "honorários", "ganhar", "cobrar"]
+      keywords: ["remuneração", "salário", "valor", "preço", "quanto ganha", "pagamento", "honorários", "ganhar", "cobrar"]
     },
     { 
       topic: "Governança corporativa na prática", 
-      keywords: ["governança", "corporativa", "prática", "implementar", "estrutura", "compliance", "boas práticas"]
+      keywords: ["governança", "corporativa", "compliance", "boas práticas", "gestão"]
     },
     { 
       topic: "Empresas familiares e conselhos consultivos", 
-      keywords: ["familiar", "família", "consultivo", "advisory", "pme", "pequena", "média empresa"]
+      keywords: ["familiar", "família", "consultivo", "advisory", "pme", "pequena empresa", "média empresa"]
     },
     { 
       topic: "Due diligence e avaliação de empresas", 
-      keywords: ["due diligence", "avaliar", "avaliação", "análise", "riscos", "oportunidades", "empresa"]
+      keywords: ["due diligence", "avaliar empresa", "avaliação", "análise de empresa", "riscos"]
     },
     { 
       topic: "Desenvolvimento de competências de conselheiro", 
-      keywords: ["competência", "habilidade", "skill", "desenvolver", "capacidade", "preparar", "aprender"]
+      keywords: ["competência", "habilidade", "skill", "desenvolver", "capacidade", "aprender", "soft skills"]
     },
     { 
       topic: "Uso de IA e tecnologia para conselheiros", 
-      keywords: ["ia", "inteligência artificial", "tecnologia", "digital", "inovação", "prompt", "chatgpt", "automação"]
+      keywords: ["inteligência artificial", "tecnologia", "digital", "inovação", "prompt", "chatgpt", "automação", "gpt", "openai"]
     },
     { 
       topic: "Cases práticos e experiências reais", 
-      keywords: ["case", "exemplo", "prático", "real", "experiência", "história", "resultado"]
+      keywords: ["case", "exemplo", "prático", "experiência real", "história", "resultado", "depoimento"]
+    },
+    { 
+      topic: "Como criar oportunidades em conselhos", 
+      keywords: ["criar oportunidade", "oportunidade", "conquistar conselho", "conseguir conselho", "acesso", "porta de entrada"]
+    },
+    { 
+      topic: "Estratégias de prospecção e abordagem", 
+      keywords: ["prospecção", "prospectar", "abordar", "abordagem", "contato inicial", "pitch", "apresentação"]
     },
   ];
 
+  // Helper function to check if keyword matches as whole word
+  const matchesWholeWord = (text: string, keyword: string): boolean => {
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`\\b${escapedKeyword}\\b`, 'i');
+    return regex.test(text);
+  };
+
   const suggestions: TopicSuggestion[] = [];
-  const allTexts = registrations.map(r => r.interests.toLowerCase()).join(" ");
 
   for (const pattern of topicPatterns) {
     const matchingComments: string[] = [];
     let totalMatches = 0;
+    const foundKeywords: Set<string> = new Set();
 
     for (const reg of registrations) {
-      const text = reg.interests.toLowerCase();
-      const hasMatch = pattern.keywords.some(keyword => text.includes(keyword));
-      if (hasMatch) {
+      const text = reg.interests;
+      const matchedKeywords = pattern.keywords.filter(keyword => matchesWholeWord(text, keyword));
+      
+      if (matchedKeywords.length > 0) {
         totalMatches++;
+        matchedKeywords.forEach(k => foundKeywords.add(k));
         if (matchingComments.length < 3) {
           matchingComments.push(`${reg.name}: "${reg.interests.substring(0, 150)}${reg.interests.length > 150 ? '...' : ''}"`);
         }
@@ -99,7 +116,7 @@ function analyzeTopics(registrations: EventRegistration[]): TopicSuggestion[] {
     if (totalMatches > 0) {
       suggestions.push({
         topic: pattern.topic,
-        keywords: pattern.keywords.filter(k => allTexts.includes(k)),
+        keywords: Array.from(foundKeywords),
         count: totalMatches,
         relevantComments: matchingComments,
       });

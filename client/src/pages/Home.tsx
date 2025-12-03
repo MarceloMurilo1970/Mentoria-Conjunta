@@ -1,10 +1,8 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Calendar, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Calendar } from "lucide-react";
 import Hero from "@/components/Hero";
 import ProgramSection from "@/components/ProgramSection";
 import RegistrationForm from "@/components/RegistrationForm";
@@ -84,8 +82,7 @@ const testimonials = [
 export default function Home() {
   const registrationRef = useRef<HTMLDivElement>(null);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
-  const [testDate, setTestDate] = useState<string>("");
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const currentDate = new Date();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -96,19 +93,6 @@ export default function Home() {
       setShowRegistrationForm(true);
     }
   }, []);
-
-  useEffect(() => {
-    if (testDate) {
-      const parsed = new Date(testDate);
-      if (!isNaN(parsed.getTime())) {
-        setCurrentDate(parsed);
-        const targetDate = new Date("2025-12-04T20:45:00-03:00");
-        setShowRegistrationForm(parsed >= targetDate);
-      }
-    } else {
-      setCurrentDate(new Date());
-    }
-  }, [testDate]);
 
   const scrollToRegistration = () => {
     registrationRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -798,46 +782,6 @@ export default function Home() {
       {/* Registration Section */}
       <section className="py-20 md:py-24 bg-card" id="inscricao" ref={registrationRef}>
         <div className="max-w-7xl mx-auto px-6 md:px-8">
-          {/* Temporary Test Date Input */}
-          <Card className="mb-8 border-yellow-500/50 bg-yellow-500/5 max-w-md mx-auto">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-semibold text-yellow-500">Modo de Teste (Temporário)</span>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="test-date" className="text-sm text-muted-foreground">
-                  Simular data para ver diferentes lotes:
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="test-date"
-                    type="datetime-local"
-                    value={testDate}
-                    onChange={(e) => setTestDate(e.target.value)}
-                    className="text-sm"
-                    data-testid="input-test-date"
-                  />
-                  {testDate && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setTestDate("")}
-                      data-testid="button-clear-test-date"
-                    >
-                      Limpar
-                    </Button>
-                  )}
-                </div>
-                {testDate && (
-                  <p className="text-xs text-muted-foreground">
-                    Visualizando: {currentDate.toLocaleString("pt-BR")}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
           {showRegistrationForm ? (
             <div className="space-y-12">
               <BatchPricing currentDate={currentDate} />

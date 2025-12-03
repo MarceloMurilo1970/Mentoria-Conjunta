@@ -11,6 +11,7 @@ interface BatchInfo {
   pixPrice: number;
   installmentPrice: number;
   installmentTotal: number;
+  paymentLink: string;
 }
 
 interface TimeLeft {
@@ -29,6 +30,7 @@ const BATCHES: BatchInfo[] = [
     pixPrice: 8000,
     installmentPrice: 1775,
     installmentTotal: 8875,
+    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGnMgu7Ax-8875,00",
   },
   {
     id: 2,
@@ -38,6 +40,7 @@ const BATCHES: BatchInfo[] = [
     pixPrice: 8750,
     installmentPrice: 1930,
     installmentTotal: 9650,
+    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-kuyi8p4sl-9650,00",
   },
   {
     id: 3,
@@ -47,6 +50,7 @@ const BATCHES: BatchInfo[] = [
     pixPrice: 9400,
     installmentPrice: 2085,
     installmentTotal: 10425,
+    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGomxwm8d-10425,00",
   },
 ];
 
@@ -67,12 +71,14 @@ export function isBatchesOpen(currentDate: Date = new Date()): boolean {
 
 export function getBatchPrices(currentDate: Date = new Date()) {
   const batch = getCurrentBatch(currentDate);
+  const lastBatch = BATCHES[BATCHES.length - 1];
   if (!batch) {
     return {
-      pixPrice: BATCHES[BATCHES.length - 1].pixPrice,
-      installmentPrice: BATCHES[BATCHES.length - 1].installmentPrice,
-      installmentTotal: BATCHES[BATCHES.length - 1].installmentTotal,
-      batchName: "Lote 3",
+      pixPrice: lastBatch.pixPrice,
+      installmentPrice: lastBatch.installmentPrice,
+      installmentTotal: lastBatch.installmentTotal,
+      batchName: lastBatch.name,
+      paymentLink: lastBatch.paymentLink,
     };
   }
   return {
@@ -80,6 +86,7 @@ export function getBatchPrices(currentDate: Date = new Date()) {
     installmentPrice: batch.installmentPrice,
     installmentTotal: batch.installmentTotal,
     batchName: batch.name,
+    paymentLink: batch.paymentLink,
   };
 }
 

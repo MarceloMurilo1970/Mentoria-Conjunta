@@ -17,6 +17,7 @@ interface PriceInfo {
   installmentPrice: number;
   installmentTotal: number;
   batchName: string;
+  paymentLink: string;
 }
 
 interface RegistrationFormProps {
@@ -29,6 +30,7 @@ const DEFAULT_PRICES: PriceInfo = {
   installmentPrice: 1775,
   installmentTotal: 8875,
   batchName: "Lote 1",
+  paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGnMgu7Ax-8875,00",
 };
 
 function formatPrice(price: number): string {
@@ -41,7 +43,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
   const [emailError, setEmailError] = useState(false);
   const { toast } = useToast();
   
-  const { pixPrice, installmentPrice, installmentTotal, batchName } = priceInfo;
+  const { pixPrice, installmentPrice, installmentTotal, batchName, paymentLink } = priceInfo;
 
   const {
     register,
@@ -124,7 +126,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
           ) : (
             <div className="space-y-4 max-w-md mx-auto text-center">
               <Button
-                onClick={() => window.open("https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-8750,00", "_blank", "noopener,noreferrer")}
+                onClick={() => window.open(paymentLink, "_blank", "noopener,noreferrer")}
                 size="lg"
                 data-testid="button-payment"
               >
@@ -183,7 +185,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
                 Enviamos um email com o link de pagamento. Clique no botão abaixo para pagar parcelado no cartão.
               </p>
               <Button
-                onClick={() => window.open("https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-50rYBDe3R-8750,00", "_blank", "noopener,noreferrer")}
+                onClick={() => window.open(paymentLink, "_blank", "noopener,noreferrer")}
                 size="lg"
                 data-testid="button-payment"
               >

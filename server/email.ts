@@ -76,7 +76,7 @@ function getMailerSendClient() {
   return new MailerSend({ apiKey });
 }
 
-const FROM_EMAIL = "contato@marcelomurilo.com.br";
+const FROM_EMAIL = "mentoria@test-ywj2lpnxyyqg7oqz.mlsender.net";
 const FROM_NAME = "Mentoria Marcelo Murilo & Hamilton Felix";
 
 export async function sendRegistrationEmail(

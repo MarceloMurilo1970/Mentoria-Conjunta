@@ -1,6 +1,4 @@
-import sgMail from '@sendgrid/mail';
-
-let connectionSettings: any;
+import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
 interface BatchPriceInfo {
   pixPrice: number;
@@ -70,49 +68,23 @@ function formatPrice(price: number): string {
   return price.toLocaleString("pt-BR", { minimumFractionDigits: 0 });
 }
 
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+function getMailerSendClient() {
+  const apiKey = process.env.MAILERSEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("MAILERSEND_API_KEY not configured");
   }
-
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=sendgrid',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  if (!connectionSettings || (!connectionSettings.settings.api_key || !connectionSettings.settings.from_email)) {
-    throw new Error('SendGrid not connected');
-  }
-  return {apiKey: connectionSettings.settings.api_key, email: connectionSettings.settings.from_email};
+  return new MailerSend({ apiKey });
 }
 
-export async function getUncachableSendGridClient() {
-  const {apiKey, email} = await getCredentials();
-  sgMail.setApiKey(apiKey);
-  return {
-    client: sgMail,
-    fromEmail: email
-  };
-}
+const FROM_EMAIL = "contato@marcelomurilo.com.br";
+const FROM_NAME = "Mentoria Marcelo Murilo & Hamilton Felix";
 
 export async function sendRegistrationEmail(
   to: string,
   name: string,
   paymentMethod: "pix" | "installments"
 ) {
-  const { client, fromEmail } = await getUncachableSendGridClient();
+  const mailerSend = getMailerSendClient();
   const batchInfo = getCurrentBatchInfo();
   
   const replitDomain = process.env.REPLIT_DOMAINS || process.env.REPL_SLUG;
@@ -143,65 +115,65 @@ export async function sendRegistrationEmail(
     <p>Após a confirmação do pagamento, sua inscrição será confirmada e a nota fiscal será enviada em até 5 dias.</p>
   `;
 
-  const msg = {
-    to,
-    from: fromEmail,
-    subject: 'Confirmação de Inscrição - Mentoria Marcelo Murilo e Hamilton Felix',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <img src="${heroImageUrl}" alt="Mentoria Marcelo Murilo e Hamilton Felix" style="max-width: 100%; height: auto; border-radius: 8px;" />
-        </div>
-        <h2 style="color: #0070f3;">Inscrição Recebida com Sucesso!</h2>
-        <p>Olá ${name},</p>
-        <p>Sua inscrição para a Mentoria Conjunta de <strong>Marcelo Murilo e Hamilton Felix</strong> foi recebida com sucesso!</p>
-        
-        ${paymentMethod === "pix" ? pixInstructions : installmentsInstructions}
-        
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
-        
-        <h3>Programa da Mentoria</h3>
-        
-        <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo - 8H)</h4>
-        <ul style="line-height: 1.8;">
-          <li><strong>Sessão 1 - 19/jan (19:00-20:00):</strong> Definindo seu nicho e propósito</li>
-          <li><strong>Sessão 2 - 26/jan (19:00-20:00):</strong> Perfil de conselheiro que vende</li>
-          <li><strong>Sessão 3 - 02/fev (19:00-20:00):</strong> Posts que geram oportunidades</li>
-          <li><strong>Sessão 4 - 09/fev (19:00-20:00):</strong> Interações que multiplicam alcance</li>
-          <li><strong>Sessão 5 - 23/fev (19:00-20:00):</strong> Conectando com quem importa</li>
-          <li><strong>Sessão 6 - 02/mar (19:00-20:00):</strong> Vendas e eventos estratégicos</li>
-          <li><strong>Sessão 7 - 09/mar (19:00-20:00):</strong> Aspectos práticos dos conselhos</li>
-          <li><strong>Sessão 8 - 16/mar (19:00-20:00):</strong> Integração e planejamento futuros</li>
-        </ul>
-
-        <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix - 4H)</h4>
-        <ul style="line-height: 1.8;">
-          <li><strong>Sessão 1 - 09/mar (19:00-20:00):</strong> Prospecção de empresas</li>
-          <li><strong>Sessão 2 - 09/mar (20:00-21:00):</strong> Fechamento de Projetos</li>
-          <li><strong>Sessão 3 - 16/mar (19:00-20:00):</strong> Implementando o Conselho</li>
-          <li><strong>Sessão 4 - 16/mar (20:00-21:00):</strong> Evoluindo o Conselho</li>
-        </ul>
-
-        <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin-top: 20px;">
-          <h4 style="color: #0070f3; margin-top: 0;">Grupo de WhatsApp</h4>
-          <p style="margin: 0;">Um grupo de WhatsApp será criado com todos os participantes. Neste grupo você receberá as instruções para participação das lives e todas as informações importantes sobre a mentoria.</p>
-        </div>
-        
-        <p style="margin-top: 30px;">
-          Em caso de dúvidas, entre em contato conosco.<br/>
-          Atenciosamente,<br/>
-          Equipe Marcelo Murilo & Hamilton Felix
-        </p>
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <img src="${heroImageUrl}" alt="Mentoria Marcelo Murilo e Hamilton Felix" style="max-width: 100%; height: auto; border-radius: 8px;" />
       </div>
-    `,
-    trackingSettings: {
-      clickTracking: {
-        enable: false
-      }
-    }
-  };
+      <h2 style="color: #0070f3;">Inscrição Recebida com Sucesso!</h2>
+      <p>Olá ${name},</p>
+      <p>Sua inscrição para a Mentoria Conjunta de <strong>Marcelo Murilo e Hamilton Felix</strong> foi recebida com sucesso!</p>
+      
+      ${paymentMethod === "pix" ? pixInstructions : installmentsInstructions}
+      
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+      
+      <h3>Programa da Mentoria</h3>
+      
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo - 8H)</h4>
+      <ul style="line-height: 1.8;">
+        <li><strong>Sessão 1 - 19/jan (19:00-20:00):</strong> Definindo seu nicho e propósito</li>
+        <li><strong>Sessão 2 - 26/jan (19:00-20:00):</strong> Perfil de conselheiro que vende</li>
+        <li><strong>Sessão 3 - 02/fev (19:00-20:00):</strong> Posts que geram oportunidades</li>
+        <li><strong>Sessão 4 - 09/fev (19:00-20:00):</strong> Interações que multiplicam alcance</li>
+        <li><strong>Sessão 5 - 23/fev (19:00-20:00):</strong> Conectando com quem importa</li>
+        <li><strong>Sessão 6 - 02/mar (19:00-20:00):</strong> Vendas e eventos estratégicos</li>
+        <li><strong>Sessão 7 - 09/mar (19:00-20:00):</strong> Aspectos práticos dos conselhos</li>
+        <li><strong>Sessão 8 - 16/mar (19:00-20:00):</strong> Integração e planejamento futuros</li>
+      </ul>
 
-  await client.send(msg);
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix - 4H)</h4>
+      <ul style="line-height: 1.8;">
+        <li><strong>Sessão 1 - 09/mar (19:00-20:00):</strong> Prospecção de empresas</li>
+        <li><strong>Sessão 2 - 09/mar (20:00-21:00):</strong> Fechamento de Projetos</li>
+        <li><strong>Sessão 3 - 16/mar (19:00-20:00):</strong> Implementando o Conselho</li>
+        <li><strong>Sessão 4 - 16/mar (20:00-21:00):</strong> Evoluindo o Conselho</li>
+      </ul>
+
+      <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin-top: 20px;">
+        <h4 style="color: #0070f3; margin-top: 0;">Grupo de WhatsApp</h4>
+        <p style="margin: 0;">Um grupo de WhatsApp será criado com todos os participantes. Neste grupo você receberá as instruções para participação das lives e todas as informações importantes sobre a mentoria.</p>
+      </div>
+      
+      <p style="margin-top: 30px;">
+        Em caso de dúvidas, entre em contato conosco.<br/>
+        Atenciosamente,<br/>
+        Equipe Marcelo Murilo & Hamilton Felix
+      </p>
+    </div>
+  `;
+
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient(to, name)];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject("Confirmação de Inscrição - Mentoria Marcelo Murilo e Hamilton Felix")
+    .setHtml(htmlContent)
+    .setText(`Olá ${name}, sua inscrição para a Mentoria foi recebida com sucesso!`);
+
+  await mailerSend.email.send(emailParams);
 }
 
 export async function sendRegistrationNotificationEmail(
@@ -212,7 +184,7 @@ export async function sendRegistrationNotificationEmail(
     paymentMethod: string;
   }
 ) {
-  const { client, fromEmail } = await getUncachableSendGridClient();
+  const mailerSend = getMailerSendClient();
   const batchInfo = getCurrentBatchInfo();
 
   const paymentInfo = registration.paymentMethod === 'pix' 
@@ -223,50 +195,50 @@ export async function sendRegistrationNotificationEmail(
     ? `<p><strong>Link de Pagamento:</strong> <a href="${batchInfo.paymentLink}">${batchInfo.paymentLink}</a></p>`
     : `<p><strong>PIX (CNPJ):</strong> 17.840.516/0001-47 - Opes Informática Ltda</p>`;
 
-  const msg = {
-    to: 'contato@marcelomurilo.com.br',
-    from: fromEmail,
-    subject: `Nova Inscrição: ${registration.name} - ${batchInfo.batchName}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #0070f3;">Nova Inscrição Recebida!</h2>
-        
-        <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0; color: #0070f3;">${batchInfo.batchName}</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; width: 120px;">Nome:</td>
-              <td style="padding: 8px 0;">${registration.name}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold;">Email:</td>
-              <td style="padding: 8px 0;"><a href="mailto:${registration.email}">${registration.email}</a></td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold;">Telefone:</td>
-              <td style="padding: 8px 0;"><a href="tel:${registration.phone}">${registration.phone}</a></td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold;">Pagamento:</td>
-              <td style="padding: 8px 0;">${paymentInfo}</td>
-            </tr>
-          </table>
-          ${paymentLinkInfo}
-        </div>
-
-        <p style="color: #666; font-size: 14px;">
-          Data/Hora: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
-        </p>
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #0070f3;">Nova Inscrição Recebida!</h2>
+      
+      <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #0070f3;">${batchInfo.batchName}</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; font-weight: bold; width: 120px;">Nome:</td>
+            <td style="padding: 8px 0;">${registration.name}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Email:</td>
+            <td style="padding: 8px 0;"><a href="mailto:${registration.email}">${registration.email}</a></td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Telefone:</td>
+            <td style="padding: 8px 0;"><a href="tel:${registration.phone}">${registration.phone}</a></td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Pagamento:</td>
+            <td style="padding: 8px 0;">${paymentInfo}</td>
+          </tr>
+        </table>
+        ${paymentLinkInfo}
       </div>
-    `,
-    trackingSettings: {
-      clickTracking: {
-        enable: false
-      }
-    }
-  };
 
-  await client.send(msg);
+      <p style="color: #666; font-size: 14px;">
+        Data/Hora: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+      </p>
+    </div>
+  `;
+
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo")];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject(`Nova Inscrição: ${registration.name} - ${batchInfo.batchName}`)
+    .setHtml(htmlContent)
+    .setText(`Nova inscrição: ${registration.name} - ${registration.email} - ${paymentInfo}`);
+
+  await mailerSend.email.send(emailParams);
 }
 
 export async function sendRegistrationListEmail(
@@ -277,7 +249,7 @@ export async function sendRegistrationListEmail(
     createdAt: Date;
   }>
 ) {
-  const { client, fromEmail } = await getUncachableSendGridClient();
+  const mailerSend = getMailerSendClient();
   const batchInfo = getCurrentBatchInfo();
 
   const registrationRows = registrations.map((reg, index) => {
@@ -304,46 +276,50 @@ export async function sendRegistrationListEmail(
   `;
   }).join('');
 
-  const msg = {
-    to: ['contato@marcelomurilo.com.br', 'faturamento@marcelomurilo.com.br', 'hamiltonfelix@gmail.com'],
-    from: fromEmail,
-    subject: `Inscrições Mentoria - Total: ${registrations.length} inscritos`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
-        <h2 style="color: #0070f3;">Lista Completa de Inscritos</h2>
-        <p>Segue a lista atualizada de todos os inscritos na Mentoria:</p>
-        
-        <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #0070f3; margin-top: 0;">Total de Inscritos: ${registrations.length}</h3>
-          <p style="margin: 0;">Lote Atual: ${batchInfo.batchName}</p>
-        </div>
-
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; border: 1px solid #eee;">
-          <thead>
-            <tr style="background-color: #0070f3; color: white;">
-              <th style="padding: 12px; text-align: center;">#</th>
-              <th style="padding: 12px; text-align: left;">Nome</th>
-              <th style="padding: 12px; text-align: left;">Email</th>
-              <th style="padding: 12px; text-align: center;">Forma de Pagamento</th>
-              <th style="padding: 12px; text-align: center;">Data de Inscrição</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${registrationRows}
-          </tbody>
-        </table>
-
-        <p style="margin-top: 30px; color: #666; font-size: 14px;">
-          Este email foi enviado automaticamente pelo sistema de inscrições.
-        </p>
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+      <h2 style="color: #0070f3;">Lista Completa de Inscritos</h2>
+      <p>Segue a lista atualizada de todos os inscritos na Mentoria:</p>
+      
+      <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #0070f3; margin-top: 0;">Total de Inscritos: ${registrations.length}</h3>
+        <p style="margin: 0;">Lote Atual: ${batchInfo.batchName}</p>
       </div>
-    `,
-    trackingSettings: {
-      clickTracking: {
-        enable: false
-      }
-    }
-  };
 
-  await client.send(msg);
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; border: 1px solid #eee;">
+        <thead>
+          <tr style="background-color: #0070f3; color: white;">
+            <th style="padding: 12px; text-align: center;">#</th>
+            <th style="padding: 12px; text-align: left;">Nome</th>
+            <th style="padding: 12px; text-align: left;">Email</th>
+            <th style="padding: 12px; text-align: center;">Forma de Pagamento</th>
+            <th style="padding: 12px; text-align: center;">Data de Inscrição</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${registrationRows}
+        </tbody>
+      </table>
+
+      <p style="margin-top: 30px; color: #666; font-size: 14px;">
+        Este email foi enviado automaticamente pelo sistema de inscrições.
+      </p>
+    </div>
+  `;
+
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [
+    new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo"),
+    new Recipient("faturamento@marcelomurilo.com.br", "Faturamento"),
+    new Recipient("hamiltonfelix@gmail.com", "Hamilton Felix"),
+  ];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject(`Inscrições Mentoria - Total: ${registrations.length} inscritos`)
+    .setHtml(htmlContent)
+    .setText(`Total de inscritos: ${registrations.length}`);
+
+  await mailerSend.email.send(emailParams);
 }

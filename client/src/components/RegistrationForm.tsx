@@ -12,15 +12,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CheckCircle2, Loader2, CreditCard, Banknote, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface RegistrationFormProps {
-  onSuccess?: () => void;
+interface PriceInfo {
+  pixPrice: number;
+  installmentPrice: number;
+  installmentTotal: number;
+  batchName: string;
 }
 
-export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
+interface RegistrationFormProps {
+  onSuccess?: () => void;
+  priceInfo?: PriceInfo;
+}
+
+const DEFAULT_PRICES: PriceInfo = {
+  pixPrice: 8000,
+  installmentPrice: 1775,
+  installmentTotal: 8875,
+  batchName: "Lote 1",
+};
+
+function formatPrice(price: number): string {
+  return price.toLocaleString("pt-BR", { minimumFractionDigits: 0 });
+}
+
+export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES }: RegistrationFormProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "installments" | null>(null);
   const [emailError, setEmailError] = useState(false);
   const { toast } = useToast();
+  
+  const { pixPrice, installmentPrice, installmentTotal, batchName } = priceInfo;
 
   const {
     register,
@@ -80,7 +101,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           {paymentMethod === "pix" ? (
             <div className="space-y-4 max-w-md mx-auto">
               <div className="bg-muted/30 p-6 rounded-lg space-y-3">
-                <p className="font-semibold text-foreground">Dados para pagamento PIX:</p>
+                <p className="font-semibold text-foreground">Dados para pagamento PIX ({batchName}):</p>
                 <div className="space-y-2 text-sm">
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Chave PIX (CNPJ):</span><br />
@@ -92,7 +113,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                   </p>
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Valor:</span><br />
-                    <span className="font-bold text-lg text-primary">R$ 8.000,00</span>
+                    <span className="font-bold text-lg text-primary">R$ {formatPrice(pixPrice)},00</span>
                   </p>
                 </div>
               </div>
@@ -107,9 +128,10 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                 size="lg"
                 data-testid="button-payment"
               >
-                Pagar 5x R$ 1.750,00
+                Pagar 5x R$ {formatPrice(installmentPrice)},00
               </Button>
               <p className="text-sm text-muted-foreground">
+                Total: R$ {formatPrice(installmentTotal)},00<br />
                 Sua inscrição será confirmada após a aprovação do pagamento.<br />
                 A nota fiscal será enviada em até 5 dias após a confirmação.
               </p>
@@ -135,7 +157,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                 Enviamos um email com as instruções de pagamento via PIX.
               </p>
               <div className="bg-muted/30 p-6 rounded-lg space-y-3">
-                <p className="font-semibold text-foreground">Dados para pagamento PIX:</p>
+                <p className="font-semibold text-foreground">Dados para pagamento PIX ({batchName}):</p>
                 <div className="space-y-2 text-sm">
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Chave PIX (CNPJ):</span><br />
@@ -147,7 +169,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                   </p>
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Valor:</span><br />
-                    <span className="font-bold text-lg text-primary">R$ 8.000,00</span>
+                    <span className="font-bold text-lg text-primary">R$ {formatPrice(pixPrice)},00</span>
                   </p>
                 </div>
               </div>
@@ -165,9 +187,10 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                 size="lg"
                 data-testid="button-payment"
               >
-                Pagar 5x R$ 1.750,00
+                Pagar 5x R$ {formatPrice(installmentPrice)},00
               </Button>
               <p className="text-sm text-muted-foreground">
+                Total: R$ {formatPrice(installmentTotal)},00<br />
                 Sua inscrição será confirmada após a aprovação do pagamento.<br />
                 A nota fiscal será enviada em até 5 dias após a confirmação.
               </p>
@@ -232,27 +255,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           </div>
 
           <div className="space-y-4">
-            <Label>Forma de Pagamento *</Label>
-            <div className="bg-gradient-to-br from-primary/10 to-blue-600/5 p-6 rounded-lg mb-4 border border-primary/20">
-              <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground uppercase tracking-wide font-medium">
-                  Valor Normal
-                </p>
-                <p className="text-4xl md:text-5xl font-bold text-muted-foreground/60 line-through">
-                  R$ 9.400
-                </p>
-                <div className="flex items-center justify-center gap-2 py-2">
-                  <div className="h-px bg-primary/30 flex-1"></div>
-                  <span className="text-sm font-bold text-primary px-3 py-1 bg-primary/10 rounded-full">
-                    DESCONTO ESPECIAL
-                  </span>
-                  <div className="h-px bg-primary/30 flex-1"></div>
-                </div>
-                <p className="text-sm font-semibold text-primary">
-                  Turma 2 - Início em Janeiro 2026
-                </p>
-              </div>
-            </div>
+            <Label>Forma de Pagamento * <span className="text-primary font-semibold">({batchName})</span></Label>
             
             <RadioGroup
               onValueChange={(value) => setValue("paymentMethod", value as "pix" | "installments")}
@@ -265,7 +268,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                     <Banknote className="w-5 h-5 mt-0.5 text-primary" />
                     <div>
                       <div className="font-semibold text-foreground">PIX à vista</div>
-                      <div className="text-2xl font-bold text-primary mt-1">R$ 8.000,00</div>
+                      <div className="text-2xl font-bold text-primary mt-1">R$ {formatPrice(pixPrice)},00</div>
                       <div className="text-sm text-muted-foreground mt-1">
                         Pagamento instantâneo via PIX
                       </div>
@@ -281,9 +284,9 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
                     <CreditCard className="w-5 h-5 mt-0.5 text-primary" />
                     <div>
                       <div className="font-semibold text-foreground">Cartão de Crédito</div>
-                      <div className="text-2xl font-bold text-primary mt-1">5x R$ 1.750,00</div>
+                      <div className="text-2xl font-bold text-primary mt-1">5x R$ {formatPrice(installmentPrice)},00</div>
                       <div className="text-sm text-muted-foreground mt-1">
-                        Total: R$ 8.750,00 (sem juros)
+                        Total: R$ {formatPrice(installmentTotal)},00 (sem juros)
                       </div>
                     </div>
                   </div>

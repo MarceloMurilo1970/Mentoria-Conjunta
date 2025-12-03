@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertRegistrationSchema } from "@shared/schema";
-import { sendRegistrationEmail, sendRegistrationListEmail } from "./email";
+import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail } from "./email";
 import { addEventRegistration, getAllEventRegistrations, type EventRegistration } from "./googleSheets";
 import path from "path";
 import { z } from "zod";
@@ -141,7 +141,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Send registration list to admin
+      // Send notification to admin (contato@marcelomurilo.com.br)
+      try {
+        await sendRegistrationNotificationEmail({
+          name: registration.name,
+          email: registration.email,
+          phone: registration.phone,
+          paymentMethod: registration.paymentMethod,
+        });
+      } catch (notificationError) {
+        console.error("Error sending notification email:", notificationError);
+        // Don't fail the registration if notification email fails
+      }
+
+      // Send complete registration list to all admins
       try {
         const allRegistrations = await storage.getAllRegistrations();
         await sendRegistrationListEmail(allRegistrations);

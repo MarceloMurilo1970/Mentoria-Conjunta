@@ -427,19 +427,20 @@ function EventRegistrationsSection() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {topicSuggestions.map((suggestion, index) => (
                 <div 
                   key={index} 
-                  className="border border-gray-700 bg-gray-800 rounded-lg p-4"
+                  className="space-y-3"
                   data-testid={`suggestion-${index}`}
                 >
+                  {/* Header do Tópico */}
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
                         #{index + 1}
                       </Badge>
-                      <h4 className="font-semibold text-white">{suggestion.topic}</h4>
+                      <h4 className="font-semibold text-white text-lg">{suggestion.topic}</h4>
                     </div>
                     <Badge className="flex items-center gap-1 bg-blue-600">
                       <TrendingUp className="h-3 w-3" />
@@ -448,7 +449,7 @@ function EventRegistrationsSection() {
                   </div>
                   
                   {suggestion.keywords.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1">
                       {suggestion.keywords.slice(0, 5).map((keyword, kIndex) => (
                         <Badge key={kIndex} variant="secondary" className="text-xs bg-gray-700 text-gray-300">
                           {keyword}
@@ -457,12 +458,16 @@ function EventRegistrationsSection() {
                     </div>
                   )}
 
+                  {/* Card 1: Comentários Relacionados */}
                   {suggestion.relevantComments.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      <p className="text-xs text-gray-400 font-medium">Comentários relacionados ({suggestion.relevantComments.length}):</p>
+                    <div className="border border-gray-700 bg-gray-800 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <MessageSquare className="h-4 w-4 text-gray-400" />
+                        <p className="text-sm font-semibold text-gray-300">Comentários Relacionados ({suggestion.relevantComments.length}):</p>
+                      </div>
                       <div className="space-y-2">
                         {suggestion.relevantComments.map((comment, cIndex) => (
-                          <p key={cIndex} className="text-xs text-gray-400 italic border-l-2 border-gray-600 pl-2">
+                          <p key={cIndex} className="text-sm text-gray-300 border-l-2 border-gray-600 pl-3">
                             {comment}
                           </p>
                         ))}
@@ -470,16 +475,15 @@ function EventRegistrationsSection() {
                     </div>
                   )}
 
-                  {/* Resposta da Mentoria */}
+                  {/* Card 2: Resposta da Mentoria */}
                   {getTopicResponse(suggestion.topic) && (
-                    <div className="mt-4 bg-blue-950/50 border border-blue-500/30 rounded-lg p-4">
+                    <div className="border border-blue-500/30 bg-blue-950/50 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <MessageCircleReply className="h-4 w-4 text-blue-400" />
                         <p className="text-sm font-semibold text-blue-400">Como abordaremos na Mentoria:</p>
                       </div>
                       <div className="text-sm text-gray-200 whitespace-pre-line leading-relaxed">
                         {getTopicResponse(suggestion.topic)?.split('\n').map((line, lineIndex) => {
-                          // Converter markdown bold para HTML
                           const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
                           return (
                             <p 
@@ -491,6 +495,11 @@ function EventRegistrationsSection() {
                         })}
                       </div>
                     </div>
+                  )}
+
+                  {/* Separador entre tópicos */}
+                  {index < topicSuggestions.length - 1 && (
+                    <div className="border-b border-gray-700 pt-3" />
                   )}
                 </div>
               ))}

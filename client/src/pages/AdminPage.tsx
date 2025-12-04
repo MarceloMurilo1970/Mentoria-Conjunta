@@ -330,53 +330,53 @@ function EventRegistrationsSection() {
     <div className="space-y-6">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Total de Inscritos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-white">Total de Inscritos</CardTitle>
+            <Users className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-event-total">{totalCount}</div>
+            <div className="text-2xl font-bold text-white" data-testid="text-event-total">{totalCount}</div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Com Certificação</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Com Certificação</CardTitle>
             <Award className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600" data-testid="text-with-cert">{withCertification}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-green-400" data-testid="text-with-cert">{withCertification}</div>
+            <p className="text-xs text-gray-400">
               {totalCount > 0 ? `${Math.round((withCertification / totalCount) * 100)}%` : '0%'} do total
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Sem Certificação</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Sem Certificação</CardTitle>
             <Award className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600" data-testid="text-without-cert">{withoutCertification}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-yellow-400" data-testid="text-without-cert">{withoutCertification}</div>
+            <p className="text-xs text-gray-400">
               {totalCount > 0 ? `${Math.round((withoutCertification / totalCount) * 100)}%` : '0%'} do total
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Posições em Conselhos</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-white">Posições em Conselhos</CardTitle>
+            <Calendar className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
             <div className="space-y-1 text-sm">
               {Object.entries(boardCounts).slice(0, 4).map(([count, qty]) => (
                 <div key={count} className="flex justify-between">
-                  <span className="text-muted-foreground">{count}:</span>
-                  <span className="font-medium">{qty}</span>
+                  <span className="text-gray-400">{count}:</span>
+                  <span className="font-medium text-white">{qty}</span>
                 </div>
               ))}
             </div>
@@ -386,13 +386,13 @@ function EventRegistrationsSection() {
 
       {/* Consolidated Topic Suggestions */}
       {topicSuggestions.length > 0 && (
-        <Card className="border-primary/50">
+        <Card className="bg-gray-900 border-blue-500/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Lightbulb className="h-5 w-5 text-blue-400" />
               Sugestões Consolidadas para a Live
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-400">
               Temas identificados a partir dos interesses dos participantes, ordenados por relevância
             </CardDescription>
           </CardHeader>
@@ -401,17 +401,17 @@ function EventRegistrationsSection() {
               {topicSuggestions.map((suggestion, index) => (
                 <div 
                   key={index} 
-                  className="border rounded-lg p-4 hover-elevate"
+                  className="border border-gray-700 bg-gray-800 rounded-lg p-4"
                   data-testid={`suggestion-${index}`}
                 >
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
                         #{index + 1}
                       </Badge>
-                      <h4 className="font-semibold">{suggestion.topic}</h4>
+                      <h4 className="font-semibold text-white">{suggestion.topic}</h4>
                     </div>
-                    <Badge className="flex items-center gap-1">
+                    <Badge className="flex items-center gap-1 bg-blue-600">
                       <TrendingUp className="h-3 w-3" />
                       {suggestion.count} {suggestion.count === 1 ? 'menção' : 'menções'}
                     </Badge>
@@ -420,7 +420,7 @@ function EventRegistrationsSection() {
                   {suggestion.keywords.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {suggestion.keywords.slice(0, 5).map((keyword, kIndex) => (
-                        <Badge key={kIndex} variant="secondary" className="text-xs">
+                        <Badge key={kIndex} variant="secondary" className="text-xs bg-gray-700 text-gray-300">
                           {keyword}
                         </Badge>
                       ))}
@@ -429,10 +429,10 @@ function EventRegistrationsSection() {
 
                   {suggestion.relevantComments.length > 0 && (
                     <div className="mt-3 space-y-2">
-                      <p className="text-xs text-muted-foreground font-medium">Comentários relacionados ({suggestion.relevantComments.length}):</p>
-                      <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
+                      <p className="text-xs text-gray-400 font-medium">Comentários relacionados ({suggestion.relevantComments.length}):</p>
+                      <div className="space-y-2">
                         {suggestion.relevantComments.map((comment, cIndex) => (
-                          <p key={cIndex} className="text-xs text-muted-foreground italic border-l-2 border-muted pl-2">
+                          <p key={cIndex} className="text-xs text-gray-400 italic border-l-2 border-gray-600 pl-2">
                             {comment}
                           </p>
                         ))}
@@ -442,15 +442,15 @@ function EventRegistrationsSection() {
 
                   {/* Resposta da Mentoria */}
                   {getTopicResponse(suggestion.topic) && (
-                    <div className="mt-4 bg-primary/5 border border-primary/20 rounded-lg p-4">
+                    <div className="mt-4 bg-blue-950/50 border border-blue-500/30 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
-                        <MessageCircleReply className="h-4 w-4 text-primary" />
-                        <p className="text-sm font-semibold text-primary">Como abordaremos na Mentoria:</p>
+                        <MessageCircleReply className="h-4 w-4 text-blue-400" />
+                        <p className="text-sm font-semibold text-blue-400">Como abordaremos na Mentoria:</p>
                       </div>
-                      <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                      <div className="text-sm text-gray-200 whitespace-pre-line leading-relaxed">
                         {getTopicResponse(suggestion.topic)?.split('\n').map((line, lineIndex) => {
                           // Converter markdown bold para HTML
-                          const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                          const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
                           return (
                             <p 
                               key={lineIndex} 
@@ -471,22 +471,22 @@ function EventRegistrationsSection() {
 
       {/* Individual Topics List */}
       {allInterests.length > 0 && (
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <MessageSquare className="h-5 w-5 text-gray-400" />
               Tópicos Individuais dos Participantes
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-400">
               Todos os comentários dos inscritos sobre o que gostariam de ver no evento
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            <div className="space-y-3">
               {registrations?.map((reg, index) => (
-                <div key={index} className="border-l-2 border-primary pl-3 py-1">
-                  <p className="font-medium text-sm">{reg.name}</p>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{reg.interests}</p>
+                <div key={index} className="border-l-2 border-blue-500 pl-3 py-1">
+                  <p className="font-medium text-sm text-white">{reg.name}</p>
+                  <p className="text-sm text-gray-400 whitespace-pre-wrap">{reg.interests}</p>
                 </div>
               ))}
             </div>
@@ -495,10 +495,10 @@ function EventRegistrationsSection() {
       )}
 
       {/* Registrations Table */}
-      <Card>
+      <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
-          <CardTitle>Lista de Inscritos no Evento</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Lista de Inscritos no Evento</CardTitle>
+          <CardDescription className="text-gray-400">
             Inscrições para o evento ao vivo de 04/12/2025
           </CardDescription>
         </CardHeader>
@@ -507,48 +507,48 @@ function EventRegistrationsSection() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">#</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>LinkedIn</TableHead>
-                    <TableHead>Certificação</TableHead>
-                    <TableHead>Conselhos</TableHead>
+                  <TableRow className="border-gray-700">
+                    <TableHead className="w-[50px] text-gray-400">#</TableHead>
+                    <TableHead className="text-gray-400">Data</TableHead>
+                    <TableHead className="text-gray-400">Nome</TableHead>
+                    <TableHead className="text-gray-400">Telefone</TableHead>
+                    <TableHead className="text-gray-400">LinkedIn</TableHead>
+                    <TableHead className="text-gray-400">Certificação</TableHead>
+                    <TableHead className="text-gray-400">Conselhos</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {registrations.map((reg, index) => (
-                    <TableRow key={index} data-testid={`row-event-${index}`}>
-                      <TableCell className="font-medium">{index + 1}</TableCell>
-                      <TableCell className="text-sm">{reg.timestamp}</TableCell>
-                      <TableCell>{reg.name}</TableCell>
-                      <TableCell>{reg.phone}</TableCell>
+                    <TableRow key={index} data-testid={`row-event-${index}`} className="border-gray-800">
+                      <TableCell className="font-medium text-white">{index + 1}</TableCell>
+                      <TableCell className="text-sm text-gray-300">{reg.timestamp}</TableCell>
+                      <TableCell className="text-white">{reg.name}</TableCell>
+                      <TableCell className="text-gray-300">{reg.phone}</TableCell>
                       <TableCell>
                         {reg.linkedin && (
                           <a 
                             href={reg.linkedin} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-primary hover:underline flex items-center gap-1"
+                            className="text-blue-400 hover:underline flex items-center gap-1"
                           >
                             Perfil <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={reg.hasCertification === 'Sim' ? 'default' : 'secondary'}>
+                        <Badge className={reg.hasCertification === 'Sim' ? 'bg-green-600' : 'bg-gray-600'}>
                           {reg.hasCertification}
                         </Badge>
                       </TableCell>
-                      <TableCell>{reg.boardCount}</TableCell>
+                      <TableCell className="text-gray-300">{reg.boardCount}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-gray-400">
               Nenhuma inscrição registrada ainda.
             </div>
           )}
@@ -642,56 +642,56 @@ function MentorshipRegistrationsSection() {
     <div className="space-y-6">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Total de Inscritos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-white">Total de Inscritos</CardTitle>
+            <Users className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-mentorship-total">{totalCount}</div>
+            <div className="text-2xl font-bold text-white" data-testid="text-mentorship-total">{totalCount}</div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Pagamentos Confirmados</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Pagamentos Confirmados</CardTitle>
             <Check className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600" data-testid="text-paid">{paidCount}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-green-400" data-testid="text-paid">{paidCount}</div>
+            <p className="text-xs text-gray-400">
               {totalCount > 0 ? `${Math.round((paidCount / totalCount) * 100)}%` : '0%'} do total
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Aguardando Pagamento</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Aguardando Pagamento</CardTitle>
             <X className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600" data-testid="text-pending">{totalCount - paidCount}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-yellow-400" data-testid="text-pending">{totalCount - paidCount}</div>
+            <p className="text-xs text-gray-400">
               {totalCount > 0 ? `${Math.round(((totalCount - paidCount) / totalCount) * 100)}%` : '0%'} do total
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-900 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Formas de Pagamento</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-white">Formas de Pagamento</CardTitle>
+            <Calendar className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">PIX:</span>
-                <span className="font-medium">{pixCount}</span>
+                <span className="text-gray-400">PIX:</span>
+                <span className="font-medium text-white">{pixCount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Parcelado:</span>
-                <span className="font-medium">{installmentsCount}</span>
+                <span className="text-gray-400">Parcelado:</span>
+                <span className="font-medium text-white">{installmentsCount}</span>
               </div>
             </div>
           </CardContent>
@@ -699,10 +699,10 @@ function MentorshipRegistrationsSection() {
       </div>
 
       {/* Registrations Table */}
-      <Card>
+      <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
-          <CardTitle>Inscrições da Mentoria - Turma 2</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Inscrições da Mentoria - Turma 2</CardTitle>
+          <CardDescription className="text-gray-400">
             Janeiro a Março 2026 - Marcelo Murilo & Hamilton Felix
           </CardDescription>
         </CardHeader>
@@ -711,27 +711,27 @@ function MentorshipRegistrationsSection() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">#</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Forma de Pagamento</TableHead>
-                    <TableHead>Status Pagamento</TableHead>
-                    <TableHead>Data de Inscrição</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
+                  <TableRow className="border-gray-700">
+                    <TableHead className="w-[50px] text-gray-400">#</TableHead>
+                    <TableHead className="text-gray-400">Nome</TableHead>
+                    <TableHead className="text-gray-400">Email</TableHead>
+                    <TableHead className="text-gray-400">Telefone</TableHead>
+                    <TableHead className="text-gray-400">Forma de Pagamento</TableHead>
+                    <TableHead className="text-gray-400">Status Pagamento</TableHead>
+                    <TableHead className="text-gray-400">Data de Inscrição</TableHead>
+                    <TableHead className="w-[100px] text-gray-400">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {registrations.map((reg, index) => (
-                    <TableRow key={reg.id} data-testid={`row-registration-${index}`}>
-                      <TableCell className="font-medium">{index + 1}</TableCell>
-                      <TableCell>{reg.name}</TableCell>
-                      <TableCell>{reg.email}</TableCell>
-                      <TableCell>{reg.phone}</TableCell>
+                    <TableRow key={reg.id} data-testid={`row-registration-${index}`} className="border-gray-800">
+                      <TableCell className="font-medium text-white">{index + 1}</TableCell>
+                      <TableCell className="text-white">{reg.name}</TableCell>
+                      <TableCell className="text-gray-300">{reg.email}</TableCell>
+                      <TableCell className="text-gray-300">{reg.phone}</TableCell>
                       <TableCell>
                         <Badge 
-                          variant={reg.paymentMethod === 'pix' ? 'default' : 'secondary'}
+                          className={reg.paymentMethod === 'pix' ? 'bg-blue-600' : 'bg-gray-600'}
                           data-testid={`badge-payment-${index}`}
                         >
                           {reg.paymentMethod === 'pix' 
@@ -748,7 +748,7 @@ function MentorshipRegistrationsSection() {
                           data-testid={`button-payment-${index}`}
                           className={reg.paymentReceived 
                             ? "bg-green-600 hover:bg-green-700" 
-                            : "border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                            : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
                           }
                         >
                           {reg.paymentReceived ? (
@@ -764,7 +764,7 @@ function MentorshipRegistrationsSection() {
                           )}
                         </Button>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-gray-300">
                         {new Date(reg.createdAt).toLocaleString('pt-BR', {
                           day: '2-digit',
                           month: '2-digit',
@@ -780,7 +780,7 @@ function MentorshipRegistrationsSection() {
                           onClick={() => handleDelete(reg.id, reg.name)}
                           disabled={deleteMutation.isPending}
                           data-testid={`button-delete-${index}`}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -791,7 +791,7 @@ function MentorshipRegistrationsSection() {
               </Table>
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-gray-400">
               Nenhuma inscrição registrada ainda.
             </div>
           )}
@@ -803,32 +803,34 @@ function MentorshipRegistrationsSection() {
 
 export default function AdminPage() {
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Painel Administrativo</h1>
-        <p className="text-muted-foreground">Mentoria Marcelo Murilo & Hamilton Felix</p>
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white">Painel Administrativo</h1>
+          <p className="text-gray-400">Mentoria Marcelo Murilo & Hamilton Felix</p>
+        </div>
+
+        <Tabs defaultValue="event" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-gray-800">
+            <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-700">
+              <Calendar className="w-4 h-4 mr-2" />
+              Evento ao Vivo
+            </TabsTrigger>
+            <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-700">
+              <Users className="w-4 h-4 mr-2" />
+              Mentoria
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="event">
+            <EventRegistrationsSection />
+          </TabsContent>
+
+          <TabsContent value="mentorship">
+            <MentorshipRegistrationsSection />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="event" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="event" data-testid="tab-event">
-            <Calendar className="w-4 h-4 mr-2" />
-            Evento ao Vivo
-          </TabsTrigger>
-          <TabsTrigger value="mentorship" data-testid="tab-mentorship">
-            <Users className="w-4 h-4 mr-2" />
-            Mentoria
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="event">
-          <EventRegistrationsSection />
-        </TabsContent>
-
-        <TabsContent value="mentorship">
-          <MentorshipRegistrationsSection />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

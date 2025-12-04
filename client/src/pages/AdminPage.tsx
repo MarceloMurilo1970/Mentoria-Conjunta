@@ -107,9 +107,7 @@ function analyzeTopics(registrations: EventRegistration[]): TopicSuggestion[] {
       if (matchedKeywords.length > 0) {
         totalMatches++;
         matchedKeywords.forEach(k => foundKeywords.add(k));
-        if (matchingComments.length < 3) {
-          matchingComments.push(`${reg.name}: "${reg.interests.substring(0, 150)}${reg.interests.length > 150 ? '...' : ''}"`);
-        }
+        matchingComments.push(`${reg.name}: "${reg.interests}"`);
       }
     }
 

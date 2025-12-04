@@ -133,7 +133,7 @@ A mentoria complementa sua formação técnica com o que falta: posicionamento, 
 
 📌 **Sessão 1 - PRESENÇA**: A força invisível - influência sem autoridade. 6 dimensões: intelectual, emocional, comunicativa, facilitação, autoridade e síntese.`,
 
-  "Uso de IA e tecnologia para conselheiros": `A IA é uma ferramenta integrada em toda a mentoria!
+  "Uso de IA e inteligência artificial": `A IA é uma ferramenta integrada em toda a mentoria!
 
 📌 **Sessão 3 - Prompts Personalizados para Posts**: Você vai receber prompts customizados para gerar insights, posts e imagens alinhados ao seu propósito, com instruções de customização para ChatGPT e outras IAs.
 
@@ -180,6 +180,28 @@ Você sai da mentoria dominando IA como ferramenta de produtividade e posicionam
 📌 **Módulo 2 (Hamilton Felix)**: 
 • Prospecção de Empresas: como identificar empresas-alvo com base no seu posicionamento
 • Fechamento de Projetos: como converter conversas em convites e estruturar propostas comerciais`,
+
+  "Conselhos fiscais e comitês especializados": `Conselhos fiscais e comitês são ótimas portas de entrada! Abordamos isso na mentoria:
+
+📌 **Sessão 1 - Matching Estratégico**: Definir onde você gera mais valor inclui tipos de órgão: conselho deliberativo, consultivo, fiscal ou comitês especializados (auditoria, ESG, estratégia, sustentabilidade). Cada um tem dinâmica diferente.
+
+📌 **Sessão 7 - Anatomia da Governança**: O calendário estratégico inclui os comitês - comitê de auditoria revisa controles, comitê de estratégia analisa investimentos, comitê ESG monitora sustentabilidade. Você vai entender onde sua expertise se encaixa.
+
+📌 **Sessão 7 - Perguntas para Sócios**: "Qual é a estrutura de governança atual?" - entender se há comitês formados, conselho fiscal ativo, e onde estão as lacunas.
+
+📌 **Sessão 6 - Competência Técnica (5C-MM)**: Para conselhos fiscais, fluência financeira é crítica. Para comitês de sustentabilidade, expertise setorial em ESG. Você vai mapear qual competência desenvolver para cada tipo de posição.`,
+
+  "Áreas de atuação e nichos específicos": `Definir sua área de atuação é o primeiro passo da jornada! Isso é fundamental na mentoria:
+
+📌 **Sessão 1 - PREP e Foco Estratégico**: Propósito define onde você gera mais valor. Experiência inclui setores onde você atuou, competências desenvolvidas e problemas que sabe resolver. Escolha 2 setores, não 20 - foco é poder.
+
+📌 **Sessão 1 - Matching Estratégico**: Onde sua experiência em contabilidade, tecnologia, academia ou outra área se torna diferencial? Qual é a "dor dominante" que você resolve para CEOs?
+
+📌 **Sessão 5 - Networking com Critérios**: Sua área de especialização define quem você deve conhecer. CEOs do seu setor, influenciadores de pensamento na sua área, outros conselheiros com expertise complementar.
+
+📌 **Sessão 6 - Demonstração de Valor**: Traduzir sua experiência específica (seja contabilidade, tecnologia, inovação ou academia) em valor aplicável ao conselho. O CEO precisa ver como sua expertise resolve o problema DELE.
+
+Seu diferencial nasce da intersecção entre experiência setorial, competências únicas e problemas que você sabe resolver melhor que outros.`,
 };
 
 // Função para obter resposta de um tema
@@ -188,62 +210,70 @@ function getTopicResponse(topic: string): string | null {
 }
 
 function analyzeTopics(registrations: EventRegistration[]): TopicSuggestion[] {
-  const topicPatterns: { topic: string; keywords: string[] }[] = [
+  const topicPatterns: { topic: string; keywords: string[]; excludeKeywords?: string[] }[] = [
     { 
       topic: "Como conseguir a primeira posição em conselho", 
-      keywords: ["primeiro conselho", "primeira posição", "primeiro", "primeira", "começar", "iniciar", "entrada em conselho", "entrar em conselho"]
+      keywords: ["primeiro conselho", "primeira posição", "começar em conselho", "iniciar em conselho", "entrada em conselho", "entrar em conselho", "como conseguir", "como conquistar"]
     },
     { 
       topic: "Construção de autoridade e posicionamento no LinkedIn", 
-      keywords: ["linkedin", "autoridade", "posicionamento", "visibilidade", "marca pessoal", "personal branding", "conteúdo", "posts", "publicar", "perfil"]
+      keywords: ["linkedin", "autoridade", "posicionamento", "visibilidade", "marca pessoal", "personal branding", "conteúdo", "posts", "publicar", "perfil profissional"]
     },
     { 
       topic: "Networking estratégico para conselhos", 
-      keywords: ["networking", "rede de contatos", "contatos", "conexões", "relacionamento", "network"]
+      keywords: ["networking", "rede de contatos", "conexões estratégicas", "relacionamento profissional", "network"]
     },
     { 
       topic: "Transição de carreira executiva para conselheiro", 
-      keywords: ["transição", "carreira", "executivo", "c-level", "ceo", "diretor", "mudança de carreira", "migrar"]
+      keywords: ["transição", "carreira executiva", "executivo", "c-level", "ceo", "diretor", "mudança de carreira", "migrar para conselho", "sair do executivo"]
     },
     { 
       topic: "Certificações e qualificações para conselhos", 
-      keywords: ["certificação", "certificado", "curso", "formação", "ibgc", "qualificação", "preparação", "capacitação"]
+      keywords: ["certificação", "certificado", "curso de conselho", "formação em conselho", "ibgc", "qualificação", "preparação técnica", "capacitação"]
     },
     { 
       topic: "Remuneração e precificação de conselheiros", 
-      keywords: ["remuneração", "salário", "valor", "preço", "quanto ganha", "pagamento", "honorários", "ganhar", "cobrar"]
+      keywords: ["remuneração", "salário de conselheiro", "quanto ganha", "pagamento", "honorários", "cobrar", "precificar", "valor de conselheiro"]
     },
     { 
       topic: "Governança corporativa na prática", 
-      keywords: ["governança", "corporativa", "compliance", "boas práticas", "gestão"]
+      keywords: ["governança", "corporativa", "compliance", "boas práticas de governança"]
     },
     { 
       topic: "Empresas familiares e conselhos consultivos", 
-      keywords: ["familiar", "família", "consultivo", "advisory", "pme", "pequena empresa", "média empresa"]
+      keywords: ["empresa familiar", "família empresária", "consultivo", "advisory board", "pme", "pequena empresa", "média empresa", "conselho consultivo"]
     },
     { 
       topic: "Due diligence e avaliação de empresas", 
-      keywords: ["due diligence", "avaliar empresa", "avaliação", "análise de empresa", "riscos"]
+      keywords: ["due diligence", "avaliar empresa", "análise de empresa", "riscos empresariais", "avaliar riscos"]
     },
     { 
       topic: "Desenvolvimento de competências de conselheiro", 
-      keywords: ["competência", "habilidade", "skill", "desenvolver", "capacidade", "aprender", "soft skills"]
+      keywords: ["competência de conselheiro", "habilidades de conselheiro", "soft skills", "desenvolver competências", "capacidade técnica"]
     },
     { 
-      topic: "Uso de IA e tecnologia para conselheiros", 
-      keywords: ["inteligência artificial", "tecnologia", "digital", "inovação", "prompt", "chatgpt", "automação", "gpt", "openai"]
+      topic: "Uso de IA e inteligência artificial", 
+      keywords: ["inteligência artificial", " ia ", "chatgpt", "gpt", "openai", "prompt", "automação com ia", "machine learning", "ai "]
     },
     { 
       topic: "Cases práticos e experiências reais", 
-      keywords: ["case", "exemplo", "prático", "experiência real", "história", "resultado", "depoimento"]
+      keywords: ["case", "caso real", "experiência real", "história de sucesso", "depoimento", "exemplo prático"]
     },
     { 
       topic: "Como criar oportunidades em conselhos", 
-      keywords: ["criar oportunidade", "oportunidade", "conquistar conselho", "conseguir conselho", "acesso", "porta de entrada"]
+      keywords: ["criar oportunidade", "oportunidade de conselho", "conquistar conselho", "conseguir conselho", "porta de entrada", "acesso a conselho"]
     },
     { 
       topic: "Estratégias de prospecção e abordagem", 
-      keywords: ["prospecção", "prospectar", "abordar", "abordagem", "contato inicial", "pitch", "apresentação"]
+      keywords: ["prospecção", "prospectar empresa", "abordar empresa", "abordagem inicial", "pitch de conselheiro", "apresentação pessoal"]
+    },
+    { 
+      topic: "Conselhos fiscais e comitês especializados", 
+      keywords: ["conselho fiscal", "comitê", "fiscal", "sustentabilidade", "comitê de auditoria", "comitê estratégico"]
+    },
+    { 
+      topic: "Áreas de atuação e nichos específicos", 
+      keywords: ["contabilidade", "acadêmica", "tecnologia", "área de atuação", "nicho", "especialização", "setor específico", "inovação"]
     },
   ];
 

@@ -11,7 +11,7 @@ import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, Exter
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Registration } from "@shared/schema";
-import BatchPricing, { getCurrentBatch, getBatchPrices } from "@/components/BatchPricing";
+import BatchPricing from "@/components/BatchPricing";
 
 interface EventRegistration {
   timestamp: string;
@@ -604,31 +604,12 @@ function EventRegistrationsSection() {
 function MentorshipRegistrationsSection() {
   const { toast } = useToast();
   const [simulatedDate, setSimulatedDate] = useState<string>("");
-  const [isSimulating, setIsSimulating] = useState(false);
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ['/api/registrations'],
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
   });
-
-  const getSimulatedDate = (): Date => {
-    if (isSimulating && simulatedDate) {
-      return new Date(simulatedDate);
-    }
-    return new Date();
-  };
-
-  const handleSimulate = () => {
-    if (simulatedDate) {
-      setIsSimulating(true);
-    }
-  };
-
-  const handleResetSimulation = () => {
-    setIsSimulating(false);
-    setSimulatedDate("");
-  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -762,104 +743,47 @@ function MentorshipRegistrationsSection() {
       </div>
 
       {/* Batch Price Simulator */}
-      <Card className="bg-gray-900 border-blue-500/50">
+      <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <Clock className="h-5 w-5 text-blue-400" />
-            Simulador de Condições de Pagamento
+            Visualização de Preços por Lote
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Simule uma data/hora para visualizar qual lote estaria ativo e os preços correspondentes
+            Informe uma data/hora para ver como os preços e contagens regressivas aparecerão
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {/* Input Section */}
-            <div className="flex flex-col md:flex-row gap-4 items-end">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="simulated-date" className="text-gray-300">
-                  Data e Hora para Simulação
-                </Label>
-                <Input
-                  id="simulated-date"
-                  type="datetime-local"
-                  value={simulatedDate}
-                  onChange={(e) => setSimulatedDate(e.target.value)}
-                  className="bg-gray-800 border-gray-700 text-white"
-                  data-testid="input-simulated-date"
-                />
-              </div>
-              <div className="flex gap-2">
+            {/* Date Input */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <Label htmlFor="simulated-date" className="text-gray-300 whitespace-nowrap">
+                Simular para:
+              </Label>
+              <Input
+                id="simulated-date"
+                type="datetime-local"
+                value={simulatedDate}
+                onChange={(e) => setSimulatedDate(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white max-w-xs"
+                data-testid="input-simulated-date"
+              />
+              {simulatedDate && (
                 <Button
-                  onClick={handleSimulate}
-                  disabled={!simulatedDate}
-                  className="bg-blue-600 hover:bg-blue-700"
-                  data-testid="button-simulate"
+                  onClick={() => setSimulatedDate("")}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white"
+                  data-testid="button-clear-date"
                 >
-                  <Clock className="h-4 w-4 mr-2" />
-                  Simular
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Limpar
                 </Button>
-                {isSimulating && (
-                  <Button
-                    onClick={handleResetSimulation}
-                    variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                    data-testid="button-reset-simulation"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Voltar ao Presente
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
 
-            {/* Simulation Status */}
-            {isSimulating && (
-              <div className="bg-blue-950/50 border border-blue-500/30 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className="bg-blue-600">SIMULAÇÃO ATIVA</Badge>
-                </div>
-                <p className="text-sm text-gray-300">
-                  Visualizando lotes como se fosse: <span className="font-bold text-white">{new Date(simulatedDate).toLocaleString("pt-BR", { 
-                    weekday: 'long',
-                    day: '2-digit', 
-                    month: 'long', 
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}</span>
-                </p>
-                {(() => {
-                  const batch = getCurrentBatch(getSimulatedDate());
-                  const prices = getBatchPrices(getSimulatedDate());
-                  return (
-                    <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-400">Lote Ativo:</span>
-                        <p className="font-bold text-primary">{batch ? batch.name : "Nenhum (fora do período)"}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Preço PIX:</span>
-                        <p className="font-bold text-green-400">R$ {prices.pixPrice.toLocaleString("pt-BR")}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Parcela (5x):</span>
-                        <p className="font-bold text-white">R$ {prices.installmentPrice.toLocaleString("pt-BR")}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Total Parcelado:</span>
-                        <p className="font-bold text-white">R$ {prices.installmentTotal.toLocaleString("pt-BR")}</p>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* Batch Pricing Preview */}
-            <div className={`${isSimulating ? 'ring-2 ring-blue-500 rounded-lg p-4' : ''}`}>
-              <BatchPricing currentDate={getSimulatedDate()} />
-            </div>
+            {/* Batch Pricing */}
+            <BatchPricing currentDate={simulatedDate ? new Date(simulatedDate) : new Date()} />
           </div>
         </CardContent>
       </Card>

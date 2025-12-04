@@ -87,12 +87,17 @@ export default function Home() {
   const [simulatedDate, setSimulatedDate] = useState<string>("");
   
   const currentDate = simulatedDate ? new Date(simulatedDate) : new Date();
+  const targetDate = new Date("2025-12-04T20:45:00-03:00");
+  
+  // Determine if we should show registration based on current or simulated date
+  const shouldShowRegistration = simulatedDate 
+    ? currentDate >= targetDate 
+    : showRegistrationForm;
 
   useEffect(() => {
     window.scrollTo(0, 0);
     
     // Check if countdown already ended (after Dec 4, 2025 20:45 BRT)
-    const targetDate = new Date("2025-12-04T20:45:00-03:00");
     if (new Date() >= targetDate) {
       setShowRegistrationForm(true);
     }
@@ -818,7 +823,7 @@ export default function Home() {
             </div>
           </div>
 
-          {showRegistrationForm ? (
+          {shouldShowRegistration ? (
             <div className="space-y-12">
               <BatchPricing currentDate={currentDate} />
               {batchesOpen ? (

@@ -603,7 +603,6 @@ function EventRegistrationsSection() {
 
 function MentorshipRegistrationsSection() {
   const { toast } = useToast();
-  const [simulatedDate, setSimulatedDate] = useState<string>("");
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ['/api/registrations'],
@@ -741,52 +740,6 @@ function MentorshipRegistrationsSection() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Batch Price Simulator */}
-      <Card className="bg-gray-900 border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Clock className="h-5 w-5 text-blue-400" />
-            Visualização de Preços por Lote
-          </CardTitle>
-          <CardDescription className="text-gray-400">
-            Informe uma data/hora para ver como os preços e contagens regressivas aparecerão
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Date Input */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <Label htmlFor="simulated-date" className="text-gray-300 whitespace-nowrap">
-                Simular para:
-              </Label>
-              <Input
-                id="simulated-date"
-                type="datetime-local"
-                value={simulatedDate}
-                onChange={(e) => setSimulatedDate(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white max-w-xs"
-                data-testid="input-simulated-date"
-              />
-              {simulatedDate && (
-                <Button
-                  onClick={() => setSimulatedDate("")}
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-400 hover:text-white"
-                  data-testid="button-clear-date"
-                >
-                  <RotateCcw className="h-4 w-4 mr-1" />
-                  Limpar
-                </Button>
-              )}
-            </div>
-
-            {/* Batch Pricing */}
-            <BatchPricing currentDate={simulatedDate ? new Date(simulatedDate) : new Date()} />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Registrations Table */}
       <Card className="bg-gray-900 border-gray-700">

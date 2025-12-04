@@ -2,7 +2,9 @@ import { useRef, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Calendar, Clock, RotateCcw } from "lucide-react";
 import Hero from "@/components/Hero";
 import ProgramSection from "@/components/ProgramSection";
 import RegistrationForm from "@/components/RegistrationForm";
@@ -82,7 +84,9 @@ const testimonials = [
 export default function Home() {
   const registrationRef = useRef<HTMLDivElement>(null);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
-  const currentDate = new Date();
+  const [simulatedDate, setSimulatedDate] = useState<string>("");
+  
+  const currentDate = simulatedDate ? new Date(simulatedDate) : new Date();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -782,6 +786,38 @@ export default function Home() {
       {/* Registration Section */}
       <section className="py-20 md:py-24 bg-card" id="inscricao" ref={registrationRef}>
         <div className="max-w-7xl mx-auto px-6 md:px-8">
+          {/* Date Simulator - Only visible for testing */}
+          <div className="mb-8 p-4 bg-gray-900/50 border border-gray-700 rounded-lg">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-blue-400" />
+                <Label htmlFor="simulated-date" className="text-gray-300 whitespace-nowrap">
+                  Simular para:
+                </Label>
+              </div>
+              <Input
+                id="simulated-date"
+                type="datetime-local"
+                value={simulatedDate}
+                onChange={(e) => setSimulatedDate(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white max-w-xs"
+                data-testid="input-simulated-date"
+              />
+              {simulatedDate && (
+                <Button
+                  onClick={() => setSimulatedDate("")}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white"
+                  data-testid="button-clear-date"
+                >
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </div>
+
           {showRegistrationForm ? (
             <div className="space-y-12">
               <BatchPricing currentDate={currentDate} />

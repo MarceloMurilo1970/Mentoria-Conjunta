@@ -310,7 +310,6 @@ export async function sendRegistrationListEmail(
   const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
   const recipients = [
     new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo"),
-    new Recipient("faturamento@marcelomurilo.com.br", "Faturamento"),
     new Recipient("hamiltonfelix@gmail.com", "Hamilton Felix"),
   ];
 

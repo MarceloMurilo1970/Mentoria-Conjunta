@@ -1,47 +1,37 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Users, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
+import { 
+  PlayCircle, 
+  FileText, 
+  Presentation, 
+  ArrowRight, 
+  Sparkles, 
+  CheckCircle,
+  Calendar,
+  Clock,
+  Users,
+  Target,
+  Zap,
+  Award
+} from "lucide-react";
 import { Link } from "wouter";
-import { useToast } from "@/hooks/use-toast";
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
-import CountdownTimer from "@/components/CountdownTimer";
+import BatchPricing, { getBatchPrices, isBatchesOpen } from "@/components/BatchPricing";
 
-const eventFormSchema = z.object({
-  name: z.string().min(3, "Nome completo é obrigatório"),
-  phone: z.string().min(10, "Telefone/WhatsApp é obrigatório"),
-  linkedin: z.string().url("URL do LinkedIn é obrigatória"),
-  hasCertification: z.enum(["sim", "nao"]),
-  boardCount: z.string().min(1, "Informe quantos conselhos participa"),
-  interests: z.string().min(10, "Compartilhe o que gostaria de ouvir"),
-});
-
-type EventFormData = z.infer<typeof eventFormSchema>;
+const RECORDING_URL = "https://drive.google.com/file/d/1I5nCVGC15zKOvN1WRoP8vEjbcH5xI7Tm/view?usp=sharing";
+const SUMMARY_URL = "https://docs.google.com/document/d/1PUWN0b9HszMkY45ES-uW4wLgt9P7r3s7oAu33MCdPqc/edit?usp=sharing";
+const PRESENTATION_URL = "https://marcelomurilo-my.sharepoint.com/:b:/g/personal/contato_marcelomurilo_com_br/IQDclKCA-eajQ7V9_tANX-c5AWGdxvs1P8KWSUQW_zw3H6g?e=pmJcnp";
 
 export default function EventPage() {
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [showStickyBanner, setShowStickyBanner] = useState(false);
-  const { toast } = useToast();
+  const priceInfo = getBatchPrices(new Date());
+  const batchesOpen = isBatchesOpen(new Date());
 
-  // Show sticky banner when user scrolls past the hero section
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      const heroHeight = window.innerHeight * 0.5; // 50% of viewport height
+      const heroHeight = window.innerHeight * 0.5;
       setShowStickyBanner(scrollPosition > heroHeight);
     };
 
@@ -49,141 +39,9 @@ export default function EventPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const form = useForm<EventFormData>({
-    resolver: zodResolver(eventFormSchema),
-    defaultValues: {
-      name: "",
-      phone: "",
-      linkedin: "https://linkedin.com/in/",
-      hasCertification: "nao",
-      boardCount: "",
-      interests: "",
-    },
-  });
-
-  const onSubmit = async (data: EventFormData) => {
-    try {
-      const response = await fetch("/api/event-registrations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao processar inscrição");
-      }
-
-      setIsSubmitted(true);
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      toast({
-        title: "Erro ao processar inscrição",
-        description: error.message || "Ocorreu um erro ao registrar sua inscrição. Por favor, tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen bg-black">
-        {/* Success Section */}
-        <div className="flex items-center justify-center p-6 py-16">
-          <Card className="max-w-2xl mx-auto bg-gray-900/50 border-gray-800" data-testid="card-success">
-            <CardContent className="pt-12 pb-12 text-center">
-              <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
-              <h2 className="text-3xl font-bold text-white mb-4">
-                Inscrição Confirmada!
-              </h2>
-              <p className="text-gray-300 mb-8 text-lg">
-                Você está confirmado para o evento dia <span className="font-bold text-yellow-400">04/12 às 20h</span>
-              </p>
-              
-              {/* WhatsApp Group - Primary CTA */}
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6 mb-6">
-                <p className="text-white font-semibold mb-2 text-lg">
-                  Próximo passo importante:
-                </p>
-                <p className="text-gray-300 mb-4">
-                  Entre no grupo de WhatsApp para receber o link da live e participar das discussões:
-                </p>
-                <Button
-                  onClick={() => window.open("https://chat.whatsapp.com/FytYBXUIDbDAFzcQDCQfSO?mode=hqrt3", "_blank", "noopener,noreferrer")}
-                  size="lg"
-                  data-testid="button-whatsapp"
-                  className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
-                >
-                  <Users className="w-5 h-5 mr-2" />
-                  Entrar no Grupo do WhatsApp
-                </Button>
-                <p className="text-gray-400 text-sm mt-3">
-                  Link do grupo: <span className="text-green-400">chat.whatsapp.com/FytYBXUIDbDAFzcQDCQfSO</span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Mentoria CTA Section - High Visibility */}
-        <div className="bg-gradient-to-b from-primary/20 via-primary/10 to-black py-16 px-6">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-              <Sparkles className="w-4 h-4" />
-              Oportunidade Exclusiva
-            </div>
-            
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Quer acelerar sua jornada como Conselheiro?
-            </h2>
-            
-            <p className="text-lg text-gray-300 mb-6 max-w-2xl mx-auto">
-              Enquanto aguarda a live, conheça nossa <span className="text-yellow-400 font-semibold">Mentoria Completa</span> para Conselheiros que desejam construir autoridade e conquistar posições em conselhos estratégicos.
-            </p>
-
-            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mb-8 max-w-xl mx-auto">
-              <h3 className="text-white font-semibold mb-3">O que você vai descobrir:</h3>
-              <ul className="text-gray-300 text-left space-y-2">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Metodologia completa para criar autoridade no LinkedIn</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Framework PREP-MM para posicionamento estratégico</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Estratégias de prospecção e fechamento de conselhos</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Depoimentos de conselheiros que já passaram pela mentoria</span>
-                </li>
-              </ul>
-            </div>
-            
-            <Link href="/mentoria">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto group" data-testid="button-mentorship">
-                Conhecer a Mentoria Completa
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            
-            <p className="text-gray-500 text-sm mt-4">
-              Turma 2: Janeiro a Março de 2026
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-black">
-      {/* Hero Section with Promo Image */}
+      {/* Hero Section - Live Already Happened */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image with Dark Overlay */}
         <div className="absolute inset-0 z-0">
@@ -192,53 +50,98 @@ export default function EventPage() {
             alt="Marcelo Murilo e Hamilton Felix"
             className="w-full h-full object-cover object-top"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/70 to-black"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-black"></div>
         </div>
 
         {/* Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
-          <p className="text-white/80 text-sm md:text-base tracking-widest uppercase mb-8">
-            Encontro On-line
-          </p>
+          {/* Badge - Live Already Happened */}
+          <div className="inline-flex items-center gap-2 bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-semibold mb-6 border border-green-500/30">
+            <CheckCircle className="w-4 h-4" />
+            Live Realizada em 04/12/2025
+          </div>
 
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-            Marcelo Murilo e Hamilton Felix vão contar sobre
+            Marcelo Murilo e Hamilton Felix revelaram
           </h1>
 
-          <h2 className="text-3xl md:text-5xl lg:text-7xl font-bold mb-8 leading-tight">
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-8 leading-tight">
             <span className="text-white">Como criar </span>
             <span className="text-yellow-400">AUTORIDADE</span>
             <span className="text-white"> como </span>
             <span className="text-yellow-400">CONSELHEIRO</span>
           </h2>
 
-          <p className="text-white/90 text-xl md:text-3xl mb-12 max-w-4xl mx-auto leading-relaxed font-medium">
-            E depois construir oportunidades em empresas para conquistar sua posição em conselhos estratégicos
+          <p className="text-white/90 text-xl md:text-2xl mb-12 max-w-4xl mx-auto leading-relaxed">
+            E como construir oportunidades em empresas para conquistar sua posição em conselhos estratégicos
           </p>
 
-          {/* Date Box - Modern Style */}
-          <div className="inline-block bg-primary/90 backdrop-blur-sm rounded-xl p-8 mb-6 border border-primary/30">
-            <p className="text-white text-4xl md:text-5xl font-bold mb-2" data-testid="event-date">
-              04.12.2025
+          {/* Missed the Live? Section */}
+          <div className="bg-gray-900/70 backdrop-blur-sm rounded-2xl p-8 mb-10 border border-gray-700 max-w-3xl mx-auto">
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Perdeu a Live?
+            </h3>
+            <p className="text-gray-300 mb-6">
+              Não se preocupe! Você ainda pode assistir a gravação e aprender tudo sobre a transição para conselhos.
             </p>
-            <p className="text-white/90 text-xl md:text-2xl" data-testid="event-time">
-              Início às 20:00hs
-            </p>
+
+            {/* Resource Links */}
+            <div className="grid sm:grid-cols-3 gap-4">
+              <a 
+                href={RECORDING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group"
+                data-testid="link-recording"
+              >
+                <Card className="bg-primary/10 border-primary/30 hover:bg-primary/20 transition-colors h-full">
+                  <CardContent className="p-5 text-center">
+                    <PlayCircle className="w-10 h-10 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform" />
+                    <h4 className="text-white font-semibold mb-1">Assistir Gravação</h4>
+                    <p className="text-gray-400 text-sm">Live completa</p>
+                  </CardContent>
+                </Card>
+              </a>
+
+              <a 
+                href={SUMMARY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group"
+                data-testid="link-summary"
+              >
+                <Card className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 transition-colors h-full">
+                  <CardContent className="p-5 text-center">
+                    <FileText className="w-10 h-10 text-blue-400 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+                    <h4 className="text-white font-semibold mb-1">Resumo por IA</h4>
+                    <p className="text-gray-400 text-sm">Pontos principais</p>
+                  </CardContent>
+                </Card>
+              </a>
+
+              <a 
+                href={PRESENTATION_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group"
+                data-testid="link-presentation"
+              >
+                <Card className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 transition-colors h-full">
+                  <CardContent className="p-5 text-center">
+                    <Presentation className="w-10 h-10 text-purple-400 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+                    <h4 className="text-white font-semibold mb-1">Apresentação</h4>
+                    <p className="text-gray-400 text-sm">Slides da live</p>
+                  </CardContent>
+                </Card>
+              </a>
+            </div>
           </div>
 
-          {/* Countdown Timer */}
-          <div className="mb-12">
-            <CountdownTimer />
-          </div>
-
-          <p className="text-white/70 text-sm md:text-base mb-12">
-            Inscreva-se no link para convite de cortesia individual
-          </p>
-
-          {/* CTA Button */}
+          {/* CTA to Mentorship */}
           <a href="#inscricao">
-            <Button size="lg" className="text-lg px-8 py-6 h-auto" data-testid="button-scroll-to-form">
-              Garantir Minha Vaga Gratuita
+            <Button size="lg" className="text-lg px-8 py-6 h-auto group" data-testid="button-scroll-to-mentorship">
+              Quero me inscrever na Mentoria
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </a>
         </div>
@@ -251,228 +154,218 @@ export default function EventPage() {
         </div>
       </section>
 
-      {/* Mentoria Highlight Section - Before Form */}
-      <section className="py-16 px-6 bg-gradient-to-b from-black via-primary/10 to-black">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
+      {/* Mentorship Opportunity Section */}
+      <section className="py-20 px-6 bg-gradient-to-b from-black via-primary/10 to-black" id="inscricao">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
               <Sparkles className="w-4 h-4" />
-              Mentoria Turma 2 - Janeiro a Março 2026
+              Ainda dá tempo!
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Quer ir além da Live?
+            
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              Inscreva-se na Turma 2 da Mentoria
             </h2>
-            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Conheça nossa <span className="text-primary font-semibold">Mentoria Completa</span> para Conselheiros que desejam construir autoridade e conquistar posições estratégicas em conselhos.
+            
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              A mentoria que vai transformar sua carreira como Conselheiro começa em <span className="text-primary font-semibold">Janeiro de 2026</span>
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 text-center">
-              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-white font-semibold mb-2">Metodologia PREP-MM</h3>
-              <p className="text-gray-400 text-sm">Framework exclusivo para posicionamento estratégico</p>
+
+          {/* Batch Pricing with Countdown */}
+          {batchesOpen && (
+            <div className="mb-16">
+              <BatchPricing currentDate={new Date()} />
             </div>
-            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 text-center">
-              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-white font-semibold mb-2">Acompanhamento Individual</h3>
-              <p className="text-gray-400 text-sm">Relatórios personalizados e mentorias focadas</p>
-            </div>
-            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 text-center">
-              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ArrowRight className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-white font-semibold mb-2">Do LinkedIn ao Conselho</h3>
-              <p className="text-gray-400 text-sm">Jornada completa: autoridade, oportunidades e conquista</p>
+          )}
+
+          {/* Program Overview */}
+          <div className="mb-16">
+            <h3 className="text-2xl md:text-3xl font-bold text-white text-center mb-10">
+              Programa Completo da Mentoria
+            </h3>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Module 1 */}
+              <Card className="bg-gray-900/50 border-gray-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                      <Target className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-white">Módulo 1</h4>
+                      <p className="text-primary text-sm">Marcelo Murilo - 8 sessões</p>
+                    </div>
+                  </div>
+                  <h5 className="text-lg font-semibold text-white mb-4">Transição para Conselhos</h5>
+                  <ul className="space-y-3 text-gray-300">
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                      <span><strong>19/jan:</strong> Definindo seu nicho e propósito</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                      <span><strong>26/jan:</strong> Perfil de conselheiro que vende</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                      <span><strong>02/fev:</strong> Posts que geram oportunidades</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                      <span><strong>09/fev:</strong> Interações que multiplicam alcance</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                      <span><strong>23/fev:</strong> Conectando com quem importa</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                      <span><strong>02/mar:</strong> Vendas e eventos estratégicos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                      <span><strong>09/mar:</strong> Aspectos práticos dos conselhos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                      <span><strong>16/mar:</strong> Integração e planejamento futuros</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Module 2 */}
+              <Card className="bg-gray-900/50 border-gray-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-yellow-400/20 rounded-xl flex items-center justify-center">
+                      <Zap className="w-6 h-6 text-yellow-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-white">Módulo 2</h4>
+                      <p className="text-yellow-400 text-sm">Hamilton Felix - 4 sessões</p>
+                    </div>
+                  </div>
+                  <h5 className="text-lg font-semibold text-white mb-4">Criando Novos Conselhos</h5>
+                  <ul className="space-y-3 text-gray-300">
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-yellow-400 mt-1 flex-shrink-0" />
+                      <span><strong>09/mar (19h):</strong> Prospecção de empresas</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-yellow-400 mt-1 flex-shrink-0" />
+                      <span><strong>09/mar (20h):</strong> Fechamento de Projetos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-yellow-400 mt-1 flex-shrink-0" />
+                      <span><strong>16/mar (19h):</strong> Implementando o Conselho</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-yellow-400 mt-1 flex-shrink-0" />
+                      <span><strong>16/mar (20h):</strong> Evoluindo o Conselho</span>
+                    </li>
+                  </ul>
+
+                  {/* Benefits */}
+                  <div className="mt-6 pt-6 border-t border-gray-700">
+                    <h6 className="text-white font-semibold mb-3">O que você vai receber:</h6>
+                    <ul className="space-y-2 text-gray-300 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                        <span>Relatórios personalizados por sessão</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                        <span>Prompts de IA customizados para seu perfil</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                        <span>Acesso ao grupo exclusivo de WhatsApp</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                        <span>Gravações de todas as sessões</span>
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
-          
+
+          {/* CTA */}
           <div className="text-center">
             <Link href="/mentoria">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto group" data-testid="button-mentorship-highlight">
-                Conhecer a Mentoria Completa
+              <Button size="lg" className="text-lg px-10 py-7 h-auto group" data-testid="button-go-to-mentorship">
+                Ver Detalhes Completos e Inscrever-se
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <p className="text-gray-500 text-sm mt-4">
-              Preço promocional exclusivo durante a live de 04/12
+              Turma 2: Janeiro a Março de 2026
             </p>
           </div>
         </div>
       </section>
 
-      {/* Registration Form Section */}
-      <section className="py-20 px-6 bg-gradient-to-b from-black via-gray-950 to-black" id="inscricao">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
-            Inscreva-se Gratuitamente
-          </h2>
-          <p className="text-gray-400 text-center mb-12">
-            Preencha o formulário abaixo para garantir sua vaga no evento
-          </p>
+      {/* Mentors Section */}
+      <section className="py-16 px-6 bg-black">
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-2xl md:text-3xl font-bold text-white text-center mb-10">
+            Seus Mentores
+          </h3>
 
-          <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm" data-testid="card-registration-form">
-            <CardContent className="pt-8 pb-8">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-200">Nome e Sobrenome *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Seu nome completo"
-                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
-                            data-testid="input-name"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="bg-gray-900/50 border-gray-700">
+              <CardContent className="p-6 text-center">
+                <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Award className="w-10 h-10 text-primary" />
+                </div>
+                <h4 className="text-xl font-bold text-white mb-2">Marcelo Murilo</h4>
+                <p className="text-primary text-sm mb-3">Especialista em Posicionamento para Conselheiros</p>
+                <p className="text-gray-400 text-sm">
+                  Conselheiro com experiência em múltiplas empresas, especialista em construção de autoridade e posicionamento estratégico no LinkedIn.
+                </p>
+              </CardContent>
+            </Card>
 
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-200">Celular (WhatsApp) *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="(11) 98765-4321"
-                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
-                            data-testid="input-phone"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="linkedin"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-200">LinkedIn *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="url"
-                            placeholder="https://linkedin.com/in/seu-perfil"
-                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
-                            data-testid="input-linkedin"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="hasCertification"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-200">Possui formação de Conselheiro? *</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex gap-4"
-                            data-testid="radio-certification"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="sim" id="sim" className="border-gray-600 text-primary" />
-                              <label htmlFor="sim" className="cursor-pointer text-gray-200">
-                                Sim
-                              </label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="nao" id="nao" className="border-gray-600 text-primary" />
-                              <label htmlFor="nao" className="cursor-pointer text-gray-200">
-                                Não
-                              </label>
-                            </div>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="boardCount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-200">
-                          Quantos Conselhos remunerados participa atualmente? (ex: 0, 1, 2) *
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="0"
-                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
-                            data-testid="input-board-count"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="interests"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-200">
-                          O que desejaria ouvir neste bate-papo onde compartilharemos nossa experiência de como Criar Autoridade, Criar Oportunidades e Conquistar Conselhos? *
-                        </FormLabel>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            placeholder="Compartilhe suas expectativas e interesses..."
-                            className="min-h-24 resize-none bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
-                            data-testid="textarea-interests"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full text-lg"
-                    disabled={form.formState.isSubmitting}
-                    data-testid="button-submit"
-                  >
-                    {form.formState.isSubmitting ? "Enviando..." : "Confirmar Inscrição Gratuita"}
-                  </Button>
-
-                  <p className="text-xs text-gray-500 text-center">
-                    Seus dados serão tratados para inscrição, confirmação e comunicações sobre este evento. 
-                    Você pode exercer seus direitos (acesso, correção, exclusão etc.) no e-mail hamilton@felixempresarial.com.br
-                  </p>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+            <Card className="bg-gray-900/50 border-gray-700">
+              <CardContent className="p-6 text-center">
+                <div className="w-20 h-20 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-10 h-10 text-yellow-400" />
+                </div>
+                <h4 className="text-xl font-bold text-white mb-2">Hamilton Felix</h4>
+                <p className="text-yellow-400 text-sm mb-3">Especialista em Implementação de Conselhos</p>
+                <p className="text-gray-400 text-sm">
+                  Expert em criar e estruturar conselhos em empresas, com vasta experiência em prospecção e fechamento de projetos de governança.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
-      {/* Sticky Banner - Always visible when scrolling */}
+      {/* Final CTA */}
+      <section className="py-16 px-6 bg-gradient-to-t from-primary/20 to-black">
+        <div className="max-w-3xl mx-auto text-center">
+          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+            Pronto para transformar sua carreira como Conselheiro?
+          </h3>
+          <p className="text-gray-300 mb-8">
+            Junte-se à Turma 2 da mentoria e aprenda com quem já trilhou esse caminho.
+          </p>
+          <Link href="/mentoria">
+            <Button size="lg" className="text-lg px-10 py-7 h-auto group" data-testid="button-final-cta">
+              Inscrever-se Agora
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Sticky Banner */}
       <div 
         className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ${
           showStickyBanner ? 'translate-y-0' : 'translate-y-full'
@@ -483,8 +376,8 @@ export default function EventPage() {
             <div className="flex items-center gap-3 text-white">
               <Sparkles className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm sm:text-base font-medium text-center sm:text-left">
-                <span className="hidden sm:inline">Quer ir além da live? </span>
-                Conheça a Mentoria Completa para Conselheiros
+                <span className="hidden sm:inline">Inscrições abertas! </span>
+                {priceInfo.batchName} - {priceInfo.batchName === "Lote 1" ? "Melhor preço!" : "Garanta sua vaga!"}
               </span>
             </div>
             <Link href="/mentoria">
@@ -494,7 +387,7 @@ export default function EventPage() {
                 className="whitespace-nowrap group bg-white text-primary hover:bg-gray-100"
                 data-testid="button-sticky-mentoria"
               >
-                Conhecer Mentoria
+                Inscrever-se
                 <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>

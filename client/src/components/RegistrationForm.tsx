@@ -257,7 +257,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cpfCnpj">CPF ou CNPJ * <span className="text-xs text-muted-foreground">(para emissão da NF)</span></Label>
+            <Label htmlFor="cpfCnpj">CPF ou CNPJ *</Label>
             <Input
               id="cpfCnpj"
               {...register("cpfCnpj")}

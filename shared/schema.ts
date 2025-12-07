@@ -8,6 +8,7 @@ export const registrations = pgTable("registrations", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone").notNull(),
+  cpfCnpj: text("cpf_cnpj").notNull(),
   paymentMethod: text("payment_method").notNull(),
   paymentReceived: boolean("payment_received").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -21,6 +22,7 @@ export const insertRegistrationSchema = createInsertSchema(registrations).omit({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
+  cpfCnpj: z.string().min(11, "CPF/CNPJ deve ter pelo menos 11 dígitos").max(18, "CPF/CNPJ inválido"),
   paymentMethod: z.enum(["pix", "installments"], {
     required_error: "Selecione uma forma de pagamento",
   }),

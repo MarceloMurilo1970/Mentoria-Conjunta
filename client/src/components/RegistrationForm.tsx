@@ -256,6 +256,20 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="cpfCnpj">CPF ou CNPJ * <span className="text-xs text-muted-foreground">(para emissão da NF)</span></Label>
+            <Input
+              id="cpfCnpj"
+              {...register("cpfCnpj")}
+              placeholder="000.000.000-00 ou 00.000.000/0001-00"
+              data-testid="input-cpf-cnpj"
+              className={errors.cpfCnpj ? "border-destructive" : ""}
+            />
+            {errors.cpfCnpj && (
+              <p className="text-sm text-destructive">{errors.cpfCnpj.message}</p>
+            )}
+          </div>
+
           <div className="space-y-4">
             <Label>Forma de Pagamento * <span className="text-primary font-semibold">({batchName})</span></Label>
             

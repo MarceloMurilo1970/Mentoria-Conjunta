@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Registration } from "@shared/schema";
@@ -603,6 +603,89 @@ function EventRegistrationsSection() {
   );
 }
 
+// Commission table data based on batch pricing
+const BATCH_CONFIG = [
+  { 
+    batch: 1, 
+    deadline: "07/12/2025", 
+    pixPrice: 8000, 
+    installmentPrice: 1775, 
+    installments: 5, 
+    installmentTotal: 8875,
+    cardFee: 781,
+    taxRate: 0.1175,
+    mmRate: 0.633,
+    hfRate: 0.317,
+    vendorRate: 0.05,
+  },
+  { 
+    batch: 2, 
+    deadline: "31/12/2025", 
+    pixPrice: 8700, 
+    installmentPrice: 1930, 
+    installments: 5, 
+    installmentTotal: 9650,
+    cardFee: 849,
+    taxRate: 0.1175,
+    mmRate: 0.633,
+    hfRate: 0.317,
+    vendorRate: 0.05,
+  },
+  { 
+    batch: 3, 
+    deadline: "04/01/2026", 
+    pixPrice: 9400, 
+    installmentPrice: 2085, 
+    installments: 5, 
+    installmentTotal: 10425,
+    cardFee: 917,
+    taxRate: 0.1175,
+    mmRate: 0.633,
+    hfRate: 0.317,
+    vendorRate: 0.05,
+  },
+];
+
+// Calculate commissions for a registration
+function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFIG[0]) {
+  const isPix = reg.paymentMethod === 'pix';
+  const total = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
+  const cardFee = isPix ? 0 : batchConfig.cardFee;
+  const netBeforeTax = total - cardFee;
+  const taxes = Math.round(netBeforeTax * batchConfig.taxRate);
+  const netAfterTax = netBeforeTax - taxes;
+  
+  const hasVendor = !!reg.vendor?.trim();
+  const vendorComm = hasVendor ? Math.round(total * batchConfig.vendorRate) : 0;
+  
+  // When no vendor: split 2/3 MM and 1/3 HF from net after tax
+  // When vendor: use configured rates from net after tax minus vendor commission
+  const distributableAmount = netAfterTax - vendorComm;
+  
+  let mmComm: number;
+  let hfComm: number;
+  
+  if (hasVendor) {
+    mmComm = Math.round(distributableAmount * batchConfig.mmRate);
+    hfComm = Math.round(distributableAmount * batchConfig.hfRate);
+  } else {
+    // 2/3 for MM, 1/3 for HF
+    mmComm = Math.round(distributableAmount * (2/3));
+    hfComm = Math.round(distributableAmount * (1/3));
+  }
+  
+  return {
+    total,
+    cardFee,
+    netBeforeTax,
+    taxes,
+    netAfterTax,
+    vendorComm,
+    mmComm,
+    hfComm,
+  };
+}
+
 function MentorshipRegistrationsSection() {
   const { toast } = useToast();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -610,6 +693,10 @@ function MentorshipRegistrationsSection() {
   const [paymentStatus, setPaymentStatus] = useState<'pendente' | 'pago' | 'parcial'>('pendente');
   const [paidAmount, setPaidAmount] = useState('');
   const [remainingPaymentDate, setRemainingPaymentDate] = useState('');
+  const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
+  const [vendorValue, setVendorValue] = useState('');
+  const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
+  const [batchValue, setBatchValue] = useState<number>(1);
 
   const PIX_TOTAL = 8000;
 
@@ -679,6 +766,38 @@ function MentorshipRegistrationsSection() {
       });
     },
   });
+
+  const vendorMutation = useMutation({
+    mutationFn: async (data: { id: string; vendor: string | null; batch?: number }) => {
+      await apiRequest("PATCH", `/api/registrations/${data.id}/vendor`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      setEditingVendorId(null);
+      setEditingBatchId(null);
+      toast({
+        title: "Vendedor atualizado",
+        description: "O vendedor foi atualizado com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o vendedor.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveVendor = (id: string) => {
+    vendorMutation.mutate({ id, vendor: vendorValue.trim() || null, batch: batchValue });
+  };
+
+  const startEditingVendor = (reg: Registration) => {
+    setEditingVendorId(reg.id);
+    setVendorValue(reg.vendor || '');
+    setBatchValue(reg.batch || 1);
+  };
 
   const handleDelete = (id: string, name: string) => {
     if (confirm(`Tem certeza que deseja excluir a inscrição de "${name}"?`)) {
@@ -811,6 +930,78 @@ function MentorshipRegistrationsSection() {
         </Card>
       </div>
 
+      {/* Commission Reference Table */}
+      <Card className="bg-gray-900 border-gray-700">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-green-400" />
+            Tabela de Comissões por Lote
+          </CardTitle>
+          <CardDescription className="text-gray-400">
+            Taxa de cartão: parcelado apenas | Impostos: 11,75% | MM: 63,3% | HF: 31,7% | Comissão Vendedor: 5%
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-700">
+                  <TableHead className="text-gray-400">Lote</TableHead>
+                  <TableHead className="text-gray-400">Prazo</TableHead>
+                  <TableHead className="text-gray-400">Tipo</TableHead>
+                  <TableHead className="text-gray-400">Parcelas</TableHead>
+                  <TableHead className="text-gray-400">Valor</TableHead>
+                  <TableHead className="text-gray-400">Total</TableHead>
+                  <TableHead className="text-gray-400">Taxa Cartão</TableHead>
+                  <TableHead className="text-gray-400">Líquido s/ Impostos</TableHead>
+                  <TableHead className="text-gray-400">Impostos (11,75%)</TableHead>
+                  <TableHead className="text-gray-400">Líquido c/ Impostos</TableHead>
+                  <TableHead className="text-gray-400 text-blue-400">MM (63,3%)</TableHead>
+                  <TableHead className="text-gray-400 text-purple-400">HF (31,7%)</TableHead>
+                  <TableHead className="text-gray-400 text-yellow-400">Vendedor (5%)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {BATCH_CONFIG.map((batch) => (
+                  <>
+                    <TableRow key={`${batch.batch}-pix`} className="border-gray-800">
+                      <TableCell className="text-white font-medium">{batch.batch}</TableCell>
+                      <TableCell className="text-gray-300">{batch.deadline}</TableCell>
+                      <TableCell><Badge className="bg-blue-600">PIX</Badge></TableCell>
+                      <TableCell className="text-gray-300">1</TableCell>
+                      <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-white font-medium">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-gray-500">-</TableCell>
+                      <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-red-400">- R$ {Math.round(batch.pixPrice * batch.taxRate).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-green-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate)).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-blue-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-purple-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-yellow-400">R$ {Math.round(batch.pixPrice * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
+                    </TableRow>
+                    <TableRow key={`${batch.batch}-card`} className="border-gray-800">
+                      <TableCell className="text-white font-medium">{batch.batch}</TableCell>
+                      <TableCell className="text-gray-300">{batch.deadline}</TableCell>
+                      <TableCell><Badge className="bg-gray-600">Cartão</Badge></TableCell>
+                      <TableCell className="text-gray-300">5</TableCell>
+                      <TableCell className="text-gray-300">R$ {batch.installmentPrice.toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-white font-medium">R$ {batch.installmentTotal.toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-red-400">- R$ {batch.cardFee.toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-gray-300">R$ {(batch.installmentTotal - batch.cardFee).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-red-400">- R$ {Math.round((batch.installmentTotal - batch.cardFee) * batch.taxRate).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-green-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate)).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-blue-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-purple-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell className="text-yellow-400">R$ {Math.round(batch.installmentTotal * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
+                    </TableRow>
+                  </>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Registrations Table */}
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
@@ -829,27 +1020,98 @@ function MentorshipRegistrationsSection() {
                     <TableHead className="text-gray-400">Nome</TableHead>
                     <TableHead className="text-gray-400">Email</TableHead>
                     <TableHead className="text-gray-400">Telefone</TableHead>
+                    <TableHead className="text-gray-400">Lote</TableHead>
+                    <TableHead className="text-gray-400">Vendedor</TableHead>
                     <TableHead className="text-gray-400">Forma de Pagamento</TableHead>
                     <TableHead className="text-gray-400">Status Pagamento</TableHead>
+                    <TableHead className="text-gray-400 text-blue-400">MM</TableHead>
+                    <TableHead className="text-gray-400 text-purple-400">HF</TableHead>
+                    <TableHead className="text-gray-400 text-yellow-400">Vendedor</TableHead>
                     <TableHead className="text-gray-400">Data de Inscrição</TableHead>
                     <TableHead className="w-[100px] text-gray-400">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {registrations.map((reg, index) => (
+                  {registrations.map((reg, index) => {
+                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                    const commissions = calculateCommissions(reg, batchConfig);
+                    
+                    return (
                     <TableRow key={reg.id} data-testid={`row-registration-${index}`} className="border-gray-800">
                       <TableCell className="font-medium text-white">{index + 1}</TableCell>
                       <TableCell className="text-white">{reg.name}</TableCell>
                       <TableCell className="text-gray-300">{reg.email}</TableCell>
                       <TableCell className="text-gray-300">{reg.phone}</TableCell>
                       <TableCell>
+                        {editingVendorId === reg.id ? (
+                          <Select value={batchValue.toString()} onValueChange={(val) => setBatchValue(Number(val))}>
+                            <SelectTrigger className="w-20 bg-gray-800 border-gray-600">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-gray-800 border-gray-600">
+                              <SelectItem value="1">1</SelectItem>
+                              <SelectItem value="2">2</SelectItem>
+                              <SelectItem value="3">3</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge className="bg-primary">{reg.batch || 1}</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editingVendorId === reg.id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              value={vendorValue}
+                              onChange={(e) => setVendorValue(e.target.value)}
+                              placeholder="Vendedor"
+                              className="w-24 h-8 bg-gray-800 border-gray-600 text-sm"
+                              data-testid={`input-vendor-${index}`}
+                            />
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => handleSaveVendor(reg.id)}
+                              disabled={vendorMutation.isPending}
+                              className="h-8 w-8"
+                              data-testid={`button-save-vendor-${index}`}
+                            >
+                              <Save className="w-4 h-4 text-green-400" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => setEditingVendorId(null)}
+                              className="h-8 w-8"
+                            >
+                              <X className="w-4 h-4 text-gray-400" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span className={reg.vendor ? "text-yellow-400" : "text-gray-500"}>
+                              {reg.vendor || "-"}
+                            </span>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => startEditingVendor(reg)}
+                              className="h-6 w-6"
+                              data-testid={`button-edit-vendor-${index}`}
+                            >
+                              <Edit2 className="w-3 h-3 text-gray-400" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Badge 
                           className={reg.paymentMethod === 'pix' ? 'bg-blue-600' : 'bg-gray-600'}
                           data-testid={`badge-payment-${index}`}
                         >
                           {reg.paymentMethod === 'pix' 
-                            ? 'PIX (R$ 8.000)' 
-                            : '5x R$ 1.750 (Cartão)'}
+                            ? `PIX (R$ ${batchConfig.pixPrice.toLocaleString('pt-BR')})` 
+                            : `5x R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR')}`}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -923,6 +1185,15 @@ function MentorshipRegistrationsSection() {
                           </Button>
                         )}
                       </TableCell>
+                      <TableCell className="text-blue-400 font-medium">
+                        R$ {commissions.mmComm.toLocaleString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="text-purple-400 font-medium">
+                        R$ {commissions.hfComm.toLocaleString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="text-yellow-400 font-medium">
+                        {commissions.vendorComm > 0 ? `R$ ${commissions.vendorComm.toLocaleString('pt-BR')}` : '-'}
+                      </TableCell>
                       <TableCell className="text-gray-300">
                         {new Date(reg.createdAt).toLocaleString('pt-BR', {
                           day: '2-digit',
@@ -945,7 +1216,8 @@ function MentorshipRegistrationsSection() {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

@@ -869,6 +869,19 @@ function MentorshipRegistrationsSection() {
   const totalCount = registrations?.length || 0;
   const pixCount = registrations?.filter(r => r.paymentMethod === 'pix').length || 0;
   const installmentsCount = totalCount - pixCount;
+  
+  // Calculate total commissions
+  const totalCommissions = (registrations || []).reduce((acc, reg) => {
+    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+    const comms = calculateCommissions(reg, batchConfig);
+    return {
+      mm: acc.mm + comms.mmComm,
+      hf: acc.hf + comms.hfComm,
+      vendor: acc.vendor + comms.vendorComm,
+      gross: acc.gross + comms.gross,
+      net: acc.net + comms.netAfterTax
+    };
+  }, { mm: 0, hf: 0, vendor: 0, gross: 0, net: 0 });
 
   return (
     <div className="space-y-6">
@@ -926,6 +939,59 @@ function MentorshipRegistrationsSection() {
                 <span className="font-medium text-white">{installmentsCount}</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Commission Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card className="bg-gray-900 border-gray-700">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-white">Faturamento Bruto</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold text-green-400">R$ {totalCommissions.gross.toLocaleString('pt-BR')}</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gray-900 border-gray-700">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-white">Líquido (após impostos)</CardTitle>
+            <DollarSign className="h-4 w-4 text-gray-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold text-white">R$ {totalCommissions.net.toLocaleString('pt-BR')}</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gray-900 border-gray-700 border-blue-500/30">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-blue-400">MM (Marcelo)</CardTitle>
+            <User className="h-4 w-4 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold text-blue-400">R$ {totalCommissions.mm.toLocaleString('pt-BR')}</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gray-900 border-gray-700 border-purple-500/30">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-purple-400">HF (Hamilton)</CardTitle>
+            <User className="h-4 w-4 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold text-purple-400">R$ {totalCommissions.hf.toLocaleString('pt-BR')}</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gray-900 border-gray-700 border-yellow-500/30">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-yellow-400">Vendedores</CardTitle>
+            <UserCheck className="h-4 w-4 text-yellow-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold text-yellow-400">R$ {totalCommissions.vendor.toLocaleString('pt-BR')}</div>
           </CardContent>
         </Card>
       </div>

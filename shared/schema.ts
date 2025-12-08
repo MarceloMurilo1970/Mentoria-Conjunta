@@ -16,6 +16,8 @@ export const registrations = pgTable("registrations", {
   paidAmount: integer("paid_amount").default(0),
   totalAmount: integer("total_amount").default(0),
   remainingPaymentDate: timestamp("remaining_payment_date"),
+  vendor: text("vendor"),
+  batch: integer("batch").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

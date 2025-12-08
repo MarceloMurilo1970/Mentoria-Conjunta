@@ -2,6 +2,13 @@ import { type Registration, type InsertRegistration, registrations } from "@shar
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
+export interface PaymentUpdate {
+  paymentStatus: 'pendente' | 'pago' | 'parcial';
+  paidAmount?: number;
+  totalAmount?: number;
+  remainingPaymentDate?: Date | null;
+}
+
 export interface IStorage {
   getRegistration(id: string): Promise<Registration | undefined>;
   getRegistrationByEmail(email: string): Promise<Registration | undefined>;
@@ -9,6 +16,7 @@ export interface IStorage {
   createRegistration(registration: InsertRegistration): Promise<Registration>;
   deleteRegistration(id: string): Promise<boolean>;
   updatePaymentReceived(id: string, received: boolean): Promise<Registration | undefined>;
+  updatePaymentStatus(id: string, update: PaymentUpdate): Promise<Registration | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -39,6 +47,22 @@ export class DbStorage implements IStorage {
   async updatePaymentReceived(id: string, received: boolean): Promise<Registration | undefined> {
     const result = await db.update(registrations)
       .set({ paymentReceived: received })
+      .where(eq(registrations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updatePaymentStatus(id: string, update: PaymentUpdate): Promise<Registration | undefined> {
+    const updateData: Partial<Registration> = {
+      paymentStatus: update.paymentStatus,
+      paymentReceived: update.paymentStatus === 'pago',
+      paidAmount: update.paidAmount ?? 0,
+      totalAmount: update.totalAmount ?? 8000,
+      remainingPaymentDate: update.remainingPaymentDate ?? null,
+    };
+
+    const result = await db.update(registrations)
+      .set(updateData)
       .where(eq(registrations.id, id))
       .returning();
     return result[0];

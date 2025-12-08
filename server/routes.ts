@@ -205,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update payment received status
+  // Update payment received status (legacy)
   app.patch("/api/registrations/:id/payment", async (req, res) => {
     try {
       const { id } = req.params;
@@ -220,6 +220,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updated) {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
+      
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      res.status(500).json({ error: "Erro ao atualizar status de pagamento" });
+    }
+  });
+
+  // Update payment status with full details (PIX only)
+  app.patch("/api/registrations/:id/payment-status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { paymentStatus, paidAmount, remainingPaymentDate } = req.body;
+      
+      // Validate payment status
+      if (!['pendente', 'pago', 'parcial'].includes(paymentStatus)) {
+        return res.status(400).json({ error: "Status de pagamento inválido" });
+      }
+      
+      // Get current registration to verify it's PIX
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      if (registration.paymentMethod !== 'pix') {
+        return res.status(400).json({ error: "Esta funcionalidade é apenas para pagamentos PIX" });
+      }
+
+      const PIX_TOTAL = 8000;
+      let validatedPaidAmount = 0;
+
+      // Validate partial payment fields
+      if (paymentStatus === 'parcial') {
+        const paidNum = Number(paidAmount);
+        if (isNaN(paidNum) || paidNum <= 0 || paidNum >= PIX_TOTAL) {
+          return res.status(400).json({ error: "Valor pago deve ser maior que 0 e menor que o total" });
+        }
+        validatedPaidAmount = paidNum;
+      } else if (paymentStatus === 'pago') {
+        validatedPaidAmount = PIX_TOTAL;
+      }
+      
+      const updated = await storage.updatePaymentStatus(id, {
+        paymentStatus,
+        paidAmount: validatedPaidAmount,
+        totalAmount: PIX_TOTAL,
+        remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? new Date(remainingPaymentDate) : null,
+      });
       
       res.json({ success: true, registration: updated });
     } catch (error) {

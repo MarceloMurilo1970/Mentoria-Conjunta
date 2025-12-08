@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Registration } from "@shared/schema";
@@ -603,6 +605,13 @@ function EventRegistrationsSection() {
 
 function MentorshipRegistrationsSection() {
   const { toast } = useToast();
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'pendente' | 'pago' | 'parcial'>('pendente');
+  const [paidAmount, setPaidAmount] = useState('');
+  const [remainingPaymentDate, setRemainingPaymentDate] = useState('');
+
+  const PIX_TOTAL = 8000;
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ['/api/registrations'],
@@ -650,6 +659,27 @@ function MentorshipRegistrationsSection() {
     },
   });
 
+  const paymentStatusMutation = useMutation({
+    mutationFn: async (data: { id: string; paymentStatus: string; paidAmount?: number; totalAmount?: number; remainingPaymentDate?: string | null }) => {
+      await apiRequest("PATCH", `/api/registrations/${data.id}/payment-status`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      setPaymentModalOpen(false);
+      toast({
+        title: "Status atualizado",
+        description: "O status do pagamento foi atualizado com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDelete = (id: string, name: string) => {
     if (confirm(`Tem certeza que deseja excluir a inscrição de "${name}"?`)) {
       deleteMutation.mutate(id);
@@ -658,6 +688,46 @@ function MentorshipRegistrationsSection() {
 
   const handleTogglePayment = (id: string, currentStatus: boolean) => {
     paymentMutation.mutate({ id, received: !currentStatus });
+  };
+
+  const openPaymentModal = (reg: Registration) => {
+    setSelectedRegistration(reg);
+    setPaymentStatus((reg.paymentStatus as 'pendente' | 'pago' | 'parcial') || 'pendente');
+    setPaidAmount(reg.paidAmount?.toString() || '');
+    setRemainingPaymentDate(reg.remainingPaymentDate ? new Date(reg.remainingPaymentDate).toISOString().split('T')[0] : '');
+    setPaymentModalOpen(true);
+  };
+
+  const handleSavePaymentStatus = () => {
+    if (!selectedRegistration) return;
+
+    // Validate partial payment fields
+    if (paymentStatus === 'parcial') {
+      const paidNum = Number(paidAmount);
+      if (isNaN(paidNum) || paidNum <= 0 || paidNum >= PIX_TOTAL) {
+        toast({
+          title: "Valor inválido",
+          description: "O valor pago deve ser maior que 0 e menor que R$ 8.000",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const paidAmountNum = paymentStatus === 'parcial' ? Number(paidAmount) : (paymentStatus === 'pago' ? PIX_TOTAL : 0);
+
+    paymentStatusMutation.mutate({
+      id: selectedRegistration.id,
+      paymentStatus,
+      paidAmount: paidAmountNum,
+      totalAmount: PIX_TOTAL,
+      remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? remainingPaymentDate : null,
+    });
+  };
+
+  const getRemainingAmount = () => {
+    const paid = Number(paidAmount) || 0;
+    return PIX_TOTAL - paid;
   };
 
   if (isLoading) {
@@ -783,29 +853,75 @@ function MentorshipRegistrationsSection() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant={reg.paymentReceived ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleTogglePayment(reg.id, reg.paymentReceived)}
-                          disabled={paymentMutation.isPending}
-                          data-testid={`button-payment-${index}`}
-                          className={reg.paymentReceived 
-                            ? "bg-green-600 hover:bg-green-700" 
-                            : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
-                          }
-                        >
-                          {reg.paymentReceived ? (
-                            <>
-                              <Check className="w-4 h-4 mr-1" />
-                              Pago
-                            </>
-                          ) : (
-                            <>
-                              <X className="w-4 h-4 mr-1" />
-                              Pendente
-                            </>
-                          )}
-                        </Button>
+                        {reg.paymentMethod === 'pix' ? (
+                          <div className="space-y-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openPaymentModal(reg)}
+                              data-testid={`button-payment-${index}`}
+                              className={
+                                reg.paymentStatus === 'pago' 
+                                  ? "bg-green-600 hover:bg-green-700 border-green-600" 
+                                  : reg.paymentStatus === 'parcial'
+                                    ? "bg-orange-600 hover:bg-orange-700 border-orange-600"
+                                    : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
+                              }
+                            >
+                              {reg.paymentStatus === 'pago' ? (
+                                <>
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Pago
+                                </>
+                              ) : reg.paymentStatus === 'parcial' ? (
+                                <>
+                                  <DollarSign className="w-4 h-4 mr-1" />
+                                  Parcial
+                                </>
+                              ) : (
+                                <>
+                                  <X className="w-4 h-4 mr-1" />
+                                  Pendente
+                                </>
+                              )}
+                            </Button>
+                            {reg.paymentStatus === 'parcial' && (
+                              <div className="text-xs text-gray-400">
+                                <div>Pago: R$ {reg.paidAmount?.toLocaleString('pt-BR')}</div>
+                                <div className="text-orange-400">Saldo: R$ {(8000 - (reg.paidAmount || 0)).toLocaleString('pt-BR')}</div>
+                                {reg.remainingPaymentDate && (
+                                  <div className="text-blue-400">
+                                    Previsto: {new Date(reg.remainingPaymentDate).toLocaleDateString('pt-BR')}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <Button
+                            variant={reg.paymentReceived ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleTogglePayment(reg.id, reg.paymentReceived)}
+                            disabled={paymentMutation.isPending}
+                            data-testid={`button-payment-${index}`}
+                            className={reg.paymentReceived 
+                              ? "bg-green-600 hover:bg-green-700" 
+                              : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
+                            }
+                          >
+                            {reg.paymentReceived ? (
+                              <>
+                                <Check className="w-4 h-4 mr-1" />
+                                Pago
+                              </>
+                            ) : (
+                              <>
+                                <X className="w-4 h-4 mr-1" />
+                                Pendente
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </TableCell>
                       <TableCell className="text-gray-300">
                         {new Date(reg.createdAt).toLocaleString('pt-BR', {
@@ -840,6 +956,91 @@ function MentorshipRegistrationsSection() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Pagamento PIX</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {selectedRegistration?.name} - Total: R$ 8.000,00
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="paymentStatus">Status do Pagamento</Label>
+              <Select value={paymentStatus} onValueChange={(val) => setPaymentStatus(val as 'pendente' | 'pago' | 'parcial')}>
+                <SelectTrigger className="bg-gray-800 border-gray-600">
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-600">
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                  <SelectItem value="pago">Pago (Total)</SelectItem>
+                  <SelectItem value="parcial">Parcial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {paymentStatus === 'parcial' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="paidAmount">Valor Pago (R$)</Label>
+                  <Input
+                    id="paidAmount"
+                    type="number"
+                    value={paidAmount}
+                    onChange={(e) => setPaidAmount(e.target.value)}
+                    placeholder="Ex: 4000"
+                    className="bg-gray-800 border-gray-600"
+                  />
+                </div>
+
+                <div className="p-3 bg-gray-800 rounded-lg space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Valor Total:</span>
+                    <span className="text-white">R$ 8.000,00</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Valor Pago:</span>
+                    <span className="text-green-400">R$ {(Number(paidAmount) || 0).toLocaleString('pt-BR')},00</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-semibold">
+                    <span className="text-orange-400">Saldo Pendente:</span>
+                    <span className="text-orange-400">R$ {getRemainingAmount().toLocaleString('pt-BR')},00</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="remainingPaymentDate">Data Prevista do Pagamento do Saldo</Label>
+                  <Input
+                    id="remainingPaymentDate"
+                    type="date"
+                    value={remainingPaymentDate}
+                    onChange={(e) => setRemainingPaymentDate(e.target.value)}
+                    className="bg-gray-800 border-gray-600"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPaymentModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSavePaymentStatus}
+              disabled={paymentStatusMutation.isPending}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {paymentStatusMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

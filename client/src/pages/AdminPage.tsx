@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -1311,8 +1311,8 @@ function MentorshipRegistrationsSection() {
                   </TableHeader>
                   <TableBody>
                     {BATCH_CONFIG.map((batch) => (
-                      <>
-                        <TableRow key={`${batch.batch}-pix`} className="border-gray-800">
+                      <Fragment key={batch.batch}>
+                        <TableRow className="border-gray-800">
                           <TableCell className="text-white font-medium">{batch.batch}</TableCell>
                           <TableCell className="text-gray-300">{batch.deadline}</TableCell>
                           <TableCell><Badge className="bg-blue-600">PIX</Badge></TableCell>
@@ -1342,7 +1342,7 @@ function MentorshipRegistrationsSection() {
                           <TableCell className="text-purple-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
                           <TableCell className="text-yellow-400">R$ {Math.round(batch.installmentTotal * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
                         </TableRow>
-                      </>
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>

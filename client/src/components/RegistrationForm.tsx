@@ -56,6 +56,10 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
   });
 
   const selectedPayment = watch("paymentMethod");
+  const cpfCnpjValue = watch("cpfCnpj");
+  
+  // Check if it's a CNPJ (14+ digits after removing formatting)
+  const isCnpj = (cpfCnpjValue?.replace(/\D/g, '') || '').length >= 14;
 
   const registrationMutation = useMutation({
     mutationFn: async (data: InsertRegistration) => {
@@ -269,6 +273,22 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
               <p className="text-sm text-destructive">{errors.cpfCnpj.message}</p>
             )}
           </div>
+
+          {isCnpj && (
+            <div className="space-y-2">
+              <Label htmlFor="razaoSocial">Razão Social *</Label>
+              <Input
+                id="razaoSocial"
+                {...register("razaoSocial")}
+                placeholder="Nome da empresa"
+                data-testid="input-razao-social"
+                className={errors.razaoSocial ? "border-destructive" : ""}
+              />
+              {errors.razaoSocial && (
+                <p className="text-sm text-destructive">{errors.razaoSocial.message}</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4">
             <Label>Forma de Pagamento * <span className="text-primary font-semibold">({batchName})</span></Label>

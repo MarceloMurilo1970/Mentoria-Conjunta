@@ -104,6 +104,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertRegistrationSchema.parse(req.body);
       
+      // Validate razaoSocial is required for CNPJ (14+ digits)
+      const cpfCnpjDigits = validatedData.cpfCnpj.replace(/\D/g, '');
+      if (cpfCnpjDigits.length >= 14 && !validatedData.razaoSocial?.trim()) {
+        return res.status(400).json({ 
+          error: "Razão Social é obrigatória para CNPJ" 
+        });
+      }
+      
       // Block test emails and specific admin email
       if (validatedData.email.endsWith('@test.com') || 
           validatedData.email === 'marcelo.murilo.silva@gmail.com') {

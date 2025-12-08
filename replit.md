@@ -52,7 +52,33 @@ Preferred communication style: Simple, everyday language.
 - **Third-Party UI Libraries:** Radix UI for accessible components, Lucide React for iconography, Embla Carousel, CMDK.
 - **Google Sheets Integration:** Replit's native Google Sheets connector for secure OAuth, used to save event registrations to a specific spreadsheet (ID: 1-fCalJZRLnerVeTsPQhetEOiM816FxLWquS6kX47o1k) with automatic timestamping.
 
-## Recent Changes (November 26, 2025)
+## Recent Changes (December 8, 2025)
+
+**Admin Panel - Commission System & Vendor Tracking:**
+- **Batch-Based Pricing:** Three pricing tiers implemented:
+  - Lote 1 (até 07/12/2025): PIX R$8.000 or 5x R$1.775
+  - Lote 2 (até 31/12/2025): PIX R$8.700 or 5x R$1.930
+  - Lote 3 (até 04/01/2026): PIX R$9.400 or 5x R$2.085
+- **Commission Calculation System:**
+  - `calculateCommissions` function calculates MM/HF/Vendor commissions based on batch, payment method, and vendor presence
+  - Tax rate: 11.75% deducted before commission split
+  - Card fees: Applied only to installment payments
+  - When vendor present: MM 63.3%, HF 31.7%, Vendor 5%
+  - When no vendor: MM 2/3, HF 1/3 (split after taxes)
+- **Commission Reference Table:** Visual table showing all pricing scenarios with calculated commissions per batch and payment type
+- **Commission Summary Cards:** Five cards showing aggregated totals (Gross, Net after taxes, MM, HF, Vendors)
+- **Vendor & Batch Editing:** Editable vendor field and batch selector in registration table with inline editing and save/cancel buttons
+- **Commission Columns:** MM, HF, and Vendor commission columns in registration table with color-coded values (blue, purple, yellow)
+- **Dynamic PIX Pricing:** Payment modal and balance calculations now use batch-specific prices instead of hardcoded R$8.000
+
+**Database Schema Updates:**
+- Added `vendor` field (varchar, nullable) for tracking referral vendors
+- Added `batch` field (integer, default 1) for pricing tier tracking
+
+**API Endpoints:**
+- `PATCH /api/registrations/:id/vendor` - Update vendor and batch for a registration
+
+## Previous Changes (November 26, 2025)
 
 **Latest Updates - Session Deliverables & Module Restructure:**
 - **Session Cards with Deliverables:** Each of the 8 Módulo 1 sessions now includes a dedicated "Entregas" section with document icon

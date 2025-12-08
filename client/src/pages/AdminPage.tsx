@@ -823,30 +823,38 @@ function MentorshipRegistrationsSection() {
     // Validate partial payment fields
     if (paymentStatus === 'parcial') {
       const paidNum = Number(paidAmount);
-      if (isNaN(paidNum) || paidNum <= 0 || paidNum >= PIX_TOTAL) {
+      const batchTotal = getSelectedBatchConfig().pixPrice;
+      if (isNaN(paidNum) || paidNum <= 0 || paidNum >= batchTotal) {
         toast({
           title: "Valor inválido",
-          description: "O valor pago deve ser maior que 0 e menor que R$ 8.000",
+          description: `O valor pago deve ser maior que 0 e menor que R$ ${getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR')}`,
           variant: "destructive",
         });
         return;
       }
     }
 
-    const paidAmountNum = paymentStatus === 'parcial' ? Number(paidAmount) : (paymentStatus === 'pago' ? PIX_TOTAL : 0);
+    const batchPixPrice = getSelectedBatchConfig().pixPrice;
+    const paidAmountNum = paymentStatus === 'parcial' ? Number(paidAmount) : (paymentStatus === 'pago' ? batchPixPrice : 0);
 
     paymentStatusMutation.mutate({
       id: selectedRegistration.id,
       paymentStatus,
       paidAmount: paidAmountNum,
-      totalAmount: PIX_TOTAL,
+      totalAmount: batchPixPrice,
       remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? remainingPaymentDate : null,
     });
   };
 
+  const getSelectedBatchConfig = () => {
+    if (!selectedRegistration) return BATCH_CONFIG[0];
+    return BATCH_CONFIG.find(b => b.batch === (selectedRegistration.batch || 1)) || BATCH_CONFIG[0];
+  };
+
   const getRemainingAmount = () => {
     const paid = Number(paidAmount) || 0;
-    return PIX_TOTAL - paid;
+    const batchConfig = getSelectedBatchConfig();
+    return batchConfig.pixPrice - paid;
   };
 
   if (isLoading) {
@@ -1216,7 +1224,7 @@ function MentorshipRegistrationsSection() {
                             {reg.paymentStatus === 'parcial' && (
                               <div className="text-xs text-gray-400">
                                 <div>Pago: R$ {reg.paidAmount?.toLocaleString('pt-BR')}</div>
-                                <div className="text-orange-400">Saldo: R$ {(8000 - (reg.paidAmount || 0)).toLocaleString('pt-BR')}</div>
+                                <div className="text-orange-400">Saldo: R$ {(batchConfig.pixPrice - (reg.paidAmount || 0)).toLocaleString('pt-BR')}</div>
                                 {reg.remainingPaymentDate && (
                                   <div className="text-blue-400">
                                     Previsto: {new Date(reg.remainingPaymentDate).toLocaleDateString('pt-BR')}
@@ -1300,7 +1308,7 @@ function MentorshipRegistrationsSection() {
           <DialogHeader>
             <DialogTitle>Gerenciar Pagamento PIX</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {selectedRegistration?.name} - Total: R$ 8.000,00
+              {selectedRegistration?.name} - Lote {selectedRegistration?.batch || 1} - Total: R$ {getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR')},00
             </DialogDescription>
           </DialogHeader>
           
@@ -1336,7 +1344,7 @@ function MentorshipRegistrationsSection() {
                 <div className="p-3 bg-gray-800 rounded-lg space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Valor Total:</span>
-                    <span className="text-white">R$ 8.000,00</span>
+                    <span className="text-white">R$ {getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR')},00</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Valor Pago:</span>

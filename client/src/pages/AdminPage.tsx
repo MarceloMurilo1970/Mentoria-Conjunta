@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -701,6 +701,9 @@ function MentorshipRegistrationsSection() {
   const [editingObsId, setEditingObsId] = useState<string | null>(null);
   const [obsValue, setObsValue] = useState('');
   const [commissionTableOpen, setCommissionTableOpen] = useState(false);
+  const [vendorDashboardOpen, setVendorDashboardOpen] = useState(false);
+  const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
+  const [batchValue, setBatchValue] = useState<number>(1);
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ['/api/registrations'],
@@ -811,6 +814,67 @@ function MentorshipRegistrationsSection() {
     },
   });
 
+  const invoiceMutation = useMutation({
+    mutationFn: async (data: { id: string; invoiceIssued: boolean; invoiceIssuedAt: string | null }) => {
+      await apiRequest("PATCH", `/api/registrations/${data.id}/invoice`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({
+        title: "NF atualizada",
+        description: "O status da nota fiscal foi atualizado.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a NF.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const batchMutation = useMutation({
+    mutationFn: async (data: { id: string; batch: number }) => {
+      await apiRequest("PATCH", `/api/registrations/${data.id}/batch`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      setEditingBatchId(null);
+      toast({
+        title: "Lote atualizado",
+        description: "O lote foi alterado com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o lote.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const vendorCommissionMutation = useMutation({
+    mutationFn: async (data: { id: string; vendorCommissionPaid: number; vendorCommissionPaidAt: string | null }) => {
+      await apiRequest("PATCH", `/api/registrations/${data.id}/vendor-commission`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({
+        title: "Comissão atualizada",
+        description: "O pagamento de comissão foi registrado.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a comissão.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSaveVendor = (id: string) => {
     vendorMutation.mutate({ id, vendor: vendorValue.trim() || null });
   };
@@ -827,6 +891,24 @@ function MentorshipRegistrationsSection() {
   const startEditingVendor = (reg: Registration) => {
     setEditingVendorId(reg.id);
     setVendorValue(reg.vendor || '');
+  };
+
+  const startEditingBatch = (reg: Registration) => {
+    setEditingBatchId(reg.id);
+    setBatchValue(reg.batch || 1);
+  };
+
+  const handleSaveBatch = (id: string) => {
+    batchMutation.mutate({ id, batch: batchValue });
+  };
+
+  const handleToggleInvoice = (reg: Registration) => {
+    const newIssued = !reg.invoiceIssued;
+    invoiceMutation.mutate({
+      id: reg.id,
+      invoiceIssued: newIssued,
+      invoiceIssuedAt: newIssued ? new Date().toISOString() : null,
+    });
   };
 
   const handleDelete = (id: string, name: string) => {
@@ -1034,6 +1116,101 @@ function MentorshipRegistrationsSection() {
         </Card>
       </div>
 
+      {/* Vendor Commission Dashboard - Collapsible */}
+      <Collapsible open={vendorDashboardOpen} onOpenChange={setVendorDashboardOpen}>
+        <Card className="bg-gray-900 border-gray-700 border-yellow-500/30">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-gray-800/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-yellow-400" />
+                  Dashboard de Comissões por Vendedor
+                </CardTitle>
+                {vendorDashboardOpen ? (
+                  <ChevronUp className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                )}
+              </div>
+              <CardDescription className="text-gray-400">
+                Controle de pagamentos e saldos de comissões dos vendedores
+              </CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent>
+              {(() => {
+                const vendorStats = registrations?.filter(r => r.vendor).reduce((acc, reg) => {
+                  const vendor = reg.vendor!;
+                  if (!acc[vendor]) {
+                    acc[vendor] = { 
+                      sales: 0, 
+                      totalDue: 0, 
+                      totalPaid: 0, 
+                      registrations: [] as typeof registrations 
+                    };
+                  }
+                  const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                  const commissions = calculateCommissions(reg, batchConfig);
+                  acc[vendor].sales++;
+                  acc[vendor].totalDue += commissions.vendorComm;
+                  acc[vendor].totalPaid += reg.vendorCommissionPaid || 0;
+                  acc[vendor].registrations!.push(reg);
+                  return acc;
+                }, {} as Record<string, { sales: number; totalDue: number; totalPaid: number; registrations: typeof registrations }>);
+                
+                const vendorList = Object.entries(vendorStats || {});
+                
+                if (vendorList.length === 0) {
+                  return (
+                    <div className="text-center py-4 text-gray-400">
+                      Nenhum vendedor registrado ainda.
+                    </div>
+                  );
+                }
+                
+                return (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-gray-700">
+                        <TableHead className="text-gray-400">Vendedor</TableHead>
+                        <TableHead className="text-gray-400">Vendas</TableHead>
+                        <TableHead className="text-gray-400">Total a Receber</TableHead>
+                        <TableHead className="text-gray-400">Já Recebeu</TableHead>
+                        <TableHead className="text-gray-400">Saldo</TableHead>
+                        <TableHead className="text-gray-400">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {vendorList.map(([vendor, stats]) => {
+                        const balance = stats.totalDue - stats.totalPaid;
+                        const isPaid = balance <= 0;
+                        return (
+                          <TableRow key={vendor} className="border-gray-800">
+                            <TableCell className="text-yellow-400 font-medium">{vendor}</TableCell>
+                            <TableCell className="text-white">{stats.sales}</TableCell>
+                            <TableCell className="text-gray-300">R$ {stats.totalDue.toLocaleString('pt-BR')}</TableCell>
+                            <TableCell className="text-green-400">R$ {stats.totalPaid.toLocaleString('pt-BR')}</TableCell>
+                            <TableCell className={balance > 0 ? "text-orange-400" : "text-green-400"}>
+                              R$ {balance.toLocaleString('pt-BR')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={isPaid ? "bg-green-600" : "bg-orange-600"}>
+                                {isPaid ? "Pago" : "Pendente"}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                );
+              })()}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       {/* Registrations Table - Two-line layout to avoid horizontal scroll */}
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
@@ -1055,7 +1232,34 @@ function MentorshipRegistrationsSection() {
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="text-gray-500 text-sm font-mono w-6">{index + 1}</span>
                       <span className="text-white font-medium flex-1 min-w-[150px]">{reg.name}</span>
-                      <Badge className="bg-primary" title="Lote (calculado pela data)">{reg.batch || 1}</Badge>
+                      {editingBatchId === reg.id ? (
+                        <div className="flex items-center gap-1">
+                          <Select value={batchValue.toString()} onValueChange={(val) => setBatchValue(Number(val))}>
+                            <SelectTrigger className="w-16 h-7 bg-gray-800 border-gray-600 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-gray-800 border-gray-600">
+                              <SelectItem value="1">1</SelectItem>
+                              <SelectItem value="2">2</SelectItem>
+                              <SelectItem value="3">3</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button size="icon" variant="ghost" onClick={() => handleSaveBatch(reg.id)} disabled={batchMutation.isPending} className="h-7 w-7">
+                            <Save className="w-3 h-3 text-green-400" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => setEditingBatchId(null)} className="h-7 w-7">
+                            <X className="w-3 h-3 text-gray-400" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Badge 
+                          className="bg-primary cursor-pointer hover:bg-primary/80" 
+                          title="Clique para alterar o lote"
+                          onClick={() => startEditingBatch(reg)}
+                        >
+                          Lote {reg.batch || 1}
+                        </Badge>
+                      )}
                       <Badge 
                         className={reg.paymentMethod === 'pix' ? 'bg-blue-600' : 'bg-gray-600'}
                         data-testid={`badge-payment-${index}`}
@@ -1208,7 +1412,47 @@ function MentorshipRegistrationsSection() {
                       )}
                     </div>
                     
-                    {/* Fourth Row: Observations */}
+                    {/* Fourth Row: NF Control */}
+                    <div className="flex flex-wrap items-center gap-4 pl-6 border-t border-gray-800 pt-3">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-500 text-xs">CPF/CNPJ:</span>
+                        <span className="text-gray-300 text-sm">{reg.cpfCnpj || '-'}</span>
+                        {reg.razaoSocial && (
+                          <>
+                            <span className="text-gray-600">|</span>
+                            <span className="text-gray-400 text-sm">{reg.razaoSocial}</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 text-xs">NF:</span>
+                        <Button
+                          size="sm"
+                          variant={reg.invoiceIssued ? "default" : "outline"}
+                          onClick={() => handleToggleInvoice(reg)}
+                          disabled={invoiceMutation.isPending}
+                          className={reg.invoiceIssued 
+                            ? "h-6 bg-green-600 hover:bg-green-700 text-xs" 
+                            : "h-6 border-gray-600 text-gray-400 text-xs"
+                          }
+                          data-testid={`button-invoice-${index}`}
+                        >
+                          {reg.invoiceIssued ? (
+                            <><Check className="w-3 h-3 mr-1" />Emitida</>
+                          ) : (
+                            <><X className="w-3 h-3 mr-1" />Pendente</>
+                          )}
+                        </Button>
+                        {reg.invoiceIssued && reg.invoiceIssuedAt && (
+                          <span className="text-green-400 text-xs">
+                            em {new Date(reg.invoiceIssuedAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Fifth Row: Observations */}
                     <div className="pl-6 border-t border-gray-800 pt-3">
                       <div className="flex items-start gap-2">
                         <MessageCircle className="w-4 h-4 text-gray-500 mt-1" />

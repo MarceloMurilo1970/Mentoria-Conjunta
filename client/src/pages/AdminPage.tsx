@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Save, User, UserCheck } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Registration } from "@shared/schema";
@@ -696,10 +698,9 @@ function MentorshipRegistrationsSection() {
   const [remainingPaymentDate, setRemainingPaymentDate] = useState('');
   const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
   const [vendorValue, setVendorValue] = useState('');
-  const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
-  const [batchValue, setBatchValue] = useState<number>(1);
-
-  const PIX_TOTAL = 8000;
+  const [editingObsId, setEditingObsId] = useState<string | null>(null);
+  const [obsValue, setObsValue] = useState('');
+  const [commissionTableOpen, setCommissionTableOpen] = useState(false);
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ['/api/registrations'],
@@ -769,13 +770,12 @@ function MentorshipRegistrationsSection() {
   });
 
   const vendorMutation = useMutation({
-    mutationFn: async (data: { id: string; vendor: string | null; batch?: number }) => {
+    mutationFn: async (data: { id: string; vendor: string | null }) => {
       await apiRequest("PATCH", `/api/registrations/${data.id}/vendor`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
       setEditingVendorId(null);
-      setEditingBatchId(null);
       toast({
         title: "Vendedor atualizado",
         description: "O vendedor foi atualizado com sucesso.",
@@ -790,14 +790,43 @@ function MentorshipRegistrationsSection() {
     },
   });
 
+  const observationsMutation = useMutation({
+    mutationFn: async (data: { id: string; observations: string | null }) => {
+      await apiRequest("PATCH", `/api/registrations/${data.id}/observations`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      setEditingObsId(null);
+      toast({
+        title: "Observações atualizadas",
+        description: "As observações foram salvas com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as observações.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSaveVendor = (id: string) => {
-    vendorMutation.mutate({ id, vendor: vendorValue.trim() || null, batch: batchValue });
+    vendorMutation.mutate({ id, vendor: vendorValue.trim() || null });
+  };
+
+  const handleSaveObservations = (id: string) => {
+    observationsMutation.mutate({ id, observations: obsValue.trim() || null });
+  };
+
+  const startEditingObservations = (reg: Registration) => {
+    setEditingObsId(reg.id);
+    setObsValue(reg.observations || '');
   };
 
   const startEditingVendor = (reg: Registration) => {
     setEditingVendorId(reg.id);
     setVendorValue(reg.vendor || '');
-    setBatchValue(reg.batch || 1);
   };
 
   const handleDelete = (id: string, name: string) => {
@@ -1005,79 +1034,7 @@ function MentorshipRegistrationsSection() {
         </Card>
       </div>
 
-      {/* Commission Reference Table */}
-      <Card className="bg-gray-900 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-green-400" />
-            Tabela de Comissões por Lote
-          </CardTitle>
-          <CardDescription className="text-gray-400">
-            Taxa de cartão: parcelado apenas | Impostos: 11,75% | MM: 63,3% | HF: 31,7% | Comissão Vendedor: 5%
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-400">Lote</TableHead>
-                  <TableHead className="text-gray-400">Prazo</TableHead>
-                  <TableHead className="text-gray-400">Tipo</TableHead>
-                  <TableHead className="text-gray-400">Parcelas</TableHead>
-                  <TableHead className="text-gray-400">Valor</TableHead>
-                  <TableHead className="text-gray-400">Total</TableHead>
-                  <TableHead className="text-gray-400">Taxa Cartão</TableHead>
-                  <TableHead className="text-gray-400">Líquido s/ Impostos</TableHead>
-                  <TableHead className="text-gray-400">Impostos (11,75%)</TableHead>
-                  <TableHead className="text-gray-400">Líquido c/ Impostos</TableHead>
-                  <TableHead className="text-gray-400 text-blue-400">MM (63,3%)</TableHead>
-                  <TableHead className="text-gray-400 text-purple-400">HF (31,7%)</TableHead>
-                  <TableHead className="text-gray-400 text-yellow-400">Vendedor (5%)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {BATCH_CONFIG.map((batch) => (
-                  <>
-                    <TableRow key={`${batch.batch}-pix`} className="border-gray-800">
-                      <TableCell className="text-white font-medium">{batch.batch}</TableCell>
-                      <TableCell className="text-gray-300">{batch.deadline}</TableCell>
-                      <TableCell><Badge className="bg-blue-600">PIX</Badge></TableCell>
-                      <TableCell className="text-gray-300">1</TableCell>
-                      <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-white font-medium">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-gray-500">-</TableCell>
-                      <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-red-400">- R$ {Math.round(batch.pixPrice * batch.taxRate).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-green-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate)).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-blue-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-purple-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-yellow-400">R$ {Math.round(batch.pixPrice * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
-                    </TableRow>
-                    <TableRow key={`${batch.batch}-card`} className="border-gray-800">
-                      <TableCell className="text-white font-medium">{batch.batch}</TableCell>
-                      <TableCell className="text-gray-300">{batch.deadline}</TableCell>
-                      <TableCell><Badge className="bg-gray-600">Cartão</Badge></TableCell>
-                      <TableCell className="text-gray-300">5</TableCell>
-                      <TableCell className="text-gray-300">R$ {batch.installmentPrice.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-white font-medium">R$ {batch.installmentTotal.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-red-400">- R$ {batch.cardFee.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-gray-300">R$ {(batch.installmentTotal - batch.cardFee).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-red-400">- R$ {Math.round((batch.installmentTotal - batch.cardFee) * batch.taxRate).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-green-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate)).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-blue-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-purple-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="text-yellow-400">R$ {Math.round(batch.installmentTotal * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
-                    </TableRow>
-                  </>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Registrations Table */}
+      {/* Registrations Table - Two-line layout to avoid horizontal scroll */}
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
           <CardTitle className="text-white">Inscrições da Mentoria - Turma 2</CardTitle>
@@ -1087,60 +1044,108 @@ function MentorshipRegistrationsSection() {
         </CardHeader>
         <CardContent>
           {registrations && registrations.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="w-[50px] text-gray-400">#</TableHead>
-                    <TableHead className="text-gray-400">Nome</TableHead>
-                    <TableHead className="text-gray-400">Email</TableHead>
-                    <TableHead className="text-gray-400">Telefone</TableHead>
-                    <TableHead className="text-gray-400">Lote</TableHead>
-                    <TableHead className="text-gray-400">Vendedor</TableHead>
-                    <TableHead className="text-gray-400">Forma de Pagamento</TableHead>
-                    <TableHead className="text-gray-400">Status Pagamento</TableHead>
-                    <TableHead className="text-gray-400 text-blue-400">MM</TableHead>
-                    <TableHead className="text-gray-400 text-purple-400">HF</TableHead>
-                    <TableHead className="text-gray-400 text-yellow-400">Vendedor</TableHead>
-                    <TableHead className="text-gray-400">Data de Inscrição</TableHead>
-                    <TableHead className="w-[100px] text-gray-400">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {registrations.map((reg, index) => {
-                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
-                    const commissions = calculateCommissions(reg, batchConfig);
+            <div className="space-y-4">
+              {registrations.map((reg, index) => {
+                const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                const commissions = calculateCommissions(reg, batchConfig);
+                
+                return (
+                  <div key={reg.id} data-testid={`row-registration-${index}`} className="border border-gray-800 rounded-lg p-4 space-y-3">
+                    {/* First Row: Name, Batch, Payment Method, Status */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-gray-500 text-sm font-mono w-6">{index + 1}</span>
+                      <span className="text-white font-medium flex-1 min-w-[150px]">{reg.name}</span>
+                      <Badge className="bg-primary" title="Lote (calculado pela data)">{reg.batch || 1}</Badge>
+                      <Badge 
+                        className={reg.paymentMethod === 'pix' ? 'bg-blue-600' : 'bg-gray-600'}
+                        data-testid={`badge-payment-${index}`}
+                      >
+                        {reg.paymentMethod === 'pix' 
+                          ? `PIX R$ ${batchConfig.pixPrice.toLocaleString('pt-BR')}` 
+                          : `5x R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR')}`}
+                      </Badge>
+                      {reg.paymentMethod === 'pix' ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openPaymentModal(reg)}
+                          data-testid={`button-payment-${index}`}
+                          className={
+                            reg.paymentStatus === 'pago' 
+                              ? "bg-green-600 hover:bg-green-700 border-green-600" 
+                              : reg.paymentStatus === 'parcial'
+                                ? "bg-orange-600 hover:bg-orange-700 border-orange-600"
+                                : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
+                          }
+                        >
+                          {reg.paymentStatus === 'pago' ? (
+                            <><Check className="w-4 h-4 mr-1" />Pago</>
+                          ) : reg.paymentStatus === 'parcial' ? (
+                            <><DollarSign className="w-4 h-4 mr-1" />Parcial</>
+                          ) : (
+                            <><X className="w-4 h-4 mr-1" />Pendente</>
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant={reg.paymentReceived ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleTogglePayment(reg.id, reg.paymentReceived)}
+                          disabled={paymentMutation.isPending}
+                          data-testid={`button-payment-${index}`}
+                          className={reg.paymentReceived 
+                            ? "bg-green-600 hover:bg-green-700" 
+                            : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
+                          }
+                        >
+                          {reg.paymentReceived ? (
+                            <><Check className="w-4 h-4 mr-1" />Pago</>
+                          ) : (
+                            <><X className="w-4 h-4 mr-1" />Pendente</>
+                          )}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(reg.id, reg.name)}
+                        disabled={deleteMutation.isPending}
+                        data-testid={`button-delete-${index}`}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                     
-                    return (
-                    <TableRow key={reg.id} data-testid={`row-registration-${index}`} className="border-gray-800">
-                      <TableCell className="font-medium text-white">{index + 1}</TableCell>
-                      <TableCell className="text-white">{reg.name}</TableCell>
-                      <TableCell className="text-gray-300">{reg.email}</TableCell>
-                      <TableCell className="text-gray-300">{reg.phone}</TableCell>
-                      <TableCell>
-                        {editingVendorId === reg.id ? (
-                          <Select value={batchValue.toString()} onValueChange={(val) => setBatchValue(Number(val))}>
-                            <SelectTrigger className="w-20 bg-gray-800 border-gray-600">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-gray-800 border-gray-600">
-                              <SelectItem value="1">1</SelectItem>
-                              <SelectItem value="2">2</SelectItem>
-                              <SelectItem value="3">3</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge className="bg-primary">{reg.batch || 1}</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
+                    {/* Second Row: Email, Phone, Date */}
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 pl-6">
+                      <span>{reg.email}</span>
+                      <span className="text-gray-600">|</span>
+                      <span>{reg.phone}</span>
+                      <span className="text-gray-600">|</span>
+                      <span>
+                        {new Date(reg.createdAt).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                    
+                    {/* Third Row: Vendor, Commissions, Partial Payment Info */}
+                    <div className="flex flex-wrap items-center gap-4 pl-6 border-t border-gray-800 pt-3">
+                      {/* Vendor */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 text-xs">Vendedor:</span>
                         {editingVendorId === reg.id ? (
                           <div className="flex items-center gap-1">
                             <Input
                               value={vendorValue}
                               onChange={(e) => setVendorValue(e.target.value)}
-                              placeholder="Vendedor"
-                              className="w-24 h-8 bg-gray-800 border-gray-600 text-sm"
+                              placeholder="Nome"
+                              className="w-24 h-7 bg-gray-800 border-gray-600 text-sm"
                               data-testid={`input-vendor-${index}`}
                             />
                             <Button 
@@ -1148,23 +1153,23 @@ function MentorshipRegistrationsSection() {
                               variant="ghost" 
                               onClick={() => handleSaveVendor(reg.id)}
                               disabled={vendorMutation.isPending}
-                              className="h-8 w-8"
+                              className="h-7 w-7"
                               data-testid={`button-save-vendor-${index}`}
                             >
-                              <Save className="w-4 h-4 text-green-400" />
+                              <Save className="w-3 h-3 text-green-400" />
                             </Button>
                             <Button 
                               size="icon" 
                               variant="ghost" 
                               onClick={() => setEditingVendorId(null)}
-                              className="h-8 w-8"
+                              className="h-7 w-7"
                             >
-                              <X className="w-4 h-4 text-gray-400" />
+                              <X className="w-3 h-3 text-gray-400" />
                             </Button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1">
-                            <span className={reg.vendor ? "text-yellow-400" : "text-gray-500"}>
+                            <span className={reg.vendor ? "text-yellow-400 text-sm" : "text-gray-500 text-sm"}>
                               {reg.vendor || "-"}
                             </span>
                             <Button 
@@ -1178,123 +1183,81 @@ function MentorshipRegistrationsSection() {
                             </Button>
                           </div>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          className={reg.paymentMethod === 'pix' ? 'bg-blue-600' : 'bg-gray-600'}
-                          data-testid={`badge-payment-${index}`}
-                        >
-                          {reg.paymentMethod === 'pix' 
-                            ? `PIX (R$ ${batchConfig.pixPrice.toLocaleString('pt-BR')})` 
-                            : `5x R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR')}`}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {reg.paymentMethod === 'pix' ? (
-                          <div className="space-y-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openPaymentModal(reg)}
-                              data-testid={`button-payment-${index}`}
-                              className={
-                                reg.paymentStatus === 'pago' 
-                                  ? "bg-green-600 hover:bg-green-700 border-green-600" 
-                                  : reg.paymentStatus === 'parcial'
-                                    ? "bg-orange-600 hover:bg-orange-700 border-orange-600"
-                                    : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
-                              }
-                            >
-                              {reg.paymentStatus === 'pago' ? (
-                                <>
-                                  <Check className="w-4 h-4 mr-1" />
-                                  Pago
-                                </>
-                              ) : reg.paymentStatus === 'parcial' ? (
-                                <>
-                                  <DollarSign className="w-4 h-4 mr-1" />
-                                  Parcial
-                                </>
-                              ) : (
-                                <>
-                                  <X className="w-4 h-4 mr-1" />
-                                  Pendente
-                                </>
-                              )}
-                            </Button>
-                            {reg.paymentStatus === 'parcial' && (
-                              <div className="text-xs text-gray-400">
-                                <div>Pago: R$ {reg.paidAmount?.toLocaleString('pt-BR')}</div>
-                                <div className="text-orange-400">Saldo: R$ {(batchConfig.pixPrice - (reg.paidAmount || 0)).toLocaleString('pt-BR')}</div>
-                                {reg.remainingPaymentDate && (
-                                  <div className="text-blue-400">
-                                    Previsto: {new Date(reg.remainingPaymentDate).toLocaleDateString('pt-BR')}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <Button
-                            variant={reg.paymentReceived ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleTogglePayment(reg.id, reg.paymentReceived)}
-                            disabled={paymentMutation.isPending}
-                            data-testid={`button-payment-${index}`}
-                            className={reg.paymentReceived 
-                              ? "bg-green-600 hover:bg-green-700" 
-                              : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
-                            }
-                          >
-                            {reg.paymentReceived ? (
-                              <>
-                                <Check className="w-4 h-4 mr-1" />
-                                Pago
-                              </>
-                            ) : (
-                              <>
-                                <X className="w-4 h-4 mr-1" />
-                                Pendente
-                              </>
-                            )}
-                          </Button>
+                      </div>
+                      
+                      {/* Commissions */}
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-blue-400">MM: R$ {commissions.mmComm.toLocaleString('pt-BR')}</span>
+                        <span className="text-purple-400">HF: R$ {commissions.hfComm.toLocaleString('pt-BR')}</span>
+                        {commissions.vendorComm > 0 && (
+                          <span className="text-yellow-400">Vend: R$ {commissions.vendorComm.toLocaleString('pt-BR')}</span>
                         )}
-                      </TableCell>
-                      <TableCell className="text-blue-400 font-medium">
-                        R$ {commissions.mmComm.toLocaleString('pt-BR')}
-                      </TableCell>
-                      <TableCell className="text-purple-400 font-medium">
-                        R$ {commissions.hfComm.toLocaleString('pt-BR')}
-                      </TableCell>
-                      <TableCell className="text-yellow-400 font-medium">
-                        {commissions.vendorComm > 0 ? `R$ ${commissions.vendorComm.toLocaleString('pt-BR')}` : '-'}
-                      </TableCell>
-                      <TableCell className="text-gray-300">
-                        {new Date(reg.createdAt).toLocaleString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(reg.id, reg.name)}
-                          disabled={deleteMutation.isPending}
-                          data-testid={`button-delete-${index}`}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                      </div>
+                      
+                      {/* Partial Payment Info */}
+                      {reg.paymentStatus === 'parcial' && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-green-400">Pago: R$ {reg.paidAmount?.toLocaleString('pt-BR')}</span>
+                          <span className="text-orange-400">Saldo: R$ {(batchConfig.pixPrice - (reg.paidAmount || 0)).toLocaleString('pt-BR')}</span>
+                          {reg.remainingPaymentDate && (
+                            <span className="text-blue-400">
+                              Prev: {new Date(reg.remainingPaymentDate).toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Fourth Row: Observations */}
+                    <div className="pl-6 border-t border-gray-800 pt-3">
+                      <div className="flex items-start gap-2">
+                        <MessageCircle className="w-4 h-4 text-gray-500 mt-1" />
+                        <div className="flex-1">
+                          {editingObsId === reg.id ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={obsValue}
+                                onChange={(e) => setObsValue(e.target.value)}
+                                placeholder="Observações sobre este fechamento..."
+                                className="bg-gray-800 border-gray-600 text-sm min-h-[60px]"
+                                data-testid={`input-observations-${index}`}
+                              />
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleSaveObservations(reg.id)}
+                                  disabled={observationsMutation.isPending}
+                                  className="h-7"
+                                  data-testid={`button-save-observations-${index}`}
+                                >
+                                  <Save className="w-3 h-3 mr-1" />
+                                  Salvar
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => setEditingObsId(null)}
+                                  className="h-7"
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div 
+                              onClick={() => startEditingObservations(reg)}
+                              className="text-sm text-gray-400 cursor-pointer hover:bg-gray-800/50 rounded p-1 min-h-[24px]"
+                              data-testid={`text-observations-${index}`}
+                            >
+                              {reg.observations || <span className="text-gray-600 italic">Clique para adicionar observações...</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-400">
@@ -1303,6 +1266,91 @@ function MentorshipRegistrationsSection() {
           )}
         </CardContent>
       </Card>
+
+      {/* Commission Reference Table - Collapsible at the bottom */}
+      <Collapsible open={commissionTableOpen} onOpenChange={setCommissionTableOpen}>
+        <Card className="bg-gray-900 border-gray-700">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-gray-800/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-green-400" />
+                  Tabela de Comissões por Lote
+                </CardTitle>
+                {commissionTableOpen ? (
+                  <ChevronUp className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                )}
+              </div>
+              <CardDescription className="text-gray-400">
+                Taxa de cartão: parcelado apenas | Impostos: 11,75% | MM: 63,3% | HF: 31,7% | Comissão Vendedor: 5%
+              </CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-gray-700">
+                      <TableHead className="text-gray-400">Lote</TableHead>
+                      <TableHead className="text-gray-400">Prazo</TableHead>
+                      <TableHead className="text-gray-400">Tipo</TableHead>
+                      <TableHead className="text-gray-400">Parcelas</TableHead>
+                      <TableHead className="text-gray-400">Valor</TableHead>
+                      <TableHead className="text-gray-400">Total</TableHead>
+                      <TableHead className="text-gray-400">Taxa Cartão</TableHead>
+                      <TableHead className="text-gray-400">Líquido s/ Impostos</TableHead>
+                      <TableHead className="text-gray-400">Impostos (11,75%)</TableHead>
+                      <TableHead className="text-gray-400">Líquido c/ Impostos</TableHead>
+                      <TableHead className="text-blue-400">MM (63,3%)</TableHead>
+                      <TableHead className="text-purple-400">HF (31,7%)</TableHead>
+                      <TableHead className="text-yellow-400">Vendedor (5%)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {BATCH_CONFIG.map((batch) => (
+                      <>
+                        <TableRow key={`${batch.batch}-pix`} className="border-gray-800">
+                          <TableCell className="text-white font-medium">{batch.batch}</TableCell>
+                          <TableCell className="text-gray-300">{batch.deadline}</TableCell>
+                          <TableCell><Badge className="bg-blue-600">PIX</Badge></TableCell>
+                          <TableCell className="text-gray-300">1</TableCell>
+                          <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-white font-medium">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-gray-500">-</TableCell>
+                          <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-red-400">- R$ {Math.round(batch.pixPrice * batch.taxRate).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-green-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate)).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-blue-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-purple-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-yellow-400">R$ {Math.round(batch.pixPrice * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
+                        </TableRow>
+                        <TableRow key={`${batch.batch}-card`} className="border-gray-800">
+                          <TableCell className="text-white font-medium">{batch.batch}</TableCell>
+                          <TableCell className="text-gray-300">{batch.deadline}</TableCell>
+                          <TableCell><Badge className="bg-gray-600">Cartão</Badge></TableCell>
+                          <TableCell className="text-gray-300">5</TableCell>
+                          <TableCell className="text-gray-300">R$ {batch.installmentPrice.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-white font-medium">R$ {batch.installmentTotal.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-red-400">- R$ {batch.cardFee.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-gray-300">R$ {(batch.installmentTotal - batch.cardFee).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-red-400">- R$ {Math.round((batch.installmentTotal - batch.cardFee) * batch.taxRate).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-green-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate)).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-blue-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-purple-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-yellow-400">R$ {Math.round(batch.installmentTotal * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
+                        </TableRow>
+                      </>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
         <DialogContent className="bg-gray-900 border-gray-700 text-white">
@@ -1401,24 +1449,24 @@ export default function AdminPage() {
           <p className="text-gray-400">Mentoria Marcelo Murilo & Hamilton Felix</p>
         </div>
 
-        <Tabs defaultValue="event" className="space-y-6">
+        <Tabs defaultValue="mentorship" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2 bg-gray-800">
-            <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-700">
-              <Calendar className="w-4 h-4 mr-2" />
-              Evento ao Vivo
-            </TabsTrigger>
             <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-700">
               <Users className="w-4 h-4 mr-2" />
               Mentoria
             </TabsTrigger>
+            <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-700">
+              <Calendar className="w-4 h-4 mr-2" />
+              Evento ao Vivo
+            </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="event">
-            <EventRegistrationsSection />
-          </TabsContent>
 
           <TabsContent value="mentorship">
             <MentorshipRegistrationsSection />
+          </TabsContent>
+
+          <TabsContent value="event">
+            <EventRegistrationsSection />
           </TabsContent>
         </Tabs>
       </div>

@@ -11,7 +11,10 @@ export interface PaymentUpdate {
 
 export interface VendorUpdate {
   vendor: string | null;
-  batch?: number;
+}
+
+export interface ObservationsUpdate {
+  observations: string | null;
 }
 
 export interface IStorage {
@@ -23,6 +26,7 @@ export interface IStorage {
   updatePaymentReceived(id: string, received: boolean): Promise<Registration | undefined>;
   updatePaymentStatus(id: string, update: PaymentUpdate): Promise<Registration | undefined>;
   updateVendor(id: string, update: VendorUpdate): Promise<Registration | undefined>;
+  updateObservations(id: string, update: ObservationsUpdate): Promise<Registration | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -75,16 +79,16 @@ export class DbStorage implements IStorage {
   }
 
   async updateVendor(id: string, update: VendorUpdate): Promise<Registration | undefined> {
-    const updateData: Partial<Registration> = {
-      vendor: update.vendor,
-    };
-    
-    if (update.batch !== undefined) {
-      updateData.batch = update.batch;
-    }
-
     const result = await db.update(registrations)
-      .set(updateData)
+      .set({ vendor: update.vendor })
+      .where(eq(registrations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateObservations(id: string, update: ObservationsUpdate): Promise<Registration | undefined> {
+    const result = await db.update(registrations)
+      .set({ observations: update.observations })
       .where(eq(registrations.id, id))
       .returning();
     return result[0];

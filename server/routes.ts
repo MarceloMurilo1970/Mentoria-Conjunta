@@ -285,11 +285,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update vendor and batch
+  // Update vendor only (batch is calculated automatically from date)
   app.patch("/api/registrations/:id/vendor", async (req, res) => {
     try {
       const { id } = req.params;
-      const { vendor, batch } = req.body;
+      const { vendor } = req.body;
       
       const registration = await storage.getRegistration(id);
       if (!registration) {
@@ -298,13 +298,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updated = await storage.updateVendor(id, {
         vendor: vendor?.trim() || null,
-        batch: batch !== undefined ? Number(batch) : undefined,
       });
       
       res.json({ success: true, registration: updated });
     } catch (error) {
       console.error("Error updating vendor:", error);
       res.status(500).json({ error: "Erro ao atualizar vendedor" });
+    }
+  });
+
+  // Update observations
+  app.patch("/api/registrations/:id/observations", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { observations } = req.body;
+      
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      const updated = await storage.updateObservations(id, {
+        observations: observations?.trim() || null,
+      });
+      
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error updating observations:", error);
+      res.status(500).json({ error: "Erro ao atualizar observações" });
     }
   });
 

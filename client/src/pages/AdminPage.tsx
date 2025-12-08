@@ -1201,7 +1201,7 @@ function MentorshipRegistrationsSection() {
                           <span className="text-orange-400">Saldo: R$ {(batchConfig.pixPrice - (reg.paidAmount || 0)).toLocaleString('pt-BR')}</span>
                           {reg.remainingPaymentDate && (
                             <span className="text-blue-400">
-                              Prev: {new Date(reg.remainingPaymentDate).toLocaleDateString('pt-BR')}
+                              Prev: {new Date(reg.remainingPaymentDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                             </span>
                           )}
                         </div>

@@ -19,6 +19,10 @@ export const registrations = pgTable("registrations", {
   vendor: text("vendor"),
   batch: integer("batch").default(1),
   observations: text("observations"),
+  invoiceIssued: boolean("invoice_issued").default(false),
+  invoiceIssuedAt: timestamp("invoice_issued_at"),
+  vendorCommissionPaid: integer("vendor_commission_paid").default(0),
+  vendorCommissionPaidAt: timestamp("vendor_commission_paid_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

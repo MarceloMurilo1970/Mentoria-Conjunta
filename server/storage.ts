@@ -17,6 +17,20 @@ export interface ObservationsUpdate {
   observations: string | null;
 }
 
+export interface InvoiceUpdate {
+  invoiceIssued: boolean;
+  invoiceIssuedAt: Date | null;
+}
+
+export interface VendorCommissionUpdate {
+  vendorCommissionPaid: number;
+  vendorCommissionPaidAt: Date | null;
+}
+
+export interface BatchUpdate {
+  batch: number;
+}
+
 export interface IStorage {
   getRegistration(id: string): Promise<Registration | undefined>;
   getRegistrationByEmail(email: string): Promise<Registration | undefined>;
@@ -27,6 +41,9 @@ export interface IStorage {
   updatePaymentStatus(id: string, update: PaymentUpdate): Promise<Registration | undefined>;
   updateVendor(id: string, update: VendorUpdate): Promise<Registration | undefined>;
   updateObservations(id: string, update: ObservationsUpdate): Promise<Registration | undefined>;
+  updateInvoice(id: string, update: InvoiceUpdate): Promise<Registration | undefined>;
+  updateVendorCommission(id: string, update: VendorCommissionUpdate): Promise<Registration | undefined>;
+  updateBatch(id: string, update: BatchUpdate): Promise<Registration | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -89,6 +106,36 @@ export class DbStorage implements IStorage {
   async updateObservations(id: string, update: ObservationsUpdate): Promise<Registration | undefined> {
     const result = await db.update(registrations)
       .set({ observations: update.observations })
+      .where(eq(registrations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateInvoice(id: string, update: InvoiceUpdate): Promise<Registration | undefined> {
+    const result = await db.update(registrations)
+      .set({ 
+        invoiceIssued: update.invoiceIssued,
+        invoiceIssuedAt: update.invoiceIssuedAt
+      })
+      .where(eq(registrations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateVendorCommission(id: string, update: VendorCommissionUpdate): Promise<Registration | undefined> {
+    const result = await db.update(registrations)
+      .set({ 
+        vendorCommissionPaid: update.vendorCommissionPaid,
+        vendorCommissionPaidAt: update.vendorCommissionPaidAt
+      })
+      .where(eq(registrations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateBatch(id: string, update: BatchUpdate): Promise<Registration | undefined> {
+    const result = await db.update(registrations)
+      .set({ batch: update.batch })
       .where(eq(registrations.id, id))
       .returning();
     return result[0];

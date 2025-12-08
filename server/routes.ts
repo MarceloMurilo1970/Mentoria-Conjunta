@@ -329,6 +329,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update invoice status
+  app.patch("/api/registrations/:id/invoice", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { invoiceIssued, invoiceIssuedAt } = req.body;
+      
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      const updated = await storage.updateInvoice(id, {
+        invoiceIssued: Boolean(invoiceIssued),
+        invoiceIssuedAt: invoiceIssued && invoiceIssuedAt ? new Date(invoiceIssuedAt) : null,
+      });
+      
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      res.status(500).json({ error: "Erro ao atualizar NF" });
+    }
+  });
+
+  // Update vendor commission payment
+  app.patch("/api/registrations/:id/vendor-commission", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { vendorCommissionPaid, vendorCommissionPaidAt } = req.body;
+      
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      const updated = await storage.updateVendorCommission(id, {
+        vendorCommissionPaid: Number(vendorCommissionPaid) || 0,
+        vendorCommissionPaidAt: vendorCommissionPaid > 0 && vendorCommissionPaidAt ? new Date(vendorCommissionPaidAt) : null,
+      });
+      
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error updating vendor commission:", error);
+      res.status(500).json({ error: "Erro ao atualizar comissão do vendedor" });
+    }
+  });
+
+  // Update batch (manual override)
+  app.patch("/api/registrations/:id/batch", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { batch } = req.body;
+      
+      if (![1, 2, 3].includes(Number(batch))) {
+        return res.status(400).json({ error: "Lote deve ser 1, 2 ou 3" });
+      }
+      
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      const updated = await storage.updateBatch(id, {
+        batch: Number(batch),
+      });
+      
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error updating batch:", error);
+      res.status(500).json({ error: "Erro ao atualizar lote" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

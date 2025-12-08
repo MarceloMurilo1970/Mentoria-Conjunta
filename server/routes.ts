@@ -285,6 +285,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update vendor and batch
+  app.patch("/api/registrations/:id/vendor", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { vendor, batch } = req.body;
+      
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      const updated = await storage.updateVendor(id, {
+        vendor: vendor?.trim() || null,
+        batch: batch !== undefined ? Number(batch) : undefined,
+      });
+      
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error updating vendor:", error);
+      res.status(500).json({ error: "Erro ao atualizar vendedor" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

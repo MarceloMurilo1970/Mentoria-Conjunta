@@ -9,6 +9,11 @@ export interface PaymentUpdate {
   remainingPaymentDate?: Date | null;
 }
 
+export interface VendorUpdate {
+  vendor: string | null;
+  batch?: number;
+}
+
 export interface IStorage {
   getRegistration(id: string): Promise<Registration | undefined>;
   getRegistrationByEmail(email: string): Promise<Registration | undefined>;
@@ -17,6 +22,7 @@ export interface IStorage {
   deleteRegistration(id: string): Promise<boolean>;
   updatePaymentReceived(id: string, received: boolean): Promise<Registration | undefined>;
   updatePaymentStatus(id: string, update: PaymentUpdate): Promise<Registration | undefined>;
+  updateVendor(id: string, update: VendorUpdate): Promise<Registration | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -60,6 +66,22 @@ export class DbStorage implements IStorage {
       totalAmount: update.totalAmount ?? 8000,
       remainingPaymentDate: update.remainingPaymentDate ?? null,
     };
+
+    const result = await db.update(registrations)
+      .set(updateData)
+      .where(eq(registrations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateVendor(id: string, update: VendorUpdate): Promise<Registration | undefined> {
+    const updateData: Partial<Registration> = {
+      vendor: update.vendor,
+    };
+    
+    if (update.batch !== undefined) {
+      updateData.batch = update.batch;
+    }
 
     const result = await db.update(registrations)
       .set(updateData)

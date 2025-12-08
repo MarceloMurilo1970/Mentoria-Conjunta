@@ -333,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/registrations/:id/invoice", async (req, res) => {
     try {
       const { id } = req.params;
-      const { invoiceIssued, invoiceIssuedAt } = req.body;
+      const { invoiceIssued, invoiceIssuedAt, invoices } = req.body;
       
       const registration = await storage.getRegistration(id);
       if (!registration) {
@@ -343,6 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateInvoice(id, {
         invoiceIssued: Boolean(invoiceIssued),
         invoiceIssuedAt: invoiceIssued && invoiceIssuedAt ? new Date(invoiceIssuedAt) : null,
+        invoices: invoices || null,
       });
       
       res.json({ success: true, registration: updated });

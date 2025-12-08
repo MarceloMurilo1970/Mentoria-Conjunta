@@ -54,6 +54,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (December 8, 2025)
 
+**Admin Panel - Light Theme & Multiple Invoices Support:**
+- **Light Theme:** Converted admin panel from dark theme (bg-gray-900) to light theme (bg-gray-100/white) for better readability
+- **Multiple Invoices (NF) Support:** 
+  - New `invoices` JSON field in database storing array of invoice objects with `amount`, `date`, and `id`
+  - Invoice modal for adding multiple NFs per registration with amount and date
+  - Summary display showing total NF count and sum
+- **Vendor Payments Tracking:**
+  - New `vendorPayments` JSON field in database storing array of payment objects
+  - Modal for recording multiple vendor payments with amount and date
+- **Toast Duration:** Changed from infinite to 5 seconds auto-dismiss
+- **Timezone Handling:** All dates use 'America/Sao_Paulo' for consistent Brazil time display
+
 **Admin Panel - Commission System & Vendor Tracking:**
 - **Batch-Based Pricing:** Three pricing tiers implemented:
   - Lote 1 (até 07/12/2025): PIX R$8.000 or 5x R$1.775

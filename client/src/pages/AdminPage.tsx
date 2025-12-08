@@ -704,6 +704,15 @@ function MentorshipRegistrationsSection() {
   const [vendorDashboardOpen, setVendorDashboardOpen] = useState(false);
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   const [batchValue, setBatchValue] = useState<number>(1);
+  const [vendorPaymentModalOpen, setVendorPaymentModalOpen] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<string>('');
+  const [vendorPaymentAmount, setVendorPaymentAmount] = useState('');
+  const [vendorPaymentDate, setVendorPaymentDate] = useState('');
+  const [vendorMaxPayment, setVendorMaxPayment] = useState(0);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [selectedInvoiceReg, setSelectedInvoiceReg] = useState<Registration | null>(null);
+  const [invoiceAmount, setInvoiceAmount] = useState('');
+  const [invoiceDate, setInvoiceDate] = useState('');
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ['/api/registrations'],
@@ -815,7 +824,7 @@ function MentorshipRegistrationsSection() {
   });
 
   const invoiceMutation = useMutation({
-    mutationFn: async (data: { id: string; invoiceIssued: boolean; invoiceIssuedAt: string | null }) => {
+    mutationFn: async (data: { id: string; invoiceIssued: boolean; invoiceIssuedAt: string | null; invoices?: string }) => {
       await apiRequest("PATCH", `/api/registrations/${data.id}/invoice`, data);
     },
     onSuccess: () => {
@@ -902,13 +911,80 @@ function MentorshipRegistrationsSection() {
     batchMutation.mutate({ id, batch: batchValue });
   };
 
-  const handleToggleInvoice = (reg: Registration) => {
-    const newIssued = !reg.invoiceIssued;
+  const openInvoiceModal = (reg: Registration) => {
+    setSelectedInvoiceReg(reg);
+    setInvoiceAmount('');
+    const today = new Date().toISOString().split('T')[0];
+    setInvoiceDate(today);
+    setInvoiceModalOpen(true);
+  };
+
+  const handleAddInvoice = () => {
+    if (!selectedInvoiceReg || !invoiceAmount || !invoiceDate) return;
+    
+    const existingInvoices = selectedInvoiceReg.invoices ? JSON.parse(selectedInvoiceReg.invoices) : [];
+    const newInvoice = {
+      amount: Number(invoiceAmount),
+      date: invoiceDate,
+      createdAt: new Date().toISOString()
+    };
+    existingInvoices.push(newInvoice);
+    
     invoiceMutation.mutate({
-      id: reg.id,
-      invoiceIssued: newIssued,
-      invoiceIssuedAt: newIssued ? new Date().toISOString() : null,
+      id: selectedInvoiceReg.id,
+      invoiceIssued: true,
+      invoiceIssuedAt: new Date().toISOString(),
+      invoices: JSON.stringify(existingInvoices)
     });
+    setInvoiceModalOpen(false);
+  };
+
+  const openVendorPaymentModal = (vendor: string, maxPayment: number) => {
+    setSelectedVendor(vendor);
+    setVendorMaxPayment(maxPayment);
+    setVendorPaymentAmount(maxPayment.toString());
+    const today = new Date().toISOString().split('T')[0];
+    setVendorPaymentDate(today);
+    setVendorPaymentModalOpen(true);
+  };
+
+  const handleVendorPayment = () => {
+    if (!selectedVendor || !vendorPaymentAmount || !vendorPaymentDate) return;
+    
+    const amount = Number(vendorPaymentAmount);
+    if (amount <= 0 || amount > vendorMaxPayment) {
+      toast({
+        title: "Erro",
+        description: `O valor deve estar entre R$ 1 e R$ ${vendorMaxPayment.toLocaleString('pt-BR')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Find all registrations with this vendor and distribute the payment
+    const vendorRegs = registrations?.filter(r => r.vendor === selectedVendor) || [];
+    let remainingPayment = amount;
+    
+    vendorRegs.forEach(reg => {
+      if (remainingPayment <= 0) return;
+      
+      const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+      const comms = calculateCommissions(reg, batchConfig);
+      const alreadyPaid = reg.vendorCommissionPaid || 0;
+      const owedToVendor = comms.vendorComm - alreadyPaid;
+      
+      if (owedToVendor > 0) {
+        const paymentForThisReg = Math.min(remainingPayment, owedToVendor);
+        vendorCommissionMutation.mutate({
+          id: reg.id,
+          vendorCommissionPaid: alreadyPaid + paymentForThisReg,
+          vendorCommissionPaidAt: vendorPaymentDate
+        });
+        remainingPayment -= paymentForThisReg;
+      }
+    });
+    
+    setVendorPaymentModalOpen(false);
   };
 
   const handleDelete = (id: string, name: string) => {
@@ -1007,56 +1083,56 @@ function MentorshipRegistrationsSection() {
     <div className="space-y-6">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gray-900 border-gray-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-white">Total de Inscritos</CardTitle>
-            <Users className="h-4 w-4 text-gray-400" />
+            <CardTitle className="text-sm font-medium text-gray-700">Total de Inscritos</CardTitle>
+            <Users className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white" data-testid="text-mentorship-total">{totalCount}</div>
+            <div className="text-2xl font-bold text-gray-900" data-testid="text-mentorship-total">{totalCount}</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gray-900 border-gray-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-white">Pagamentos Confirmados</CardTitle>
-            <Check className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium text-gray-700">Pagamentos Confirmados</CardTitle>
+            <Check className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-400" data-testid="text-paid">{paidCount}</div>
-            <p className="text-xs text-gray-400">
+            <div className="text-2xl font-bold text-green-600" data-testid="text-paid">{paidCount}</div>
+            <p className="text-xs text-gray-500">
               {totalCount > 0 ? `${Math.round((paidCount / totalCount) * 100)}%` : '0%'} do total
             </p>
           </CardContent>
         </Card>
         
-        <Card className="bg-gray-900 border-gray-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-white">Aguardando Pagamento</CardTitle>
-            <X className="h-4 w-4 text-yellow-500" />
+            <CardTitle className="text-sm font-medium text-gray-700">Aguardando Pagamento</CardTitle>
+            <X className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-400" data-testid="text-pending">{totalCount - paidCount}</div>
-            <p className="text-xs text-gray-400">
+            <div className="text-2xl font-bold text-amber-500" data-testid="text-pending">{totalCount - paidCount}</div>
+            <p className="text-xs text-gray-500">
               {totalCount > 0 ? `${Math.round(((totalCount - paidCount) / totalCount) * 100)}%` : '0%'} do total
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 border-gray-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-white">Formas de Pagamento</CardTitle>
-            <Calendar className="h-4 w-4 text-gray-400" />
+            <CardTitle className="text-sm font-medium text-gray-700">Formas de Pagamento</CardTitle>
+            <Calendar className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">PIX:</span>
-                <span className="font-medium text-white">{pixCount}</span>
+                <span className="text-gray-500">PIX:</span>
+                <span className="font-medium text-gray-900">{pixCount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Parcelado:</span>
-                <span className="font-medium text-white">{installmentsCount}</span>
+                <span className="text-gray-500">Parcelado:</span>
+                <span className="font-medium text-gray-900">{installmentsCount}</span>
               </div>
             </div>
           </CardContent>
@@ -1065,74 +1141,74 @@ function MentorshipRegistrationsSection() {
 
       {/* Commission Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card className="bg-gray-900 border-gray-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-white">Faturamento Bruto</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-400" />
+            <CardTitle className="text-sm font-medium text-gray-700">Faturamento Bruto</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-green-400">R$ {totalCommissions.gross.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-green-600">R$ {totalCommissions.gross.toLocaleString('pt-BR')}</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gray-900 border-gray-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-white">Líquido (após impostos)</CardTitle>
-            <DollarSign className="h-4 w-4 text-gray-400" />
+            <CardTitle className="text-sm font-medium text-gray-700">Líquido (após impostos)</CardTitle>
+            <DollarSign className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-white">R$ {totalCommissions.net.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-gray-900">R$ {totalCommissions.net.toLocaleString('pt-BR')}</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gray-900 border-gray-700 border-blue-500/30">
+        <Card className="bg-blue-50 border-blue-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-blue-400">MM (Marcelo)</CardTitle>
-            <User className="h-4 w-4 text-blue-400" />
+            <CardTitle className="text-sm font-medium text-blue-700">MM (Marcelo)</CardTitle>
+            <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-blue-400">R$ {totalCommissions.mm.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-blue-700">R$ {totalCommissions.mm.toLocaleString('pt-BR')}</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gray-900 border-gray-700 border-purple-500/30">
+        <Card className="bg-purple-50 border-purple-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-purple-400">HF (Hamilton)</CardTitle>
-            <User className="h-4 w-4 text-purple-400" />
+            <CardTitle className="text-sm font-medium text-purple-700">HF (Hamilton)</CardTitle>
+            <User className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-purple-400">R$ {totalCommissions.hf.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-purple-700">R$ {totalCommissions.hf.toLocaleString('pt-BR')}</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gray-900 border-gray-700 border-yellow-500/30">
+        <Card className="bg-amber-50 border-amber-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-yellow-400">Vendedores</CardTitle>
-            <UserCheck className="h-4 w-4 text-yellow-400" />
+            <CardTitle className="text-sm font-medium text-amber-700">Vendedores</CardTitle>
+            <UserCheck className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-yellow-400">R$ {totalCommissions.vendor.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-amber-700">R$ {totalCommissions.vendor.toLocaleString('pt-BR')}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Vendor Commission Dashboard - Collapsible */}
       <Collapsible open={vendorDashboardOpen} onOpenChange={setVendorDashboardOpen}>
-        <Card className="bg-gray-900 border-gray-700 border-yellow-500/30">
+        <Card className="bg-amber-50 border-amber-200 shadow-sm">
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-800/50 transition-colors">
+            <CardHeader className="cursor-pointer hover:bg-amber-100/50 transition-colors">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-yellow-400" />
+                <CardTitle className="text-gray-900 flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-amber-600" />
                   Dashboard de Comissões por Vendedor
                 </CardTitle>
                 {vendorDashboardOpen ? (
-                  <ChevronUp className="h-5 w-5 text-gray-400" />
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
                 )}
               </div>
-              <CardDescription className="text-gray-400">
+              <CardDescription className="text-gray-600">
                 Controle de pagamentos e saldos de comissões dos vendedores
               </CardDescription>
             </CardHeader>
@@ -1163,7 +1239,7 @@ function MentorshipRegistrationsSection() {
                 
                 if (vendorList.length === 0) {
                   return (
-                    <div className="text-center py-4 text-gray-400">
+                    <div className="text-center py-4 text-gray-500">
                       Nenhum vendedor registrado ainda.
                     </div>
                   );
@@ -1172,13 +1248,14 @@ function MentorshipRegistrationsSection() {
                 return (
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-gray-700">
-                        <TableHead className="text-gray-400">Vendedor</TableHead>
-                        <TableHead className="text-gray-400">Vendas</TableHead>
-                        <TableHead className="text-gray-400">Total a Receber</TableHead>
-                        <TableHead className="text-gray-400">Já Recebeu</TableHead>
-                        <TableHead className="text-gray-400">Saldo</TableHead>
-                        <TableHead className="text-gray-400">Status</TableHead>
+                      <TableRow className="border-gray-200">
+                        <TableHead className="text-gray-600">Vendedor</TableHead>
+                        <TableHead className="text-gray-600">Vendas</TableHead>
+                        <TableHead className="text-gray-600">Total a Receber</TableHead>
+                        <TableHead className="text-gray-600">Já Recebeu</TableHead>
+                        <TableHead className="text-gray-600">Saldo</TableHead>
+                        <TableHead className="text-gray-600">Status</TableHead>
+                        <TableHead className="text-gray-600">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1186,18 +1263,31 @@ function MentorshipRegistrationsSection() {
                         const balance = stats.totalDue - stats.totalPaid;
                         const isPaid = balance <= 0;
                         return (
-                          <TableRow key={vendor} className="border-gray-800">
-                            <TableCell className="text-yellow-400 font-medium">{vendor}</TableCell>
-                            <TableCell className="text-white">{stats.sales}</TableCell>
-                            <TableCell className="text-gray-300">R$ {stats.totalDue.toLocaleString('pt-BR')}</TableCell>
-                            <TableCell className="text-green-400">R$ {stats.totalPaid.toLocaleString('pt-BR')}</TableCell>
-                            <TableCell className={balance > 0 ? "text-orange-400" : "text-green-400"}>
+                          <TableRow key={vendor} className="border-gray-200">
+                            <TableCell className="text-amber-700 font-medium">{vendor}</TableCell>
+                            <TableCell className="text-gray-900">{stats.sales}</TableCell>
+                            <TableCell className="text-gray-700">R$ {stats.totalDue.toLocaleString('pt-BR')}</TableCell>
+                            <TableCell className="text-green-600">R$ {stats.totalPaid.toLocaleString('pt-BR')}</TableCell>
+                            <TableCell className={balance > 0 ? "text-orange-600" : "text-green-600"}>
                               R$ {balance.toLocaleString('pt-BR')}
                             </TableCell>
                             <TableCell>
-                              <Badge className={isPaid ? "bg-green-600" : "bg-orange-600"}>
+                              <Badge className={isPaid ? "bg-green-600" : "bg-orange-500"}>
                                 {isPaid ? "Pago" : "Pendente"}
                               </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {balance > 0 && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => openVendorPaymentModal(vendor, balance)}
+                                  className="h-7 text-xs border-amber-400 text-amber-700 hover:bg-amber-50"
+                                >
+                                  <DollarSign className="w-3 h-3 mr-1" />
+                                  Pagar
+                                </Button>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -1212,10 +1302,10 @@ function MentorshipRegistrationsSection() {
       </Collapsible>
 
       {/* Registrations Table - Two-line layout to avoid horizontal scroll */}
-      <Card className="bg-gray-900 border-gray-700">
+      <Card className="bg-white border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white">Inscrições da Mentoria - Turma 2</CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardTitle className="text-gray-900">Inscrições da Mentoria - Turma 2</CardTitle>
+          <CardDescription className="text-gray-600">
             Janeiro a Março 2026 - Marcelo Murilo & Hamilton Felix
           </CardDescription>
         </CardHeader>
@@ -1227,28 +1317,28 @@ function MentorshipRegistrationsSection() {
                 const commissions = calculateCommissions(reg, batchConfig);
                 
                 return (
-                  <div key={reg.id} data-testid={`row-registration-${index}`} className="border border-gray-800 rounded-lg p-4 space-y-3">
+                  <div key={reg.id} data-testid={`row-registration-${index}`} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50">
                     {/* First Row: Name, Batch, Payment Method, Status */}
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-gray-500 text-sm font-mono w-6">{index + 1}</span>
-                      <span className="text-white font-medium flex-1 min-w-[150px]">{reg.name}</span>
+                      <span className="text-gray-400 text-sm font-mono w-6">{index + 1}</span>
+                      <span className="text-gray-900 font-medium flex-1 min-w-[150px]">{reg.name}</span>
                       {editingBatchId === reg.id ? (
                         <div className="flex items-center gap-1">
                           <Select value={batchValue.toString()} onValueChange={(val) => setBatchValue(Number(val))}>
-                            <SelectTrigger className="w-16 h-7 bg-gray-800 border-gray-600 text-sm">
+                            <SelectTrigger className="w-16 h-7 bg-white border-gray-300 text-sm">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-gray-800 border-gray-600">
+                            <SelectContent className="bg-white border-gray-300">
                               <SelectItem value="1">1</SelectItem>
                               <SelectItem value="2">2</SelectItem>
                               <SelectItem value="3">3</SelectItem>
                             </SelectContent>
                           </Select>
                           <Button size="icon" variant="ghost" onClick={() => handleSaveBatch(reg.id)} disabled={batchMutation.isPending} className="h-7 w-7">
-                            <Save className="w-3 h-3 text-green-400" />
+                            <Save className="w-3 h-3 text-green-600" />
                           </Button>
                           <Button size="icon" variant="ghost" onClick={() => setEditingBatchId(null)} className="h-7 w-7">
-                            <X className="w-3 h-3 text-gray-400" />
+                            <X className="w-3 h-3 text-gray-500" />
                           </Button>
                         </div>
                       ) : (
@@ -1276,10 +1366,10 @@ function MentorshipRegistrationsSection() {
                           data-testid={`button-payment-${index}`}
                           className={
                             reg.paymentStatus === 'pago' 
-                              ? "bg-green-600 hover:bg-green-700 border-green-600" 
+                              ? "bg-green-600 hover:bg-green-700 border-green-600 text-white" 
                               : reg.paymentStatus === 'parcial'
-                                ? "bg-orange-600 hover:bg-orange-700 border-orange-600"
-                                : "border-yellow-500 text-yellow-400 hover:bg-yellow-900/20"
+                                ? "bg-orange-500 hover:bg-orange-600 border-orange-500 text-white"
+                                : "border-yellow-500 text-yellow-600 hover:bg-yellow-50"
                           }
                         >
                           {reg.paymentStatus === 'pago' ? (
@@ -1349,7 +1439,7 @@ function MentorshipRegistrationsSection() {
                               value={vendorValue}
                               onChange={(e) => setVendorValue(e.target.value)}
                               placeholder="Nome"
-                              className="w-24 h-7 bg-gray-800 border-gray-600 text-sm"
+                              className="w-24 h-7 bg-white border-gray-300 text-sm"
                               data-testid={`input-vendor-${index}`}
                             />
                             <Button 
@@ -1413,15 +1503,15 @@ function MentorshipRegistrationsSection() {
                     </div>
                     
                     {/* Fourth Row: NF Control */}
-                    <div className="flex flex-wrap items-center gap-4 pl-6 border-t border-gray-800 pt-3">
+                    <div className="flex flex-wrap items-center gap-4 pl-6 border-t border-gray-200 pt-3">
                       <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-gray-500" />
+                        <FileText className="w-4 h-4 text-gray-400" />
                         <span className="text-gray-500 text-xs">CPF/CNPJ:</span>
-                        <span className="text-gray-300 text-sm">{reg.cpfCnpj || '-'}</span>
+                        <span className="text-gray-700 text-sm">{reg.cpfCnpj || '-'}</span>
                         {reg.razaoSocial && (
                           <>
-                            <span className="text-gray-600">|</span>
-                            <span className="text-gray-400 text-sm">{reg.razaoSocial}</span>
+                            <span className="text-gray-300">|</span>
+                            <span className="text-gray-600 text-sm">{reg.razaoSocial}</span>
                           </>
                         )}
                       </div>
@@ -1429,33 +1519,30 @@ function MentorshipRegistrationsSection() {
                         <span className="text-gray-500 text-xs">NF:</span>
                         <Button
                           size="sm"
-                          variant={reg.invoiceIssued ? "default" : "outline"}
-                          onClick={() => handleToggleInvoice(reg)}
+                          variant="outline"
+                          onClick={() => openInvoiceModal(reg)}
                           disabled={invoiceMutation.isPending}
-                          className={reg.invoiceIssued 
-                            ? "h-6 bg-green-600 hover:bg-green-700 text-xs" 
-                            : "h-6 border-gray-600 text-gray-400 text-xs"
-                          }
+                          className="h-6 border-green-500 text-green-700 hover:bg-green-50 text-xs"
                           data-testid={`button-invoice-${index}`}
                         >
-                          {reg.invoiceIssued ? (
-                            <><Check className="w-3 h-3 mr-1" />Emitida</>
-                          ) : (
-                            <><X className="w-3 h-3 mr-1" />Pendente</>
-                          )}
+                          <Receipt className="w-3 h-3 mr-1" />
+                          Emitir NF
                         </Button>
-                        {reg.invoiceIssued && reg.invoiceIssuedAt && (
-                          <span className="text-green-400 text-xs">
-                            em {new Date(reg.invoiceIssuedAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
-                          </span>
-                        )}
+                        {reg.invoices && (() => {
+                          const invoiceList = JSON.parse(reg.invoices);
+                          return invoiceList.length > 0 ? (
+                            <span className="text-green-600 text-xs">
+                              {invoiceList.length} NF(s) emitida(s) - Total: R$ {invoiceList.reduce((sum: number, inv: {amount: number}) => sum + inv.amount, 0).toLocaleString('pt-BR')}
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
 
                     {/* Fifth Row: Observations */}
-                    <div className="pl-6 border-t border-gray-800 pt-3">
+                    <div className="pl-6 border-t border-gray-200 pt-3">
                       <div className="flex items-start gap-2">
-                        <MessageCircle className="w-4 h-4 text-gray-500 mt-1" />
+                        <MessageCircle className="w-4 h-4 text-gray-400 mt-1" />
                         <div className="flex-1">
                           {editingObsId === reg.id ? (
                             <div className="space-y-2">
@@ -1463,7 +1550,7 @@ function MentorshipRegistrationsSection() {
                                 value={obsValue}
                                 onChange={(e) => setObsValue(e.target.value)}
                                 placeholder="Observações sobre este fechamento..."
-                                className="bg-gray-800 border-gray-600 text-sm min-h-[60px]"
+                                className="bg-white border-gray-300 text-sm min-h-[60px]"
                                 data-testid={`input-observations-${index}`}
                               />
                               <div className="flex gap-2">
@@ -1490,7 +1577,7 @@ function MentorshipRegistrationsSection() {
                           ) : (
                             <div 
                               onClick={() => startEditingObservations(reg)}
-                              className="text-sm text-gray-400 cursor-pointer hover:bg-gray-800/50 rounded p-1 min-h-[24px]"
+                              className="text-sm text-gray-500 cursor-pointer hover:bg-gray-100 rounded p-1 min-h-[24px]"
                               data-testid={`text-observations-${index}`}
                             >
                               {reg.observations || <span className="text-gray-600 italic">Clique para adicionar observações...</span>}
@@ -1513,12 +1600,12 @@ function MentorshipRegistrationsSection() {
 
       {/* Commission Reference Table - Collapsible at the bottom */}
       <Collapsible open={commissionTableOpen} onOpenChange={setCommissionTableOpen}>
-        <Card className="bg-gray-900 border-gray-700">
+        <Card className="bg-white border-gray-200">
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-800/50 transition-colors">
+            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-green-400" />
+                <CardTitle className="text-gray-900 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-green-600" />
                   Tabela de Comissões por Lote
                 </CardTitle>
                 {commissionTableOpen ? (
@@ -1680,26 +1767,145 @@ function MentorshipRegistrationsSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Vendor Payment Modal */}
+      <Dialog open={vendorPaymentModalOpen} onOpenChange={setVendorPaymentModalOpen}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900">
+          <DialogHeader>
+            <DialogTitle>Registrar Pagamento ao Vendedor</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Vendedor: {selectedVendor} - Saldo pendente: R$ {vendorMaxPayment.toLocaleString('pt-BR')}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="vendorPaymentAmount">Valor do Pagamento (R$)</Label>
+              <Input
+                id="vendorPaymentAmount"
+                type="number"
+                value={vendorPaymentAmount}
+                onChange={(e) => setVendorPaymentAmount(e.target.value)}
+                placeholder="Ex: 400"
+                className="bg-white border-gray-300"
+                max={vendorMaxPayment}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vendorPaymentDate">Data do Pagamento</Label>
+              <Input
+                id="vendorPaymentDate"
+                type="date"
+                value={vendorPaymentDate}
+                onChange={(e) => setVendorPaymentDate(e.target.value)}
+                className="bg-white border-gray-300"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVendorPaymentModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleVendorPayment}
+              disabled={vendorCommissionMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {vendorCommissionMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Registrar Pagamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invoice Modal */}
+      <Dialog open={invoiceModalOpen} onOpenChange={setInvoiceModalOpen}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900">
+          <DialogHeader>
+            <DialogTitle>Emitir Nota Fiscal</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              {selectedInvoiceReg?.name} - {selectedInvoiceReg?.cpfCnpj}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="invoiceAmount">Valor da NF (R$)</Label>
+              <Input
+                id="invoiceAmount"
+                type="number"
+                value={invoiceAmount}
+                onChange={(e) => setInvoiceAmount(e.target.value)}
+                placeholder="Ex: 4000"
+                className="bg-white border-gray-300"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="invoiceDate">Data de Emissão</Label>
+              <Input
+                id="invoiceDate"
+                type="date"
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+                className="bg-white border-gray-300"
+              />
+            </div>
+
+            {selectedInvoiceReg?.invoices && (
+              <div className="p-3 bg-gray-100 rounded-lg space-y-2">
+                <Label className="text-sm text-gray-600">NFs já emitidas:</Label>
+                {JSON.parse(selectedInvoiceReg.invoices).map((inv: {amount: number, date: string}, idx: number) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span className="text-gray-600">NF {idx + 1}:</span>
+                    <span className="text-gray-900">R$ {inv.amount.toLocaleString('pt-BR')} - {new Date(inv.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInvoiceModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleAddInvoice}
+              disabled={invoiceMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {invoiceMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Emitir NF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 export default function AdminPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-gray-100 text-gray-900">
       <div className="container mx-auto py-8 px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Painel Administrativo</h1>
-          <p className="text-gray-400">Mentoria Marcelo Murilo & Hamilton Felix</p>
+          <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
+          <p className="text-gray-600">Mentoria Marcelo Murilo & Hamilton Felix</p>
         </div>
 
         <Tabs defaultValue="mentorship" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-gray-800">
-            <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-700">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-white border border-gray-200">
+            <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-100">
               <Users className="w-4 h-4 mr-2" />
               Mentoria
             </TabsTrigger>
-            <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-700">
+            <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-100">
               <Calendar className="w-4 h-4 mr-2" />
               Evento ao Vivo
             </TabsTrigger>

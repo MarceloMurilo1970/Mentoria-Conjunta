@@ -20,6 +20,7 @@ export interface ObservationsUpdate {
 export interface InvoiceUpdate {
   invoiceIssued: boolean;
   invoiceIssuedAt: Date | null;
+  invoices?: string | null;
 }
 
 export interface VendorCommissionUpdate {
@@ -112,11 +113,15 @@ export class DbStorage implements IStorage {
   }
 
   async updateInvoice(id: string, update: InvoiceUpdate): Promise<Registration | undefined> {
+    const updateData: any = { 
+      invoiceIssued: update.invoiceIssued,
+      invoiceIssuedAt: update.invoiceIssuedAt
+    };
+    if (update.invoices !== undefined) {
+      updateData.invoices = update.invoices;
+    }
     const result = await db.update(registrations)
-      .set({ 
-        invoiceIssued: update.invoiceIssued,
-        invoiceIssuedAt: update.invoiceIssuedAt
-      })
+      .set(updateData)
       .where(eq(registrations.id, id))
       .returning();
     return result[0];

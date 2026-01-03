@@ -1,6 +1,6 @@
-import { type Registration, type InsertRegistration, registrations } from "@shared/schema";
+import { type Registration, type InsertRegistration, registrations, type PageView, type InsertPageView, pageViews } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql, gte } from "drizzle-orm";
 
 export interface PaymentUpdate {
   paymentStatus: 'pendente' | 'pago' | 'parcial';
@@ -144,6 +144,61 @@ export class DbStorage implements IStorage {
       .where(eq(registrations.id, id))
       .returning();
     return result[0];
+  }
+
+  // Page Views Analytics
+  async createPageView(pageView: InsertPageView): Promise<PageView> {
+    const result = await db.insert(pageViews).values(pageView).returning();
+    return result[0];
+  }
+
+  async getPageViewsByDay(days: number = 30): Promise<{ date: string; count: number }[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const result = await db.execute(sql`
+      SELECT 
+        TO_CHAR(created_at AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as date,
+        COUNT(*)::integer as count
+      FROM page_views 
+      WHERE created_at >= ${startDate}
+      GROUP BY TO_CHAR(created_at AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD')
+      ORDER BY date DESC
+    `);
+    return result.rows as { date: string; count: number }[];
+  }
+
+  async getPageViewsByPath(days: number = 30): Promise<{ path: string; count: number }[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const result = await db.execute(sql`
+      SELECT 
+        path,
+        COUNT(*)::integer as count
+      FROM page_views 
+      WHERE created_at >= ${startDate}
+      GROUP BY path
+      ORDER BY count DESC
+    `);
+    return result.rows as { path: string; count: number }[];
+  }
+
+  async getTotalPageViews(): Promise<number> {
+    const result = await db.execute(sql`SELECT COUNT(*)::integer as count FROM page_views`);
+    return (result.rows[0] as { count: number }).count;
+  }
+
+  async getUniqueVisitors(days: number = 30): Promise<number> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const result = await db.execute(sql`
+      SELECT COUNT(DISTINCT session_id)::integer as count 
+      FROM page_views 
+      WHERE created_at >= ${startDate} AND session_id IS NOT NULL
+    `);
+    return (result.rows[0] as { count: number }).count;
   }
 }
 

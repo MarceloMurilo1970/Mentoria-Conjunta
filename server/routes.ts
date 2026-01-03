@@ -402,6 +402,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics - Record page view
+  app.post("/api/analytics/pageview", async (req, res) => {
+    try {
+      const { path, referrer, sessionId } = req.body;
+      const userAgent = req.headers['user-agent'] || null;
+      
+      // Hash IP for privacy (don't store raw IP)
+      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+      const ipHash = require('crypto').createHash('sha256').update(String(ip)).digest('hex').slice(0, 16);
+      
+      await storage.createPageView({
+        path,
+        referrer: referrer || null,
+        userAgent,
+        ipHash,
+        sessionId: sessionId || null,
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error recording page view:", error);
+      res.status(500).json({ error: "Erro ao registrar visita" });
+    }
+  });
+
+  // Analytics - Get statistics
+  app.get("/api/analytics/stats", async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      
+      const [viewsByDay, viewsByPath, totalViews, uniqueVisitors] = await Promise.all([
+        storage.getPageViewsByDay(days),
+        storage.getPageViewsByPath(days),
+        storage.getTotalPageViews(),
+        storage.getUniqueVisitors(days),
+      ]);
+      
+      res.json({
+        viewsByDay,
+        viewsByPath,
+        totalViews,
+        uniqueVisitors,
+        period: days,
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ error: "Erro ao buscar estatísticas" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

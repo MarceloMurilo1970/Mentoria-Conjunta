@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { insertRegistrationSchema } from "@shared/schema";
 import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail } from "./email";
@@ -410,7 +411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Hash IP for privacy (don't store raw IP)
       const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-      const ipHash = require('crypto').createHash('sha256').update(String(ip)).digest('hex').slice(0, 16);
+      const ipHash = crypto.createHash('sha256').update(String(ip)).digest('hex').slice(0, 16);
       
       await storage.createPageView({
         path,

@@ -7,8 +7,11 @@ import Home from "@/pages/Home";
 import AdminPage from "@/pages/AdminPage";
 import EventPage from "@/pages/EventPage";
 import NotFound from "@/pages/not-found";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 function Router() {
+  usePageTracking();
+  
   return (
     <Switch>
       <Route path="/" component={EventPage} />

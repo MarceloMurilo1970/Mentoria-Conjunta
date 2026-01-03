@@ -1890,6 +1890,180 @@ function MentorshipRegistrationsSection() {
   );
 }
 
+// Analytics Section Component
+function AnalyticsSection() {
+  interface AnalyticsData {
+    viewsByDay: { date: string; count: number }[];
+    viewsByPath: { path: string; count: number }[];
+    totalViews: number;
+    uniqueVisitors: number;
+    period: number;
+  }
+
+  const { data: analytics, isLoading } = useQuery<AnalyticsData>({
+    queryKey: ['/api/analytics/stats'],
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="bg-white border-gray-200">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const pageNameMap: Record<string, string> = {
+    '/': 'Página do Evento',
+    '/mentoria': 'Página da Mentoria',
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-white border-gray-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-gray-500">Total de Visitas</CardDescription>
+            <CardTitle className="text-3xl text-gray-900" data-testid="text-total-views">
+              {analytics?.totalViews?.toLocaleString('pt-BR') || 0}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="bg-white border-gray-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-gray-500">Visitantes Únicos (30 dias)</CardDescription>
+            <CardTitle className="text-3xl text-gray-900" data-testid="text-unique-visitors">
+              {analytics?.uniqueVisitors?.toLocaleString('pt-BR') || 0}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="bg-white border-gray-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-gray-500">Visitas Hoje</CardDescription>
+            <CardTitle className="text-3xl text-gray-900" data-testid="text-visits-today">
+              {(() => {
+                const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+                return analytics?.viewsByDay?.find(d => d.date === today)?.count?.toLocaleString('pt-BR') || 0;
+              })()}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="bg-white border-gray-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-gray-500">Média Diária</CardDescription>
+            <CardTitle className="text-3xl text-gray-900" data-testid="text-daily-avg">
+              {analytics?.viewsByDay && analytics.viewsByDay.length > 0 
+                ? Math.round(analytics.viewsByDay.reduce((sum, d) => sum + d.count, 0) / analytics.viewsByDay.length).toLocaleString('pt-BR')
+                : 0}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {/* Pages Most Visited */}
+      <Card className="bg-white border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-gray-900 flex items-center gap-2">
+            <Award className="w-5 h-5 text-blue-600" />
+            Páginas Mais Visitadas
+          </CardTitle>
+          <CardDescription className="text-gray-500">
+            Ranking das páginas por número de visitas nos últimos 30 dias
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {analytics?.viewsByPath && analytics.viewsByPath.length > 0 ? (
+            <div className="space-y-3">
+              {analytics.viewsByPath.map((page, index) => {
+                const maxCount = analytics.viewsByPath[0]?.count || 1;
+                const percentage = maxCount > 0 ? (page.count / maxCount) * 100 : 0;
+                return (
+                  <div key={page.path} className="space-y-1" data-testid={`row-page-${index}`}>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          #{index + 1}
+                        </Badge>
+                        <span className="font-medium text-gray-900">
+                          {pageNameMap[page.path] || page.path}
+                        </span>
+                        <span className="text-xs text-gray-500">({page.path})</span>
+                      </div>
+                      <span className="font-semibold text-blue-600">
+                        {page.count.toLocaleString('pt-BR')} visitas
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">
+              Nenhuma visita registrada ainda. As estatísticas aparecerão aqui assim que os visitantes acessarem o site.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Daily Visits Table */}
+      <Card className="bg-white border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-gray-900 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-green-600" />
+            Visitas por Dia
+          </CardTitle>
+          <CardDescription className="text-gray-500">
+            Histórico de visitas dos últimos 30 dias
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {analytics?.viewsByDay && analytics.viewsByDay.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-gray-600">Data</TableHead>
+                  <TableHead className="text-gray-600">Dia da Semana</TableHead>
+                  <TableHead className="text-right text-gray-600">Visitas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {analytics.viewsByDay.map((day, index) => {
+                  const date = new Date(day.date + 'T12:00:00');
+                  const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'long' });
+                  const formattedDate = date.toLocaleDateString('pt-BR');
+                  return (
+                    <TableRow key={day.date} data-testid={`row-day-${index}`}>
+                      <TableCell className="font-medium text-gray-900">{formattedDate}</TableCell>
+                      <TableCell className="text-gray-600 capitalize">{dayOfWeek}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                          {day.count.toLocaleString('pt-BR')}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-gray-500 text-center py-8">
+              Nenhuma visita registrada ainda.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900">
@@ -1900,7 +2074,7 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="mentorship" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-white border border-gray-200">
+          <TabsList className="grid w-full max-w-lg grid-cols-3 bg-white border border-gray-200">
             <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-100">
               <Users className="w-4 h-4 mr-2" />
               Mentoria
@@ -1908,6 +2082,10 @@ export default function AdminPage() {
             <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-100">
               <Calendar className="w-4 h-4 mr-2" />
               Evento ao Vivo
+            </TabsTrigger>
+            <TabsTrigger value="analytics" data-testid="tab-analytics" className="data-[state=active]:bg-gray-100">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Estatísticas
             </TabsTrigger>
           </TabsList>
 
@@ -1917,6 +2095,10 @@ export default function AdminPage() {
 
           <TabsContent value="event">
             <EventRegistrationsSection />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AnalyticsSection />
           </TabsContent>
         </Tabs>
       </div>

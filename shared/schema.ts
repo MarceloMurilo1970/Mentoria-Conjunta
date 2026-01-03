@@ -49,3 +49,22 @@ export const insertRegistrationSchema = createInsertSchema(registrations).omit({
 
 export type InsertRegistration = z.infer<typeof insertRegistrationSchema>;
 export type Registration = typeof registrations.$inferSelect;
+
+// Page Views table for analytics
+export const pageViews = pgTable("page_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  path: text("path").notNull(),
+  referrer: text("referrer"),
+  userAgent: text("user_agent"),
+  ipHash: text("ip_hash"),
+  sessionId: text("session_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPageViewSchema = createInsertSchema(pageViews).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPageView = z.infer<typeof insertPageViewSchema>;
+export type PageView = typeof pageViews.$inferSelect;

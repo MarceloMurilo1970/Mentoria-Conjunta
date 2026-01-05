@@ -109,3 +109,162 @@ export async function getAllEventRegistrations(): Promise<EventRegistration[]> {
     interests: row[6] || '',
   }));
 }
+
+// CRM Survey Responses Spreadsheet
+const SURVEY_SPREADSHEET_ID = '1iOSApmifjm54hpGx5vPYWkfBwGNMM5PO57PrD70DgHI';
+
+export interface SurveyResponse {
+  rowIndex: string;
+  timestamp: string;
+  email: string;
+  name: string;
+  phone?: string;
+  linkedin?: string;
+  responses: Record<string, string>;
+}
+
+export async function fetchSurveyResponses(): Promise<SurveyResponse[]> {
+  try {
+    const sheets = await getUncachableGoogleSheetClient();
+    
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SURVEY_SPREADSHEET_ID,
+      range: 'A:Z',
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+
+    const headers = rows[0] as string[];
+    const dataRows = rows.slice(1);
+
+    return dataRows.map((row, index) => {
+      const result: SurveyResponse = {
+        rowIndex: String(index + 2),
+        timestamp: '',
+        email: '',
+        name: '',
+        responses: {},
+      };
+
+      headers.forEach((header, colIndex) => {
+        const value = row[colIndex] || '';
+        const headerLower = header.toLowerCase();
+        
+        if (headerLower.includes('carimbo') || headerLower.includes('timestamp')) {
+          result.timestamp = value;
+        } else if (headerLower.includes('e-mail') || headerLower === 'email') {
+          result.email = value;
+        } else if (headerLower.includes('nome completo') || (headerLower.includes('nome') && !headerLower.includes('sobrenome'))) {
+          result.name = value;
+        } else if (headerLower.includes('telefone') || headerLower.includes('whatsapp') || headerLower.includes('celular')) {
+          result.phone = value;
+        } else if (headerLower.includes('linkedin')) {
+          result.linkedin = value;
+        }
+        
+        // Store all responses for scoring
+        if (value) {
+          result.responses[header] = value;
+        }
+      });
+
+      return result;
+    }).filter(r => r.email || r.name);
+  } catch (error) {
+    console.error('Error fetching survey responses:', error);
+    throw error;
+  }
+}
+
+// Lead scoring algorithm
+export function calculateLeadScore(responses: Record<string, string>): { score: number; temperature: string; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+
+  Object.entries(responses).forEach(([question, answer]) => {
+    if (!answer) return;
+    
+    const q = question.toLowerCase();
+    const a = answer.toLowerCase();
+
+    // Education/Formation signals
+    if (q.includes('formação') || q.includes('educação') || q.includes('curso') || q.includes('certificação')) {
+      if (a.includes('mba') || a.includes('mestrado') || a.includes('doutorado') || a.includes('pós') || a.includes('ibgc')) {
+        score += 15;
+        reasons.push('Formação avançada');
+      } else if (a.includes('graduação') || a.includes('faculdade') || a.includes('superior')) {
+        score += 10;
+        reasons.push('Formação superior');
+      }
+    }
+
+    // Mentorship interest
+    if (q.includes('mentoria') || q.includes('acompanhamento') || q.includes('ajuda') || q.includes('apoio')) {
+      if (a.includes('sim') || a.includes('muito') || a.includes('interesse') || a.includes('preciso') || a.includes('gostaria')) {
+        score += 20;
+        reasons.push('Interesse em mentoria');
+      }
+    }
+
+    // LinkedIn/Authority interest
+    if (q.includes('linkedin') || q.includes('autoridade') || q.includes('visibilidade') || q.includes('marca pessoal')) {
+      if (a.includes('sim') || a.includes('muito') || a.includes('quero') || a.includes('preciso') || a.includes('desenvolver') || a.includes('melhorar')) {
+        score += 15;
+        reasons.push('Quer desenvolver autoridade');
+      }
+    }
+
+    // Board transition interest
+    if (q.includes('conselho') || q.includes('conselheiro') || q.includes('transição')) {
+      if (a.includes('sim') || a.includes('muito') || a.includes('objetivo') || a.includes('desejo') || a.includes('busco') || a.includes('quero')) {
+        score += 20;
+        reasons.push('Busca transição para conselho');
+      }
+      if (a.includes('não sei') || a.includes('dificuldade') || a.includes('não sabe') || a.includes('como começar') || a.includes('dúvida')) {
+        score += 20;
+        reasons.push('Não sabe como começar');
+      }
+    }
+
+    // Current position
+    if (q.includes('cargo') || q.includes('posição') || q.includes('atuação') || q.includes('ocupação')) {
+      if (a.includes('diretor') || a.includes('c-level') || a.includes('ceo') || a.includes('cfo') || a.includes('cto') || a.includes('presidente')) {
+        score += 15;
+        reasons.push('Cargo C-Level/Diretor');
+      } else if (a.includes('gerente') || a.includes('coordenador') || a.includes('head') || a.includes('superintendente')) {
+        score += 10;
+        reasons.push('Cargo de gestão');
+      }
+    }
+
+    // Board experience (might be less urgent)
+    if (q.includes('quantos conselhos') || q.includes('atua em conselho')) {
+      if (a === '0' || a.includes('nenhum') || a.includes('zero')) {
+        score += 10;
+        reasons.push('Ainda não atua em conselhos');
+      }
+    }
+
+    // Urgency
+    if (q.includes('urgência') || q.includes('prazo') || q.includes('quando') || q.includes('timing')) {
+      if (a.includes('agora') || a.includes('imediato') || a.includes('urgente') || a.includes('próximo') || a.includes('esse ano')) {
+        score += 10;
+        reasons.push('Urgência no objetivo');
+      }
+    }
+  });
+
+  score = Math.max(0, Math.min(100, score));
+
+  let temperature = 'cold';
+  if (score >= 70) {
+    temperature = 'hot';
+  } else if (score >= 40) {
+    temperature = 'warm';
+  }
+
+  return { score, temperature, reasons };
+}

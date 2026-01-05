@@ -1,7 +1,106 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Vendors table for CRM
+export const vendors = pgTable("vendors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertVendorSchema = createInsertSchema(vendors).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  email: z.string().email("Email inválido"),
+});
+
+export type InsertVendor = z.infer<typeof insertVendorSchema>;
+export type Vendor = typeof vendors.$inferSelect;
+
+// Leads table for CRM (imported from Google Sheets)
+export const leads = pgTable("leads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sheetRowId: text("sheet_row_id"), // To track original row in Google Sheets
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  linkedin: text("linkedin"),
+  // Survey responses stored as JSON
+  surveyResponses: jsonb("survey_responses"),
+  // Lead scoring and status
+  score: integer("score").default(0).notNull(),
+  temperature: text("temperature").default("cold").notNull(), // cold, warm, hot
+  status: text("status").default("novo").notNull(), // novo, em_contato, qualificado, negociando, convertido, perdido
+  // Assignment
+  vendorId: text("vendor_id"),
+  claimedAt: timestamp("claimed_at"),
+  // AI-generated summary
+  aiSummary: text("ai_summary"),
+  // Conversion tracking
+  convertedAt: timestamp("converted_at"),
+  registrationId: text("registration_id"),
+  // Timestamps
+  lastContactAt: timestamp("last_contact_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertLeadSchema = createInsertSchema(leads).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertLead = z.infer<typeof insertLeadSchema>;
+export type Lead = typeof leads.$inferSelect;
+
+// Lead Activities (interaction history)
+export const leadActivities = pgTable("lead_activities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leadId: text("lead_id").notNull(),
+  vendorId: text("vendor_id"),
+  type: text("type").notNull(), // note, call, email, whatsapp, meeting, status_change
+  content: text("content").notNull(),
+  // AI-generated insights
+  aiAnalysis: text("ai_analysis"),
+  scoreChange: integer("score_change").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertLeadActivitySchema = createInsertSchema(leadActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertLeadActivity = z.infer<typeof insertLeadActivitySchema>;
+export type LeadActivity = typeof leadActivities.$inferSelect;
+
+// Lead Follow-ups (scheduled tasks)
+export const leadFollowUps = pgTable("lead_follow_ups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leadId: text("lead_id").notNull(),
+  vendorId: text("vendor_id"),
+  type: text("type").notNull(), // call, email, meeting, whatsapp
+  description: text("description").notNull(),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  completedAt: timestamp("completed_at"),
+  isCompleted: boolean("is_completed").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertLeadFollowUpSchema = createInsertSchema(leadFollowUps).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertLeadFollowUp = z.infer<typeof insertLeadFollowUpSchema>;
+export type LeadFollowUp = typeof leadFollowUps.$inferSelect;
 
 export const registrations = pgTable("registrations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

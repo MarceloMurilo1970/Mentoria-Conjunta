@@ -1,6 +1,13 @@
-import { type Registration, type InsertRegistration, registrations, type PageView, type InsertPageView, pageViews } from "@shared/schema";
+import { 
+  type Registration, type InsertRegistration, registrations, 
+  type PageView, type InsertPageView, pageViews,
+  type Vendor, type InsertVendor, vendors,
+  type Lead, type InsertLead, leads,
+  type LeadActivity, type InsertLeadActivity, leadActivities,
+  type LeadFollowUp, type InsertLeadFollowUp, leadFollowUps
+} from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, gte } from "drizzle-orm";
+import { eq, desc, sql, gte, isNull, and, or, ilike } from "drizzle-orm";
 
 export interface PaymentUpdate {
   paymentStatus: 'pendente' | 'pago' | 'parcial';
@@ -199,6 +206,173 @@ export class DbStorage implements IStorage {
       WHERE created_at >= ${startDate} AND session_id IS NOT NULL
     `);
     return (result.rows[0] as { count: number }).count;
+  }
+
+  // CRM: Vendors
+  async getAllVendors(): Promise<Vendor[]> {
+    return await db.select().from(vendors).orderBy(desc(vendors.createdAt));
+  }
+
+  async getVendor(id: string): Promise<Vendor | undefined> {
+    const result = await db.select().from(vendors).where(eq(vendors.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createVendor(vendor: InsertVendor): Promise<Vendor> {
+    const result = await db.insert(vendors).values(vendor).returning();
+    return result[0];
+  }
+
+  async updateVendorActive(id: string, isActive: boolean): Promise<Vendor | undefined> {
+    const result = await db.update(vendors)
+      .set({ isActive })
+      .where(eq(vendors.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteVendor(id: string): Promise<boolean> {
+    const result = await db.delete(vendors).where(eq(vendors.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // CRM: Leads
+  async getAllLeads(): Promise<Lead[]> {
+    return await db.select().from(leads).orderBy(desc(leads.score), desc(leads.createdAt));
+  }
+
+  async getLead(id: string): Promise<Lead | undefined> {
+    const result = await db.select().from(leads).where(eq(leads.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getLeadByEmail(email: string): Promise<Lead | undefined> {
+    const result = await db.select().from(leads).where(eq(leads.email, email)).limit(1);
+    return result[0];
+  }
+
+  async createLead(lead: InsertLead): Promise<Lead> {
+    const result = await db.insert(leads).values(lead).returning();
+    return result[0];
+  }
+
+  async updateLead(id: string, data: Partial<Lead>): Promise<Lead | undefined> {
+    const result = await db.update(leads)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(leads.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async claimLead(id: string, vendorId: string): Promise<Lead | undefined> {
+    // Check if lead is already claimed
+    const lead = await this.getLead(id);
+    if (lead?.vendorId) {
+      throw new Error('Lead já está reservado para outro vendedor');
+    }
+    
+    const result = await db.update(leads)
+      .set({ vendorId, claimedAt: new Date(), updatedAt: new Date() })
+      .where(eq(leads.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async releaseLead(id: string): Promise<Lead | undefined> {
+    const result = await db.update(leads)
+      .set({ vendorId: null, claimedAt: null, updatedAt: new Date() })
+      .where(eq(leads.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateLeadScore(id: string, score: number, temperature: string): Promise<Lead | undefined> {
+    const result = await db.update(leads)
+      .set({ score, temperature, updatedAt: new Date() })
+      .where(eq(leads.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async convertLead(id: string, registrationId: string): Promise<Lead | undefined> {
+    const result = await db.update(leads)
+      .set({ 
+        status: 'convertido', 
+        convertedAt: new Date(), 
+        registrationId,
+        updatedAt: new Date() 
+      })
+      .where(eq(leads.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // CRM: Lead Activities
+  async getLeadActivities(leadId: string): Promise<LeadActivity[]> {
+    return await db.select()
+      .from(leadActivities)
+      .where(eq(leadActivities.leadId, leadId))
+      .orderBy(desc(leadActivities.createdAt));
+  }
+
+  async createLeadActivity(activity: InsertLeadActivity): Promise<LeadActivity> {
+    const result = await db.insert(leadActivities).values(activity).returning();
+    
+    // Update lead's lastContactAt
+    await db.update(leads)
+      .set({ lastContactAt: new Date(), updatedAt: new Date() })
+      .where(eq(leads.id, activity.leadId));
+    
+    // Apply score change if any
+    if (activity.scoreChange && activity.scoreChange !== 0) {
+      const lead = await this.getLead(activity.leadId);
+      if (lead) {
+        const newScore = Math.max(0, Math.min(100, lead.score + (activity.scoreChange || 0)));
+        let temperature = 'cold';
+        if (newScore >= 70) temperature = 'hot';
+        else if (newScore >= 40) temperature = 'warm';
+        await this.updateLeadScore(activity.leadId, newScore, temperature);
+      }
+    }
+    
+    return result[0];
+  }
+
+  // CRM: Lead Follow-ups
+  async getLeadFollowUps(leadId: string): Promise<LeadFollowUp[]> {
+    return await db.select()
+      .from(leadFollowUps)
+      .where(eq(leadFollowUps.leadId, leadId))
+      .orderBy(leadFollowUps.scheduledAt);
+  }
+
+  async getPendingFollowUps(vendorId?: string): Promise<LeadFollowUp[]> {
+    const conditions = [eq(leadFollowUps.isCompleted, false)];
+    if (vendorId) {
+      conditions.push(eq(leadFollowUps.vendorId, vendorId));
+    }
+    return await db.select()
+      .from(leadFollowUps)
+      .where(and(...conditions))
+      .orderBy(leadFollowUps.scheduledAt);
+  }
+
+  async createLeadFollowUp(followUp: InsertLeadFollowUp): Promise<LeadFollowUp> {
+    const result = await db.insert(leadFollowUps).values(followUp).returning();
+    return result[0];
+  }
+
+  async completeFollowUp(id: string): Promise<LeadFollowUp | undefined> {
+    const result = await db.update(leadFollowUps)
+      .set({ isCompleted: true, completedAt: new Date() })
+      .where(eq(leadFollowUps.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteFollowUp(id: string): Promise<boolean> {
+    const result = await db.delete(leadFollowUps).where(eq(leadFollowUps.id, id)).returning();
+    return result.length > 0;
   }
 }
 

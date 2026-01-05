@@ -2,9 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import crypto from "crypto";
 import { storage } from "./storage";
-import { insertRegistrationSchema } from "@shared/schema";
+import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema } from "@shared/schema";
 import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail } from "./email";
-import { addEventRegistration, getAllEventRegistrations, type EventRegistration } from "./googleSheets";
+import { addEventRegistration, getAllEventRegistrations, type EventRegistration, fetchSurveyResponses, calculateLeadScore } from "./googleSheets";
 import path from "path";
 import { z } from "zod";
 
@@ -453,6 +453,403 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== CRM ENDPOINTS ====================
+
+  // Vendors CRUD
+  app.get("/api/crm/vendors", async (req, res) => {
+    try {
+      const vendorsList = await storage.getAllVendors();
+      res.json(vendorsList);
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
+      res.status(500).json({ error: "Erro ao buscar vendedores" });
+    }
+  });
+
+  app.post("/api/crm/vendors", async (req, res) => {
+    try {
+      const validatedData = insertVendorSchema.parse(req.body);
+      const vendor = await storage.createVendor(validatedData);
+      res.json(vendor);
+    } catch (error) {
+      console.error("Error creating vendor:", error);
+      res.status(500).json({ error: "Erro ao criar vendedor" });
+    }
+  });
+
+  app.patch("/api/crm/vendors/:id/active", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { isActive } = req.body;
+      const vendor = await storage.updateVendorActive(id, isActive);
+      res.json(vendor);
+    } catch (error) {
+      console.error("Error updating vendor:", error);
+      res.status(500).json({ error: "Erro ao atualizar vendedor" });
+    }
+  });
+
+  app.delete("/api/crm/vendors/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteVendor(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting vendor:", error);
+      res.status(500).json({ error: "Erro ao excluir vendedor" });
+    }
+  });
+
+  // Leads CRUD
+  app.get("/api/crm/leads", async (req, res) => {
+    try {
+      const leadsList = await storage.getAllLeads();
+      res.json(leadsList);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      res.status(500).json({ error: "Erro ao buscar leads" });
+    }
+  });
+
+  app.get("/api/crm/leads/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const lead = await storage.getLead(id);
+      if (!lead) {
+        return res.status(404).json({ error: "Lead não encontrado" });
+      }
+      res.json(lead);
+    } catch (error) {
+      console.error("Error fetching lead:", error);
+      res.status(500).json({ error: "Erro ao buscar lead" });
+    }
+  });
+
+  // Sync leads from Google Sheets
+  app.post("/api/crm/leads/sync", async (req, res) => {
+    try {
+      const surveyResponses = await fetchSurveyResponses();
+      let imported = 0;
+      let updated = 0;
+      let skipped = 0;
+
+      for (const response of surveyResponses) {
+        // Check if lead already exists by email
+        const existingLead = response.email ? await storage.getLeadByEmail(response.email) : null;
+        
+        // Calculate score
+        const { score, temperature, reasons } = calculateLeadScore(response.responses);
+        
+        if (existingLead) {
+          // Update existing lead with new score if higher
+          if (score > existingLead.score) {
+            await storage.updateLead(existingLead.id, {
+              score,
+              temperature,
+              surveyResponses: response.responses,
+              aiSummary: reasons.join(', '),
+            });
+            updated++;
+          } else {
+            skipped++;
+          }
+        } else {
+          // Create new lead
+          await storage.createLead({
+            sheetRowId: response.rowIndex,
+            name: response.name || 'Sem nome',
+            email: response.email || '',
+            phone: response.phone || null,
+            linkedin: response.linkedin || null,
+            surveyResponses: response.responses,
+            score,
+            temperature,
+            status: 'novo',
+            aiSummary: reasons.join(', '),
+          });
+          imported++;
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        imported, 
+        updated, 
+        skipped,
+        total: surveyResponses.length 
+      });
+    } catch (error) {
+      console.error("Error syncing leads:", error);
+      res.status(500).json({ error: "Erro ao sincronizar leads: " + (error as Error).message });
+    }
+  });
+
+  // Claim/Release lead
+  app.post("/api/crm/leads/:id/claim", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { vendorId } = req.body;
+      const lead = await storage.claimLead(id, vendorId);
+      
+      // Log activity
+      await storage.createLeadActivity({
+        leadId: id,
+        vendorId,
+        type: 'status_change',
+        content: 'Lead reservado para trabalho',
+        scoreChange: 0,
+      });
+      
+      res.json(lead);
+    } catch (error) {
+      console.error("Error claiming lead:", error);
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post("/api/crm/leads/:id/release", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const lead = await storage.releaseLead(id);
+      
+      // Log activity
+      await storage.createLeadActivity({
+        leadId: id,
+        vendorId: null,
+        type: 'status_change',
+        content: 'Lead liberado',
+        scoreChange: 0,
+      });
+      
+      res.json(lead);
+    } catch (error) {
+      console.error("Error releasing lead:", error);
+      res.status(500).json({ error: "Erro ao liberar lead" });
+    }
+  });
+
+  // Update lead status
+  app.patch("/api/crm/leads/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const lead = await storage.updateLead(id, { status });
+      
+      // Log activity
+      await storage.createLeadActivity({
+        leadId: id,
+        vendorId: null,
+        type: 'status_change',
+        content: `Status alterado para: ${status}`,
+        scoreChange: 0,
+      });
+      
+      res.json(lead);
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      res.status(500).json({ error: "Erro ao atualizar status" });
+    }
+  });
+
+  // Lead Activities
+  app.get("/api/crm/leads/:id/activities", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const activities = await storage.getLeadActivities(id);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+      res.status(500).json({ error: "Erro ao buscar atividades" });
+    }
+  });
+
+  app.post("/api/crm/leads/:id/activities", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { type, content, vendorId, scoreChange } = req.body;
+      
+      const activity = await storage.createLeadActivity({
+        leadId: id,
+        vendorId: vendorId || null,
+        type,
+        content,
+        scoreChange: scoreChange || 0,
+      });
+      
+      res.json(activity);
+    } catch (error) {
+      console.error("Error creating activity:", error);
+      res.status(500).json({ error: "Erro ao criar atividade" });
+    }
+  });
+
+  // Lead Follow-ups
+  app.get("/api/crm/leads/:id/followups", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const followUps = await storage.getLeadFollowUps(id);
+      res.json(followUps);
+    } catch (error) {
+      console.error("Error fetching follow-ups:", error);
+      res.status(500).json({ error: "Erro ao buscar follow-ups" });
+    }
+  });
+
+  app.get("/api/crm/followups/pending", async (req, res) => {
+    try {
+      const vendorId = req.query.vendorId as string | undefined;
+      const followUps = await storage.getPendingFollowUps(vendorId);
+      res.json(followUps);
+    } catch (error) {
+      console.error("Error fetching pending follow-ups:", error);
+      res.status(500).json({ error: "Erro ao buscar follow-ups pendentes" });
+    }
+  });
+
+  app.post("/api/crm/leads/:id/followups", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { type, description, scheduledAt, vendorId } = req.body;
+      
+      const followUp = await storage.createLeadFollowUp({
+        leadId: id,
+        vendorId: vendorId || null,
+        type,
+        description,
+        scheduledAt: new Date(scheduledAt),
+      });
+      
+      res.json(followUp);
+    } catch (error) {
+      console.error("Error creating follow-up:", error);
+      res.status(500).json({ error: "Erro ao criar follow-up" });
+    }
+  });
+
+  app.patch("/api/crm/followups/:id/complete", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const followUp = await storage.completeFollowUp(id);
+      res.json(followUp);
+    } catch (error) {
+      console.error("Error completing follow-up:", error);
+      res.status(500).json({ error: "Erro ao completar follow-up" });
+    }
+  });
+
+  app.delete("/api/crm/followups/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteFollowUp(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting follow-up:", error);
+      res.status(500).json({ error: "Erro ao excluir follow-up" });
+    }
+  });
+
+  // AI Suggestions for lead interactions
+  app.post("/api/crm/leads/:id/ai-suggestions", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const lead = await storage.getLead(id);
+      
+      if (!lead) {
+        return res.status(404).json({ error: "Lead não encontrado" });
+      }
+
+      const activities = await storage.getLeadActivities(id);
+      
+      // Generate AI suggestions based on lead profile and history
+      const suggestions = generateAISuggestions(lead, activities);
+      
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      res.status(500).json({ error: "Erro ao gerar sugestões" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// AI Suggestions generator based on lead context
+function generateAISuggestions(lead: any, activities: any[]): { nextSteps: string[]; arguments: string[]; status: string } {
+  const suggestions: string[] = [];
+  const args: string[] = [];
+  
+  const responses = lead.surveyResponses || {};
+  const lastActivity = activities[0];
+  const daysSinceContact = lead.lastContactAt 
+    ? Math.floor((Date.now() - new Date(lead.lastContactAt).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  // Status-based suggestions
+  switch (lead.status) {
+    case 'novo':
+      suggestions.push('Fazer primeiro contato via LinkedIn ou WhatsApp');
+      suggestions.push('Revisar respostas do questionário antes do contato');
+      suggestions.push('Agendar ligação de apresentação');
+      break;
+    case 'em_contato':
+      if (daysSinceContact && daysSinceContact > 3) {
+        suggestions.push(`Fazer follow-up - ${daysSinceContact} dias sem contato`);
+      }
+      suggestions.push('Enviar material sobre a metodologia PREP-MM');
+      suggestions.push('Agendar reunião para apresentação detalhada');
+      break;
+    case 'qualificado':
+      suggestions.push('Apresentar cases de sucesso de mentorados');
+      suggestions.push('Discutir objetivos específicos de transição para conselho');
+      suggestions.push('Enviar proposta comercial');
+      break;
+    case 'negociando':
+      suggestions.push('Esclarecer dúvidas sobre investimento');
+      suggestions.push('Oferecer condições especiais se aplicável');
+      suggestions.push('Agendar ligação para fechamento');
+      break;
+  }
+
+  // Temperature-based arguments
+  if (lead.temperature === 'hot') {
+    args.push('Lead quente: tem perfil ideal e demonstra urgência. Priorize o atendimento!');
+    args.push('Destaque: Turma 2 começa em Janeiro 2026 - vagas limitadas');
+  } else if (lead.temperature === 'warm') {
+    args.push('Lead morno: demonstra interesse mas pode precisar de mais informações');
+    args.push('Foque em entender as dúvidas e objeções específicas');
+  } else {
+    args.push('Lead frio: precisa de nutrição - envie conteúdos relevantes');
+    args.push('Convide para lives e eventos do Marcelo e Hamilton');
+  }
+
+  // Survey-based arguments
+  Object.entries(responses).forEach(([question, answer]) => {
+    const q = question.toLowerCase();
+    const a = String(answer).toLowerCase();
+    
+    if (q.includes('linkedin') && (a.includes('melhorar') || a.includes('desenvolver') || a.includes('sim'))) {
+      args.push('Interesse em LinkedIn: Destaque o módulo "LinkedIn Estratégico" com prompts personalizados');
+    }
+    if (q.includes('conselho') && (a.includes('não sei') || a.includes('dificuldade'))) {
+      args.push('Dificuldade na transição: Fale sobre a metodologia passo-a-passo e o framework 5C');
+    }
+    if (q.includes('mentoria') || q.includes('acompanhamento')) {
+      args.push('Busca acompanhamento: Enfatize as 8 sessões ao vivo + Módulo 2 com Hamilton Felix');
+    }
+  });
+
+  // Recent activity-based suggestions
+  if (lastActivity) {
+    const activityAge = Math.floor((Date.now() - new Date(lastActivity.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+    if (activityAge > 7 && lead.status !== 'convertido' && lead.status !== 'perdido') {
+      suggestions.unshift(`ATENÇÃO: ${activityAge} dias desde última interação - retomar contato`);
+    }
+  }
+
+  return {
+    nextSteps: suggestions.slice(0, 5),
+    arguments: args.slice(0, 5),
+    status: lead.temperature === 'hot' ? 'priority' : lead.temperature === 'warm' ? 'follow' : 'nurture'
+  };
 }

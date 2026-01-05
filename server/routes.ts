@@ -749,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Suggestions for lead interactions
-  app.post("/api/crm/leads/:id/ai-suggestions", async (req, res) => {
+  app.get("/api/crm/leads/:id/ai-suggestions", async (req, res) => {
     try {
       const { id } = req.params;
       const lead = await storage.getLead(id);

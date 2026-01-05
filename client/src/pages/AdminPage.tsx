@@ -9,13 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Registration } from "@shared/schema";
+import type { Registration, Lead, Vendor, LeadActivity, LeadFollowUp } from "@shared/schema";
 import BatchPricing from "@/components/BatchPricing";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EventRegistration {
   timestamp: string;
@@ -1890,6 +1891,757 @@ function MentorshipRegistrationsSection() {
   );
 }
 
+// CRM Section Component
+function CRMSection() {
+  const { toast } = useToast();
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [vendorModalOpen, setVendorModalOpen] = useState(false);
+  const [newVendorName, setNewVendorName] = useState('');
+  const [newVendorEmail, setNewVendorEmail] = useState('');
+  const [selectedVendorId, setSelectedVendorId] = useState<string>('');
+  const [activityContent, setActivityContent] = useState('');
+  const [activityType, setActivityType] = useState('note');
+  const [followUpDate, setFollowUpDate] = useState('');
+  const [followUpDescription, setFollowUpDescription] = useState('');
+  const [followUpType, setFollowUpType] = useState('call');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [temperatureFilter, setTemperatureFilter] = useState<string>('all');
+
+  const { data: leads = [], isLoading: leadsLoading } = useQuery<Lead[]>({
+    queryKey: ['/api/crm/leads'],
+  });
+
+  const { data: vendors = [], isLoading: vendorsLoading } = useQuery<Vendor[]>({
+    queryKey: ['/api/crm/vendors'],
+  });
+
+  const { data: activities = [] } = useQuery<LeadActivity[]>({
+    queryKey: ['/api/crm/leads', selectedLead?.id, 'activities'],
+    enabled: !!selectedLead,
+  });
+
+  const { data: followUps = [] } = useQuery<LeadFollowUp[]>({
+    queryKey: ['/api/crm/leads', selectedLead?.id, 'followups'],
+    enabled: !!selectedLead,
+  });
+
+  const { data: aiSuggestions } = useQuery<{ nextSteps: string[]; arguments: string[]; status: string }>({
+    queryKey: ['/api/crm/leads', selectedLead?.id, 'ai-suggestions'],
+    enabled: !!selectedLead,
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/crm/leads/sync');
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      toast({ title: 'Sincronização concluída', description: `${data.imported} novos, ${data.updated} atualizados, ${data.skipped} ignorados` });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro na sincronização', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const createVendorMutation = useMutation({
+    mutationFn: (data: { name: string; email: string }) => apiRequest('POST', '/api/crm/vendors', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/vendors'] });
+      setVendorModalOpen(false);
+      setNewVendorName('');
+      setNewVendorEmail('');
+      toast({ title: 'Vendedor cadastrado' });
+    },
+  });
+
+  const claimMutation = useMutation({
+    mutationFn: ({ leadId, vendorId }: { leadId: string; vendorId: string }) => 
+      apiRequest('POST', `/api/crm/leads/${leadId}/claim`, { vendorId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      toast({ title: 'Lead reservado com sucesso' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const releaseMutation = useMutation({
+    mutationFn: (leadId: string) => apiRequest('POST', `/api/crm/leads/${leadId}/release`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      toast({ title: 'Lead liberado' });
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ leadId, status }: { leadId: string; status: string }) => 
+      apiRequest('PATCH', `/api/crm/leads/${leadId}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      if (selectedLead) {
+        queryClient.invalidateQueries({ queryKey: ['/api/crm/leads', selectedLead.id, 'activities'] });
+      }
+      toast({ title: 'Status atualizado' });
+    },
+  });
+
+  const activityMutation = useMutation({
+    mutationFn: (data: { leadId: string; type: string; content: string; vendorId?: string; scoreChange?: number }) => 
+      apiRequest('POST', `/api/crm/leads/${data.leadId}/activities`, data),
+    onSuccess: () => {
+      if (selectedLead) {
+        queryClient.invalidateQueries({ queryKey: ['/api/crm/leads', selectedLead.id, 'activities'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      }
+      setActivityContent('');
+      toast({ title: 'Atividade registrada' });
+    },
+  });
+
+  const followUpMutation = useMutation({
+    mutationFn: (data: { leadId: string; type: string; description: string; scheduledAt: string; vendorId?: string }) => 
+      apiRequest('POST', `/api/crm/leads/${data.leadId}/followups`, data),
+    onSuccess: () => {
+      if (selectedLead) {
+        queryClient.invalidateQueries({ queryKey: ['/api/crm/leads', selectedLead.id, 'followups'] });
+      }
+      setFollowUpDate('');
+      setFollowUpDescription('');
+      toast({ title: 'Follow-up agendado' });
+    },
+  });
+
+  const completeFollowUpMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('PATCH', `/api/crm/followups/${id}/complete`),
+    onSuccess: () => {
+      if (selectedLead) {
+        queryClient.invalidateQueries({ queryKey: ['/api/crm/leads', selectedLead.id, 'followups'] });
+      }
+      toast({ title: 'Follow-up concluído' });
+    },
+  });
+
+  const getTemperatureIcon = (temp: string) => {
+    switch (temp) {
+      case 'hot': return <Flame className="w-4 h-4 text-red-500" />;
+      case 'warm': return <ThermometerSun className="w-4 h-4 text-orange-500" />;
+      default: return <Snowflake className="w-4 h-4 text-blue-500" />;
+    }
+  };
+
+  const getTemperatureBg = (temp: string) => {
+    switch (temp) {
+      case 'hot': return 'bg-red-50 border-red-200';
+      case 'warm': return 'bg-orange-50 border-orange-200';
+      default: return 'bg-blue-50 border-blue-200';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      novo: 'bg-gray-100 text-gray-700',
+      em_contato: 'bg-blue-100 text-blue-700',
+      qualificado: 'bg-purple-100 text-purple-700',
+      negociando: 'bg-yellow-100 text-yellow-700',
+      convertido: 'bg-green-100 text-green-700',
+      perdido: 'bg-red-100 text-red-700',
+    };
+    const labels: Record<string, string> = {
+      novo: 'Novo',
+      em_contato: 'Em Contato',
+      qualificado: 'Qualificado',
+      negociando: 'Negociando',
+      convertido: 'Convertido',
+      perdido: 'Perdido',
+    };
+    return <Badge className={colors[status] || colors.novo}>{labels[status] || status}</Badge>;
+  };
+
+  const filteredLeads = leads.filter(lead => {
+    if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
+    if (temperatureFilter !== 'all' && lead.temperature !== temperatureFilter) return false;
+    return true;
+  });
+
+  const getVendorName = (vendorId: string | null) => {
+    if (!vendorId) return null;
+    const vendor = vendors.find(v => v.id === vendorId);
+    return vendor?.name || 'Desconhecido';
+  };
+
+  if (leadsLoading) {
+    return (
+      <Card className="bg-white border-gray-200">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header Actions */}
+      <div className="flex flex-wrap gap-4 items-center justify-between">
+        <div className="flex gap-2">
+          <Button onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending} data-testid="button-sync-leads">
+            {syncMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Sincronizar Planilha
+          </Button>
+          <Button variant="outline" onClick={() => setVendorModalOpen(true)} data-testid="button-add-vendor">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Gerenciar Vendedores
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40 bg-white">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos Status</SelectItem>
+              <SelectItem value="novo">Novo</SelectItem>
+              <SelectItem value="em_contato">Em Contato</SelectItem>
+              <SelectItem value="qualificado">Qualificado</SelectItem>
+              <SelectItem value="negociando">Negociando</SelectItem>
+              <SelectItem value="convertido">Convertido</SelectItem>
+              <SelectItem value="perdido">Perdido</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={temperatureFilter} onValueChange={setTemperatureFilter}>
+            <SelectTrigger className="w-40 bg-white">
+              <SelectValue placeholder="Temperatura" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas Temp.</SelectItem>
+              <SelectItem value="hot">🔥 Quente</SelectItem>
+              <SelectItem value="warm">🌡️ Morno</SelectItem>
+              <SelectItem value="cold">❄️ Frio</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card className="bg-white border-gray-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-gray-500">Total Leads</CardDescription>
+            <CardTitle className="text-2xl text-gray-900">{leads.length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="bg-red-50 border-red-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-red-600 flex items-center gap-1"><Flame className="w-3 h-3" /> Quentes</CardDescription>
+            <CardTitle className="text-2xl text-red-700">{leads.filter(l => l.temperature === 'hot').length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="bg-orange-50 border-orange-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-orange-600 flex items-center gap-1"><ThermometerSun className="w-3 h-3" /> Mornos</CardDescription>
+            <CardTitle className="text-2xl text-orange-700">{leads.filter(l => l.temperature === 'warm').length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-blue-600 flex items-center gap-1"><Snowflake className="w-3 h-3" /> Frios</CardDescription>
+            <CardTitle className="text-2xl text-blue-700">{leads.filter(l => l.temperature === 'cold').length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="bg-green-50 border-green-200">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Convertidos</CardDescription>
+            <CardTitle className="text-2xl text-green-700">{leads.filter(l => l.status === 'convertido').length}</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {/* Leads Table */}
+      <Card className="bg-white border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-gray-900 flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
+            Pipeline de Leads ({filteredLeads.length})
+          </CardTitle>
+          <CardDescription className="text-gray-500">
+            Clique em um lead para ver detalhes e gerenciar interações
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-gray-600 w-12">Temp</TableHead>
+                  <TableHead className="text-gray-600">Score</TableHead>
+                  <TableHead className="text-gray-600">Nome</TableHead>
+                  <TableHead className="text-gray-600">Status</TableHead>
+                  <TableHead className="text-gray-600">Vendedor</TableHead>
+                  <TableHead className="text-gray-600">Último Contato</TableHead>
+                  <TableHead className="text-gray-600">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredLeads.map((lead) => (
+                  <TableRow 
+                    key={lead.id} 
+                    className={`cursor-pointer hover:bg-gray-50 ${getTemperatureBg(lead.temperature)}`}
+                    onClick={() => setSelectedLead(lead)}
+                    data-testid={`row-lead-${lead.id}`}
+                  >
+                    <TableCell>{getTemperatureIcon(lead.temperature)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-mono">
+                        {lead.score}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium text-gray-900">{lead.name}</TableCell>
+                    <TableCell>{getStatusBadge(lead.status)}</TableCell>
+                    <TableCell>
+                      {lead.vendorId ? (
+                        <Badge className="bg-purple-100 text-purple-700">
+                          <UserCheck className="w-3 h-3 mr-1" />
+                          {getVendorName(lead.vendorId)}
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Livre</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-gray-600 text-sm">
+                      {lead.lastContactAt 
+                        ? new Date(lead.lastContactAt).toLocaleDateString('pt-BR')
+                        : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                        {lead.linkedin && (
+                          <Button size="icon" variant="ghost" asChild>
+                            <a href={lead.linkedin.startsWith('http') ? lead.linkedin : `https://${lead.linkedin}`} target="_blank" rel="noopener noreferrer">
+                              <Linkedin className="w-4 h-4 text-blue-600" />
+                            </a>
+                          </Button>
+                        )}
+                        {lead.phone && (
+                          <Button size="icon" variant="ghost" asChild>
+                            <a href={`https://wa.me/55${lead.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                              <Phone className="w-4 h-4 text-green-600" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {filteredLeads.length === 0 && (
+            <p className="text-gray-500 text-center py-8">
+              {leads.length === 0 
+                ? 'Nenhum lead encontrado. Clique em "Sincronizar Planilha" para importar.'
+                : 'Nenhum lead corresponde aos filtros selecionados.'}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Lead Detail Modal */}
+      <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedLead && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  {getTemperatureIcon(selectedLead.temperature)}
+                  <div>
+                    <DialogTitle className="text-xl">{selectedLead.name}</DialogTitle>
+                    <DialogDescription className="flex items-center gap-2">
+                      Score: {selectedLead.score} • {getStatusBadge(selectedLead.status)}
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="grid md:grid-cols-2 gap-6 mt-4">
+                {/* Left Column - Contact & Survey */}
+                <div className="space-y-4">
+                  {/* Contact Info */}
+                  <Card className="bg-gray-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Contato</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-gray-400" />
+                        <span>{selectedLead.email}</span>
+                      </div>
+                      {selectedLead.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-400" />
+                          <span>{selectedLead.phone}</span>
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={`https://wa.me/55${selectedLead.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                              WhatsApp
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+                      {selectedLead.linkedin && (
+                        <div className="flex items-center gap-2">
+                          <Linkedin className="w-4 h-4 text-gray-400" />
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={selectedLead.linkedin.startsWith('http') ? selectedLead.linkedin : `https://${selectedLead.linkedin}`} target="_blank" rel="noopener noreferrer">
+                              Abrir LinkedIn
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Vendor Assignment */}
+                  <Card className="bg-gray-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Atribuição</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {selectedLead.vendorId ? (
+                        <div className="flex items-center justify-between">
+                          <Badge className="bg-purple-100 text-purple-700">
+                            <UserCheck className="w-3 h-3 mr-1" />
+                            {getVendorName(selectedLead.vendorId)}
+                          </Badge>
+                          <Button size="sm" variant="outline" onClick={() => releaseMutation.mutate(selectedLead.id)}>
+                            Liberar
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Selecionar vendedor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {vendors.filter(v => v.isActive).map(vendor => (
+                                <SelectItem key={vendor.id} value={vendor.id}>{vendor.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            size="sm" 
+                            disabled={!selectedVendorId}
+                            onClick={() => claimMutation.mutate({ leadId: selectedLead.id, vendorId: selectedVendorId })}
+                          >
+                            Reservar
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Status */}
+                  <Card className="bg-gray-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Status</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Select 
+                        value={selectedLead.status} 
+                        onValueChange={(status) => statusMutation.mutate({ leadId: selectedLead.id, status })}
+                      >
+                        <SelectTrigger className="bg-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="novo">Novo</SelectItem>
+                          <SelectItem value="em_contato">Em Contato</SelectItem>
+                          <SelectItem value="qualificado">Qualificado</SelectItem>
+                          <SelectItem value="negociando">Negociando</SelectItem>
+                          <SelectItem value="convertido">Convertido</SelectItem>
+                          <SelectItem value="perdido">Perdido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </CardContent>
+                  </Card>
+
+                  {/* AI Summary */}
+                  {selectedLead.aiSummary && (
+                    <Card className="bg-blue-50 border-blue-200">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                          <Bot className="w-4 h-4 text-blue-600" />
+                          Análise do Perfil
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-blue-800">{selectedLead.aiSummary}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Survey Responses */}
+                  {selectedLead.surveyResponses && (
+                    <Card className="bg-gray-50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Respostas do Questionário</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ScrollArea className="h-48">
+                          <div className="space-y-2 text-sm">
+                            {Object.entries(selectedLead.surveyResponses as Record<string, unknown>).map(([q, a], i) => (
+                              <div key={i} className="border-b border-gray-200 pb-2">
+                                <p className="font-medium text-gray-700 text-xs">{q}</p>
+                                <p className="text-gray-900">{String(a ?? '')}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Right Column - AI Suggestions, Activities & Follow-ups */}
+                <div className="space-y-4">
+                  {/* AI Suggestions */}
+                  {aiSuggestions && (
+                    <Card className={`${aiSuggestions.status === 'priority' ? 'bg-red-50 border-red-200' : aiSuggestions.status === 'follow' ? 'bg-orange-50 border-orange-200' : 'bg-gray-50'}`}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                          <Lightbulb className="w-4 h-4 text-yellow-600" />
+                          Sugestões da IA
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 mb-1">Próximos Passos:</p>
+                          <ul className="text-sm space-y-1">
+                            {aiSuggestions.nextSteps.map((step, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="text-blue-600">•</span>
+                                <span>{step}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 mb-1">Argumentos:</p>
+                          <ul className="text-sm space-y-1">
+                            {aiSuggestions.arguments.map((arg, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="text-green-600">💡</span>
+                                <span>{arg}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Add Activity */}
+                  <Card className="bg-gray-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Registrar Atividade</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex gap-2">
+                        <Select value={activityType} onValueChange={setActivityType}>
+                          <SelectTrigger className="w-32 bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="note">Nota</SelectItem>
+                            <SelectItem value="call">Ligação</SelectItem>
+                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="meeting">Reunião</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Textarea 
+                          value={activityContent}
+                          onChange={(e) => setActivityContent(e.target.value)}
+                          placeholder="O que aconteceu nessa interação?"
+                          className="bg-white"
+                          rows={2}
+                        />
+                      </div>
+                      <Button 
+                        size="sm" 
+                        disabled={!activityContent.trim()}
+                        onClick={() => activityMutation.mutate({ leadId: selectedLead.id, type: activityType, content: activityContent })}
+                      >
+                        <Send className="w-4 h-4 mr-1" />
+                        Registrar
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Schedule Follow-up */}
+                  <Card className="bg-gray-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Agendar Follow-up</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex gap-2">
+                        <Select value={followUpType} onValueChange={setFollowUpType}>
+                          <SelectTrigger className="w-32 bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="call">Ligar</SelectItem>
+                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="meeting">Reunião</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input 
+                          type="datetime-local"
+                          value={followUpDate}
+                          onChange={(e) => setFollowUpDate(e.target.value)}
+                          className="bg-white"
+                        />
+                      </div>
+                      <Input 
+                        value={followUpDescription}
+                        onChange={(e) => setFollowUpDescription(e.target.value)}
+                        placeholder="Descrição do follow-up"
+                        className="bg-white"
+                      />
+                      <Button 
+                        size="sm" 
+                        disabled={!followUpDate || !followUpDescription.trim()}
+                        onClick={() => followUpMutation.mutate({ 
+                          leadId: selectedLead.id, 
+                          type: followUpType, 
+                          description: followUpDescription,
+                          scheduledAt: followUpDate 
+                        })}
+                      >
+                        <CalendarClock className="w-4 h-4 mr-1" />
+                        Agendar
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Pending Follow-ups */}
+                  {followUps.filter(f => !f.isCompleted).length > 0 && (
+                    <Card className="bg-yellow-50 border-yellow-200">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-yellow-600" />
+                          Follow-ups Pendentes
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {followUps.filter(f => !f.isCompleted).map(f => (
+                            <div key={f.id} className="flex items-center justify-between text-sm bg-white p-2 rounded">
+                              <div>
+                                <span className="font-medium">{f.description}</span>
+                                <span className="text-gray-500 ml-2">
+                                  {new Date(f.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <Button size="sm" variant="ghost" onClick={() => completeFollowUpMutation.mutate(f.id)}>
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Activity History */}
+                  <Card className="bg-gray-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Histórico</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-48">
+                        <div className="space-y-3">
+                          {activities.length === 0 ? (
+                            <p className="text-gray-500 text-sm text-center py-4">Nenhuma atividade registrada</p>
+                          ) : (
+                            activities.map(activity => (
+                              <div key={activity.id} className="border-l-2 border-blue-200 pl-3 text-sm">
+                                <div className="flex items-center gap-2 text-gray-500 text-xs">
+                                  <span className="capitalize">{activity.type}</span>
+                                  <span>•</span>
+                                  <span>{new Date(activity.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <p className="text-gray-900">{activity.content}</p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Vendor Management Modal */}
+      <Dialog open={vendorModalOpen} onOpenChange={setVendorModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerenciar Vendedores</DialogTitle>
+            <DialogDescription>Cadastre vendedores que podem trabalhar os leads</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <Input 
+                placeholder="Nome"
+                value={newVendorName}
+                onChange={(e) => setNewVendorName(e.target.value)}
+              />
+              <Input 
+                placeholder="Email"
+                type="email"
+                value={newVendorEmail}
+                onChange={(e) => setNewVendorEmail(e.target.value)}
+              />
+            </div>
+            <Button 
+              onClick={() => createVendorMutation.mutate({ name: newVendorName, email: newVendorEmail })}
+              disabled={!newVendorName.trim() || !newVendorEmail.trim()}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Adicionar Vendedor
+            </Button>
+
+            {vendors.length > 0 && (
+              <div className="mt-4">
+                <Label className="text-sm text-gray-500">Vendedores cadastrados:</Label>
+                <div className="space-y-2 mt-2">
+                  {vendors.map(vendor => (
+                    <div key={vendor.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                      <div>
+                        <span className="font-medium">{vendor.name}</span>
+                        <span className="text-gray-500 text-sm ml-2">{vendor.email}</span>
+                      </div>
+                      <Badge variant={vendor.isActive ? 'default' : 'secondary'}>
+                        {vendor.isActive ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // Analytics Section Component
 function AnalyticsSection() {
   interface AnalyticsData {
@@ -2073,8 +2825,12 @@ export default function AdminPage() {
           <p className="text-gray-600">Mentoria Marcelo Murilo & Hamilton Felix</p>
         </div>
 
-        <Tabs defaultValue="mentorship" className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-3 bg-white border border-gray-200">
+        <Tabs defaultValue="crm" className="space-y-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4 bg-white border border-gray-200">
+            <TabsTrigger value="crm" data-testid="tab-crm" className="data-[state=active]:bg-gray-100">
+              <Target className="w-4 h-4 mr-2" />
+              CRM
+            </TabsTrigger>
             <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-100">
               <Users className="w-4 h-4 mr-2" />
               Mentoria
@@ -2088,6 +2844,10 @@ export default function AdminPage() {
               Estatísticas
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="crm">
+            <CRMSection />
+          </TabsContent>
 
           <TabsContent value="mentorship">
             <MentorshipRegistrationsSection />

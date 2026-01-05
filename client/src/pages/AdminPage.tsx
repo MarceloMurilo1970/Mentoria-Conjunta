@@ -2047,6 +2047,8 @@ function CRMSection() {
       negociando: 'bg-yellow-100 text-yellow-700',
       convertido: 'bg-green-100 text-green-700',
       perdido: 'bg-red-100 text-red-700',
+      mentorado: 'bg-emerald-100 text-emerald-700',
+      nao_abordar: 'bg-slate-100 text-slate-700',
     };
     const labels: Record<string, string> = {
       novo: 'Novo',
@@ -2055,6 +2057,8 @@ function CRMSection() {
       negociando: 'Negociando',
       convertido: 'Convertido',
       perdido: 'Perdido',
+      mentorado: 'Mentorado',
+      nao_abordar: 'Não Abordar',
     };
     return <Badge className={colors[status] || colors.novo}>{labels[status] || status}</Badge>;
   };
@@ -2108,6 +2112,8 @@ function CRMSection() {
               <SelectItem value="negociando">Negociando</SelectItem>
               <SelectItem value="convertido">Convertido</SelectItem>
               <SelectItem value="perdido">Perdido</SelectItem>
+              <SelectItem value="mentorado">Mentorado</SelectItem>
+              <SelectItem value="nao_abordar">Não Abordar</SelectItem>
             </SelectContent>
           </Select>
           <Select value={temperatureFilter} onValueChange={setTemperatureFilter}>
@@ -2361,6 +2367,8 @@ function CRMSection() {
                           <SelectItem value="negociando">Negociando</SelectItem>
                           <SelectItem value="convertido">Convertido</SelectItem>
                           <SelectItem value="perdido">Perdido</SelectItem>
+                          <SelectItem value="mentorado">Mentorado</SelectItem>
+                          <SelectItem value="nao_abordar">Não Abordar</SelectItem>
                         </SelectContent>
                       </Select>
                     </CardContent>

@@ -38,14 +38,14 @@ const modules: Module[] = [
     instructor: "Marcelo Murilo",
     duration: "8H",
     sessions: [
-      { number: 1, date: "19/jan", startTime: "19:00", endTime: "20:00", topic: "Definindo seu nicho e propósito" },
-      { number: 2, date: "26/jan", startTime: "19:00", endTime: "20:00", topic: "Perfil de conselheiro que vende" },
-      { number: 3, date: "02/fev", startTime: "19:00", endTime: "20:00", topic: "Posts que geram oportunidades" },
-      { number: 4, date: "09/fev", startTime: "19:00", endTime: "20:00", topic: "Interações que multiplicam alcance" },
-      { number: 5, date: "23/fev", startTime: "19:00", endTime: "20:00", topic: "Conectando com quem importa" },
-      { number: 6, date: "02/mar", startTime: "19:00", endTime: "20:00", topic: "Vendas e eventos estratégicos" },
-      { number: 7, date: "09/mar", startTime: "19:00", endTime: "20:00", topic: "Aspectos práticos dos conselhos" },
-      { number: 8, date: "16/mar", startTime: "19:00", endTime: "20:00", topic: "Integração e planejamento futuros" },
+      { number: 1, date: "23/fev", startTime: "19:00", endTime: "20:00", topic: "Definindo seu nicho e propósito" },
+      { number: 2, date: "02/mar", startTime: "19:00", endTime: "20:00", topic: "Perfil de conselheiro que vende" },
+      { number: 3, date: "09/mar", startTime: "19:00", endTime: "20:00", topic: "Posts que geram oportunidades" },
+      { number: 4, date: "16/mar", startTime: "19:00", endTime: "20:00", topic: "Interações que multiplicam alcance" },
+      { number: 5, date: "23/mar", startTime: "19:00", endTime: "20:00", topic: "Conectando com quem importa" },
+      { number: 6, date: "30/mar", startTime: "19:00", endTime: "20:00", topic: "Vendas e eventos estratégicos" },
+      { number: 7, date: "06/abr", startTime: "19:00", endTime: "20:00", topic: "Aspectos práticos dos conselhos" },
+      { number: 8, date: "13/abr", startTime: "19:00", endTime: "20:00", topic: "Integração e planejamento futuros" },
     ]
   },
   {
@@ -54,10 +54,10 @@ const modules: Module[] = [
     instructor: "Hamilton Felix",
     duration: "4H",
     sessions: [
-      { number: 1, date: "09/mar", startTime: "19:00", endTime: "20:00", topic: "Prospecção de empresas" },
-      { number: 2, date: "09/mar", startTime: "20:00", endTime: "21:00", topic: "Fechamento de Projetos" },
-      { number: 3, date: "16/mar", startTime: "19:00", endTime: "20:00", topic: "Implementando o Conselho" },
-      { number: 4, date: "16/mar", startTime: "20:00", endTime: "21:00", topic: "Evoluindo o Conselho" },
+      { number: 1, date: "06/abr", startTime: "19:00", endTime: "20:00", topic: "Prospecção de empresas" },
+      { number: 2, date: "06/abr", startTime: "20:00", endTime: "21:00", topic: "Fechamento de Projetos" },
+      { number: 3, date: "13/abr", startTime: "19:00", endTime: "20:00", topic: "Implementando o Conselho" },
+      { number: 4, date: "13/abr", startTime: "20:00", endTime: "21:00", topic: "Evoluindo o Conselho" },
     ]
   }
 ];

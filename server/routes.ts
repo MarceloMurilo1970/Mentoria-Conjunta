@@ -720,6 +720,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let updated = 0;
       let skipped = 0;
 
+      // Protected statuses that should not be overwritten during sync
+      const protectedStatuses = ['mentorado', 'nao_abordar', 'convertido'];
+      
       for (const response of surveyResponses) {
         // Check if lead already exists by email
         const existingLead = response.email ? await storage.getLeadByEmail(response.email) : null;
@@ -732,6 +735,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const aiSummary = uniqueCategories.join(', ');
         
         if (existingLead) {
+          // Skip leads with protected statuses - never overwrite them
+          if (protectedStatuses.includes(existingLead.status)) {
+            skipped++;
+            continue;
+          }
+          
           // Update existing lead with new score if higher
           if (score > existingLead.score) {
             await storage.updateLead(existingLead.id, {

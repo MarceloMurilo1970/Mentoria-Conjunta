@@ -1,14 +1,188 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 import { storage } from "./storage";
-import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema } from "@shared/schema";
+import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema, type User } from "@shared/schema";
 import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail } from "./email";
 import { addEventRegistration, getAllEventRegistrations, type EventRegistration, fetchSurveyResponses, calculateLeadScore } from "./googleSheets";
 import path from "path";
 import { z } from "zod";
 
+// Password hashing with bcrypt
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 10);
+}
+
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+
+// Extend Express Request to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}
+
+// Auth middleware
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const session = (req as any).session;
+  if (!session?.userId) {
+    return res.status(401).json({ error: "Não autenticado" });
+  }
+  next();
+}
+
+function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const session = (req as any).session;
+  if (!session?.userId) {
+    return res.status(401).json({ error: "Não autenticado" });
+  }
+  if (session.role !== 'admin') {
+    return res.status(403).json({ error: "Acesso restrito a administradores" });
+  }
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize admin user if not exists
+  const adminEmail = "contato@marcelomurilo.com.br";
+  const existingAdmin = await storage.getUserByEmail(adminEmail);
+  if (!existingAdmin) {
+    const hashedPw = await hashPassword("admin123");
+    await storage.createUser({
+      email: adminEmail,
+      password: hashedPw,
+      name: "Marcelo Murilo",
+      role: "admin",
+      isActive: true,
+    });
+    console.log("Admin user created");
+  }
+
+  // Auth routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user || !user.isActive) {
+        return res.status(401).json({ error: "Credenciais inválidas" });
+      }
+
+      const valid = await verifyPassword(password, user.password);
+      if (!valid) {
+        return res.status(401).json({ error: "Credenciais inválidas" });
+      }
+
+      const session = (req as any).session;
+      session.userId = user.id;
+      session.role = user.role;
+      session.vendorId = user.vendorId;
+      session.userName = user.name;
+      session.userEmail = user.email;
+
+      res.json({ 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role,
+        vendorId: user.vendorId 
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Erro no login" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    const session = (req as any).session;
+    session.destroy?.();
+    res.json({ success: true });
+  });
+
+  app.get("/api/auth/me", async (req, res) => {
+    const session = (req as any).session;
+    if (!session?.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    
+    const user = await storage.getUser(session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "Usuário não encontrado" });
+    }
+    
+    res.json({ 
+      id: user.id, 
+      name: user.name, 
+      email: user.email, 
+      role: user.role,
+      vendorId: user.vendorId 
+    });
+  });
+
+  // User management (admin only)
+  app.get("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const usersList = await storage.getAllUsers();
+      res.json(usersList.map(u => ({ ...u, password: undefined })));
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Erro ao buscar usuários" });
+    }
+  });
+
+  app.post("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const { email, password, name, role, vendorId } = req.body;
+      const hashedPw = await hashPassword(password);
+      const user = await storage.createUser({
+        email,
+        password: hashedPw,
+        name,
+        role: role || 'vendor',
+        vendorId: vendorId || null,
+        isActive: true,
+      });
+      res.json({ ...user, password: undefined });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ error: "Erro ao criar usuário" });
+    }
+  });
+
+  app.patch("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { password, ...data } = req.body;
+      
+      const updateData: any = { ...data };
+      if (password) {
+        updateData.password = await hashPassword(password);
+      }
+      
+      const user = await storage.updateUser(id, updateData);
+      res.json({ ...user, password: undefined });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Erro ao atualizar usuário" });
+    }
+  });
+
+  app.delete("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteUser(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Erro ao excluir usuário" });
+    }
+  });
+
   // Serve the hero image for email
   app.get("/email-assets/hero-image.png", (req, res) => {
     const imagePath = path.join(process.cwd(), "attached_assets", "image_1759890107941.png");
@@ -489,7 +663,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/crm/vendors/:id", async (req, res) => {
+  // Update vendor (admin only)
+  app.patch("/api/crm/vendors/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, email, isActive } = req.body;
+      const vendor = await storage.updateVendorFull(id, { name, email, isActive });
+      res.json(vendor);
+    } catch (error) {
+      console.error("Error updating vendor:", error);
+      res.status(500).json({ error: "Erro ao atualizar vendedor" });
+    }
+  });
+
+  app.delete("/api/crm/vendors/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       await storage.deleteVendor(id);
@@ -537,8 +724,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check if lead already exists by email
         const existingLead = response.email ? await storage.getLeadByEmail(response.email) : null;
         
-        // Calculate score
-        const { score, temperature, reasons } = calculateLeadScore(response.responses);
+        // Calculate score with detailed breakdown
+        const { score, temperature, breakdown } = calculateLeadScore(response.responses);
+        
+        // Generate summary from breakdown categories (unique, no duplicates)
+        const uniqueCategories = Array.from(new Set(breakdown.map(b => b.category)));
+        const aiSummary = uniqueCategories.join(', ');
         
         if (existingLead) {
           // Update existing lead with new score if higher
@@ -547,7 +738,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               score,
               temperature,
               surveyResponses: response.responses,
-              aiSummary: reasons.join(', '),
+              scoreBreakdown: breakdown,
+              aiSummary,
             });
             updated++;
           } else {
@@ -564,8 +756,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             surveyResponses: response.responses,
             score,
             temperature,
+            scoreBreakdown: breakdown,
             status: 'novo',
-            aiSummary: reasons.join(', '),
+            aiSummary,
           });
           imported++;
         }
@@ -683,6 +876,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete activity (admin only)
+  app.delete("/api/crm/activities/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteLeadActivity(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+      res.status(500).json({ error: "Erro ao excluir atividade" });
+    }
+  });
+
   // Lead Follow-ups
   app.get("/api/crm/leads/:id/followups", async (req, res) => {
     try {
@@ -767,6 +972,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating AI suggestions:", error);
       res.status(500).json({ error: "Erro ao gerar sugestões" });
+    }
+  });
+
+  // Converted leads with registration details
+  app.get("/api/crm/leads/converted", async (req, res) => {
+    try {
+      const convertedLeads = await storage.getConvertedLeadsWithRegistrations();
+      res.json(convertedLeads);
+    } catch (error) {
+      console.error("Error fetching converted leads:", error);
+      res.status(500).json({ error: "Erro ao buscar leads convertidos" });
     }
   });
 

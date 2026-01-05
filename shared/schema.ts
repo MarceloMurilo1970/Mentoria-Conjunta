@@ -3,6 +3,31 @@ import { pgTable, text, varchar, timestamp, boolean, integer, jsonb } from "driz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Users table for authentication (admin and vendor access)
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  role: text("role").notNull().default("vendor"), // admin or vendor
+  vendorId: text("vendor_id"), // Links to vendor if role is vendor
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  role: z.enum(["admin", "vendor"]),
+});
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 // Vendors table for CRM
 export const vendors = pgTable("vendors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -32,9 +57,10 @@ export const leads = pgTable("leads", {
   phone: text("phone"),
   linkedin: text("linkedin"),
   // Survey responses stored as JSON
-  surveyResponses: jsonb("survey_responses"),
+  surveyResponses: jsonb("survey_responses").$type<Record<string, string>>(),
   // Lead scoring and status
   score: integer("score").default(0).notNull(),
+  scoreBreakdown: jsonb("score_breakdown").$type<Array<{category: string; points: number; reason: string; question: string; answer: string}>>(), // Array of score breakdown items
   temperature: text("temperature").default("cold").notNull(), // cold, warm, hot
   status: text("status").default("novo").notNull(), // novo, em_contato, qualificado, negociando, convertido, perdido
   // Assignment
@@ -51,10 +77,28 @@ export const leads = pgTable("leads", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Score breakdown item type
+export type ScoreBreakdownItem = {
+  category: string;
+  points: number;
+  reason: string;
+  question: string;
+  answer: string;
+};
+
 export const insertLeadSchema = createInsertSchema(leads).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  surveyResponses: z.record(z.string(), z.string()).optional().nullable(),
+  scoreBreakdown: z.array(z.object({
+    category: z.string(),
+    points: z.number(),
+    reason: z.string(),
+    question: z.string(),
+    answer: z.string(),
+  })).optional().nullable(),
 });
 
 export type InsertLead = z.infer<typeof insertLeadSchema>;

@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 - **Video Testimonials:** Enhanced component support for embedded video testimonials with custom thumbnails.
 - **Methodology Expansion:** Detailed content for "Due Diligence e Entrada Estratégica em Conselhos" and integration of personalized prompts.
 - **Email Error Handling:** Improved UX for SendGrid failures.
-- **CRM System:** Comprehensive lead management with Google Sheets sync, lead scoring, temperature classification, vendor assignment, activity tracking, follow-up scheduling, and AI-powered suggestions.
+- **CRM System:** Comprehensive lead management with Google Sheets sync, lead scoring with detailed breakdown (category, points, reason, question, answer), temperature classification, vendor assignment, activity tracking with admin-only deletion, follow-up scheduling, and AI-powered suggestions. Includes vendor edit/delete (admin-only), converted leads tracking with registration details, and proper TypeScript types for jsonb fields (surveyResponses, scoreBreakdown).
 
 ## External Dependencies
 

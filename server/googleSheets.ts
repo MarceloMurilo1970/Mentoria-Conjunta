@@ -179,10 +179,26 @@ export async function fetchSurveyResponses(): Promise<SurveyResponse[]> {
   }
 }
 
-// Lead scoring algorithm
-export function calculateLeadScore(responses: Record<string, string>): { score: number; temperature: string; reasons: string[] } {
+// Score breakdown item
+export interface ScoreBreakdownItem {
+  category: string;
+  points: number;
+  reason: string;
+  question: string;
+  answer: string;
+}
+
+// Lead scoring algorithm with detailed breakdown
+export function calculateLeadScore(responses: Record<string, string>): { 
+  score: number; 
+  temperature: string; 
+  reasons: string[]; 
+  breakdown: ScoreBreakdownItem[];
+} {
   let score = 0;
   const reasons: string[] = [];
+  const breakdown: ScoreBreakdownItem[] = [];
+  const addedCategories = new Set<string>();
 
   Object.entries(responses).forEach(([question, answer]) => {
     if (!answer) return;
@@ -193,66 +209,166 @@ export function calculateLeadScore(responses: Record<string, string>): { score: 
     // Education/Formation signals
     if (q.includes('formação') || q.includes('educação') || q.includes('curso') || q.includes('certificação')) {
       if (a.includes('mba') || a.includes('mestrado') || a.includes('doutorado') || a.includes('pós') || a.includes('ibgc')) {
-        score += 15;
-        reasons.push('Formação avançada');
+        if (!addedCategories.has('education_advanced')) {
+          score += 15;
+          reasons.push('Formação avançada');
+          breakdown.push({
+            category: 'Formação',
+            points: 15,
+            reason: 'Possui MBA, Mestrado, Doutorado ou certificação IBGC',
+            question,
+            answer
+          });
+          addedCategories.add('education_advanced');
+        }
       } else if (a.includes('graduação') || a.includes('faculdade') || a.includes('superior')) {
-        score += 10;
-        reasons.push('Formação superior');
+        if (!addedCategories.has('education_basic')) {
+          score += 10;
+          reasons.push('Formação superior');
+          breakdown.push({
+            category: 'Formação',
+            points: 10,
+            reason: 'Possui formação superior completa',
+            question,
+            answer
+          });
+          addedCategories.add('education_basic');
+        }
       }
     }
 
     // Mentorship interest
     if (q.includes('mentoria') || q.includes('acompanhamento') || q.includes('ajuda') || q.includes('apoio')) {
       if (a.includes('sim') || a.includes('muito') || a.includes('interesse') || a.includes('preciso') || a.includes('gostaria')) {
-        score += 20;
-        reasons.push('Interesse em mentoria');
+        if (!addedCategories.has('mentorship')) {
+          score += 20;
+          reasons.push('Interesse em mentoria');
+          breakdown.push({
+            category: 'Interesse em Mentoria',
+            points: 20,
+            reason: 'Demonstra interesse direto em acompanhamento/mentoria',
+            question,
+            answer
+          });
+          addedCategories.add('mentorship');
+        }
       }
     }
 
     // LinkedIn/Authority interest
     if (q.includes('linkedin') || q.includes('autoridade') || q.includes('visibilidade') || q.includes('marca pessoal')) {
       if (a.includes('sim') || a.includes('muito') || a.includes('quero') || a.includes('preciso') || a.includes('desenvolver') || a.includes('melhorar')) {
-        score += 15;
-        reasons.push('Quer desenvolver autoridade');
+        if (!addedCategories.has('authority')) {
+          score += 15;
+          reasons.push('Quer desenvolver autoridade');
+          breakdown.push({
+            category: 'Autoridade/LinkedIn',
+            points: 15,
+            reason: 'Quer desenvolver visibilidade e autoridade',
+            question,
+            answer
+          });
+          addedCategories.add('authority');
+        }
       }
     }
 
     // Board transition interest
     if (q.includes('conselho') || q.includes('conselheiro') || q.includes('transição')) {
       if (a.includes('sim') || a.includes('muito') || a.includes('objetivo') || a.includes('desejo') || a.includes('busco') || a.includes('quero')) {
-        score += 20;
-        reasons.push('Busca transição para conselho');
+        if (!addedCategories.has('board_interest')) {
+          score += 20;
+          reasons.push('Busca transição para conselho');
+          breakdown.push({
+            category: 'Transição para Conselho',
+            points: 20,
+            reason: 'Tem como objetivo atuar em conselhos',
+            question,
+            answer
+          });
+          addedCategories.add('board_interest');
+        }
       }
       if (a.includes('não sei') || a.includes('dificuldade') || a.includes('não sabe') || a.includes('como começar') || a.includes('dúvida')) {
-        score += 20;
-        reasons.push('Não sabe como começar');
+        if (!addedCategories.has('board_help')) {
+          score += 20;
+          reasons.push('Precisa de orientação para conselhos');
+          breakdown.push({
+            category: 'Necessita Orientação',
+            points: 20,
+            reason: 'Não sabe como iniciar jornada em conselhos',
+            question,
+            answer
+          });
+          addedCategories.add('board_help');
+        }
       }
     }
 
     // Current position
     if (q.includes('cargo') || q.includes('posição') || q.includes('atuação') || q.includes('ocupação')) {
       if (a.includes('diretor') || a.includes('c-level') || a.includes('ceo') || a.includes('cfo') || a.includes('cto') || a.includes('presidente')) {
-        score += 15;
-        reasons.push('Cargo C-Level/Diretor');
+        if (!addedCategories.has('position_exec')) {
+          score += 15;
+          reasons.push('Cargo C-Level/Diretor');
+          breakdown.push({
+            category: 'Cargo Atual',
+            points: 15,
+            reason: 'Ocupa cargo de alta liderança (C-Level/Diretor)',
+            question,
+            answer
+          });
+          addedCategories.add('position_exec');
+        }
       } else if (a.includes('gerente') || a.includes('coordenador') || a.includes('head') || a.includes('superintendente')) {
-        score += 10;
-        reasons.push('Cargo de gestão');
+        if (!addedCategories.has('position_manager')) {
+          score += 10;
+          reasons.push('Cargo de gestão');
+          breakdown.push({
+            category: 'Cargo Atual',
+            points: 10,
+            reason: 'Ocupa cargo de gestão (Gerente/Coordenador)',
+            question,
+            answer
+          });
+          addedCategories.add('position_manager');
+        }
       }
     }
 
     // Board experience (might be less urgent)
     if (q.includes('quantos conselhos') || q.includes('atua em conselho')) {
       if (a === '0' || a.includes('nenhum') || a.includes('zero')) {
-        score += 10;
-        reasons.push('Ainda não atua em conselhos');
+        if (!addedCategories.has('no_board')) {
+          score += 10;
+          reasons.push('Ainda não atua em conselhos');
+          breakdown.push({
+            category: 'Experiência em Conselhos',
+            points: 10,
+            reason: 'Ainda não atua em conselhos - precisa de apoio',
+            question,
+            answer
+          });
+          addedCategories.add('no_board');
+        }
       }
     }
 
     // Urgency
     if (q.includes('urgência') || q.includes('prazo') || q.includes('quando') || q.includes('timing')) {
       if (a.includes('agora') || a.includes('imediato') || a.includes('urgente') || a.includes('próximo') || a.includes('esse ano')) {
-        score += 10;
-        reasons.push('Urgência no objetivo');
+        if (!addedCategories.has('urgency')) {
+          score += 10;
+          reasons.push('Urgência no objetivo');
+          breakdown.push({
+            category: 'Urgência',
+            points: 10,
+            reason: 'Tem urgência em iniciar a transição',
+            question,
+            answer
+          });
+          addedCategories.add('urgency');
+        }
       }
     }
   });
@@ -266,5 +382,5 @@ export function calculateLeadScore(responses: Record<string, string>): { score: 
     temperature = 'warm';
   }
 
-  return { score, temperature, reasons };
+  return { score, temperature, reasons, breakdown };
 }

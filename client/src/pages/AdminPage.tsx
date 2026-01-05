@@ -2257,9 +2257,9 @@ function CRMSection() {
                   {getTemperatureIcon(selectedLead.temperature)}
                   <div>
                     <DialogTitle className="text-xl">{selectedLead.name}</DialogTitle>
-                    <DialogDescription className="flex items-center gap-2">
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
                       Score: {selectedLead.score} • {getStatusBadge(selectedLead.status)}
-                    </DialogDescription>
+                    </div>
                   </div>
                 </div>
               </DialogHeader>
@@ -2390,10 +2390,10 @@ function CRMSection() {
                       <CardContent>
                         <ScrollArea className="h-48">
                           <div className="space-y-2 text-sm">
-                            {Object.entries(selectedLead.surveyResponses as Record<string, unknown>).map(([q, a], i) => (
+                            {Object.entries(selectedLead.surveyResponses as Record<string, string>).map(([q, a], i) => (
                               <div key={i} className="border-b border-gray-200 pb-2">
                                 <p className="font-medium text-gray-700 text-xs">{q}</p>
-                                <p className="text-gray-900">{String(a ?? '')}</p>
+                                <p className="text-gray-900">{a || ''}</p>
                               </div>
                             ))}
                           </div>

@@ -4,7 +4,8 @@ import {
   type Vendor, type InsertVendor, vendors,
   type Lead, type InsertLead, leads,
   type LeadActivity, type InsertLeadActivity, leadActivities,
-  type LeadFollowUp, type InsertLeadFollowUp, leadFollowUps
+  type LeadFollowUp, type InsertLeadFollowUp, leadFollowUps,
+  type User, type InsertUser, users
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, gte, isNull, and, or, ilike } from "drizzle-orm";
@@ -373,6 +374,72 @@ export class DbStorage implements IStorage {
   async deleteFollowUp(id: string): Promise<boolean> {
     const result = await db.delete(leadFollowUps).where(eq(leadFollowUps.id, id)).returning();
     return result.length > 0;
+  }
+
+  // CRM: Delete activity (admin only)
+  async deleteLeadActivity(id: string): Promise<boolean> {
+    const result = await db.delete(leadActivities).where(eq(leadActivities.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Users (for authentication)
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set(data)
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Vendor update (full)
+  async updateVendorFull(id: string, data: { name?: string; email?: string; isActive?: boolean }): Promise<Vendor | undefined> {
+    const result = await db.update(vendors)
+      .set(data)
+      .where(eq(vendors.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Get converted leads with registration details
+  async getConvertedLeadsWithRegistrations(): Promise<Array<Lead & { registration?: Registration }>> {
+    const convertedLeads = await db.select()
+      .from(leads)
+      .where(eq(leads.status, 'convertido'))
+      .orderBy(desc(leads.convertedAt));
+    
+    const result = await Promise.all(convertedLeads.map(async (lead) => {
+      let registration: Registration | undefined;
+      if (lead.registrationId) {
+        registration = await this.getRegistration(lead.registrationId);
+      }
+      return { ...lead, registration };
+    }));
+    
+    return result;
   }
 }
 

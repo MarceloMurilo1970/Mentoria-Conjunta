@@ -166,11 +166,11 @@ export class DbStorage implements IStorage {
     
     const result = await db.execute(sql`
       SELECT 
-        TO_CHAR(created_at AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as date,
+        TO_CHAR((created_at AT TIME ZONE 'UTC') AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as date,
         COUNT(*)::integer as count
       FROM page_views 
       WHERE created_at >= ${startDate}
-      GROUP BY TO_CHAR(created_at AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD')
+      GROUP BY TO_CHAR((created_at AT TIME ZONE 'UTC') AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD')
       ORDER BY date DESC
     `);
     return result.rows as { date: string; count: number }[];

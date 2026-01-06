@@ -1906,6 +1906,13 @@ function CRMSection() {
   const [followUpType, setFollowUpType] = useState('call');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [temperatureFilter, setTemperatureFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showMyLeadsOnly, setShowMyLeadsOnly] = useState<boolean>(false);
+  const [loginEmail, setLoginEmail] = useState<string>('');
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [currentVendorEmail, setCurrentVendorEmail] = useState<string | null>(() => {
+    return localStorage.getItem('crm_vendor_email');
+  });
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery<Lead[]>({
     queryKey: ['/api/crm/leads'],
@@ -1914,6 +1921,31 @@ function CRMSection() {
   const { data: vendors = [], isLoading: vendorsLoading } = useQuery<Vendor[]>({
     queryKey: ['/api/crm/vendors'],
   });
+
+  const currentVendor = vendors.find(v => v.email?.toLowerCase() === currentVendorEmail?.toLowerCase()) || null;
+  const isAdmin = currentVendorEmail?.toLowerCase() === 'contato@marcelomurilo.com.br';
+
+  const handleLogin = () => {
+    if (!loginEmail.trim()) {
+      toast({ title: 'Digite seu email', variant: 'destructive' });
+      return;
+    }
+    const vendor = vendors.find(v => v.email?.toLowerCase() === loginEmail.toLowerCase());
+    if (!vendor) {
+      toast({ title: 'Email não encontrado', description: 'Este email não está cadastrado como vendedor.', variant: 'destructive' });
+      return;
+    }
+    localStorage.setItem('crm_vendor_email', loginEmail.toLowerCase());
+    setCurrentVendorEmail(loginEmail.toLowerCase());
+    setIsLoggedIn(true);
+    toast({ title: `Bem-vindo, ${vendor.name}!` });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('crm_vendor_email');
+    setCurrentVendorEmail(null);
+    setIsLoggedIn(false);
+  };
 
   const { data: activities = [] } = useQuery<LeadActivity[]>({
     queryKey: ['/api/crm/leads', selectedLead?.id, 'activities'],
@@ -2066,6 +2098,16 @@ function CRMSection() {
   const filteredLeads = leads.filter(lead => {
     if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
     if (temperatureFilter !== 'all' && lead.temperature !== temperatureFilter) return false;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      const nameMatch = (lead.name ?? '').toLowerCase().includes(query);
+      const emailMatch = (lead.email ?? '').toLowerCase().includes(query);
+      const phoneMatch = (lead.phone ?? '').toLowerCase().includes(query);
+      if (!nameMatch && !emailMatch && !phoneMatch) return false;
+    }
+    if (showMyLeadsOnly && currentVendor) {
+      if (lead.vendorId !== currentVendor.id) return false;
+    }
     return true;
   });
 
@@ -2075,7 +2117,7 @@ function CRMSection() {
     return vendor?.name || 'Desconhecido';
   };
 
-  if (leadsLoading) {
+  if (leadsLoading || vendorsLoading) {
     return (
       <Card className="bg-white border-gray-200">
         <CardContent className="flex items-center justify-center py-12">
@@ -2085,21 +2127,87 @@ function CRMSection() {
     );
   }
 
+  if (!currentVendorEmail) {
+    return (
+      <Card className="bg-white border-gray-200 max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-gray-900 flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Identificação
+          </CardTitle>
+          <CardDescription className="text-gray-500">
+            Informe seu email para acessar o CRM
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="login-email" className="text-gray-700">Email</Label>
+            <Input
+              id="login-email"
+              type="email"
+              placeholder="seu@email.com"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              className="bg-white border-gray-300"
+              data-testid="input-login-email"
+            />
+          </div>
+          <Button onClick={handleLogin} className="w-full" data-testid="button-login">
+            Entrar
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* User Info Bar */}
+      <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+        <div className="flex items-center gap-2">
+          <UserCheck className="w-4 h-4 text-green-600" />
+          <span className="text-sm text-gray-600">Logado como:</span>
+          <span className="font-medium text-gray-900">{currentVendor?.name || currentVendorEmail}</span>
+          {isAdmin && <Badge className="bg-purple-100 text-purple-700">Admin</Badge>}
+        </div>
+        <Button variant="ghost" size="sm" onClick={handleLogout} data-testid="button-logout">
+          Sair
+        </Button>
+      </div>
+
       {/* Header Actions */}
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-2">
-          <Button onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending} data-testid="button-sync-leads">
-            {syncMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-            Sincronizar Planilha
-          </Button>
-          <Button variant="outline" onClick={() => setVendorModalOpen(true)} data-testid="button-add-vendor">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Gerenciar Vendedores
-          </Button>
+          {isAdmin && (
+            <>
+              <Button onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending} data-testid="button-sync-leads">
+                {syncMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                Sincronizar Planilha
+              </Button>
+              <Button variant="outline" onClick={() => setVendorModalOpen(true)} data-testid="button-add-vendor">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Gerenciar Vendedores
+              </Button>
+            </>
+          )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Input
+            placeholder="Buscar por nome, email ou telefone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-64 bg-white border-gray-300"
+            data-testid="input-search-leads"
+          />
+          <Button 
+            variant={showMyLeadsOnly ? "default" : "outline"} 
+            onClick={() => setShowMyLeadsOnly(!showMyLeadsOnly)}
+            data-testid="button-my-leads"
+          >
+            <User className="w-4 h-4 mr-2" />
+            Meus Leads
+          </Button>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40 bg-white">
               <SelectValue placeholder="Status" />
@@ -2130,33 +2238,53 @@ function CRMSection() {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - Clickable to filter */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="bg-white border-gray-200">
+        <Card 
+          className={`bg-white border-gray-200 cursor-pointer transition-all hover-elevate ${temperatureFilter === 'all' && statusFilter === 'all' ? 'ring-2 ring-blue-500' : ''}`}
+          onClick={() => { setTemperatureFilter('all'); setStatusFilter('all'); }}
+          data-testid="card-total-leads"
+        >
           <CardHeader className="pb-2">
             <CardDescription className="text-gray-500">Total Leads</CardDescription>
             <CardTitle className="text-2xl text-gray-900">{leads.length}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="bg-red-50 border-red-200">
+        <Card 
+          className={`bg-red-50 border-red-200 cursor-pointer transition-all hover-elevate ${temperatureFilter === 'hot' ? 'ring-2 ring-red-500' : ''}`}
+          onClick={() => { setTemperatureFilter('hot'); setStatusFilter('all'); }}
+          data-testid="card-hot-leads"
+        >
           <CardHeader className="pb-2">
             <CardDescription className="text-red-600 flex items-center gap-1"><Flame className="w-3 h-3" /> Quentes</CardDescription>
             <CardTitle className="text-2xl text-red-700">{leads.filter(l => l.temperature === 'hot').length}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="bg-orange-50 border-orange-200">
+        <Card 
+          className={`bg-orange-50 border-orange-200 cursor-pointer transition-all hover-elevate ${temperatureFilter === 'warm' ? 'ring-2 ring-orange-500' : ''}`}
+          onClick={() => { setTemperatureFilter('warm'); setStatusFilter('all'); }}
+          data-testid="card-warm-leads"
+        >
           <CardHeader className="pb-2">
             <CardDescription className="text-orange-600 flex items-center gap-1"><ThermometerSun className="w-3 h-3" /> Mornos</CardDescription>
             <CardTitle className="text-2xl text-orange-700">{leads.filter(l => l.temperature === 'warm').length}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="bg-blue-50 border-blue-200">
+        <Card 
+          className={`bg-blue-50 border-blue-200 cursor-pointer transition-all hover-elevate ${temperatureFilter === 'cold' ? 'ring-2 ring-blue-500' : ''}`}
+          onClick={() => { setTemperatureFilter('cold'); setStatusFilter('all'); }}
+          data-testid="card-cold-leads"
+        >
           <CardHeader className="pb-2">
             <CardDescription className="text-blue-600 flex items-center gap-1"><Snowflake className="w-3 h-3" /> Frios</CardDescription>
             <CardTitle className="text-2xl text-blue-700">{leads.filter(l => l.temperature === 'cold').length}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="bg-green-50 border-green-200">
+        <Card 
+          className={`bg-green-50 border-green-200 cursor-pointer transition-all hover-elevate ${statusFilter === 'convertido' ? 'ring-2 ring-green-500' : ''}`}
+          onClick={() => { setStatusFilter('convertido'); setTemperatureFilter('all'); }}
+          data-testid="card-converted-leads"
+        >
           <CardHeader className="pb-2">
             <CardDescription className="text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Convertidos</CardDescription>
             <CardTitle className="text-2xl text-green-700">{leads.filter(l => l.status === 'convertido').length}</CardTitle>

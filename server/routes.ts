@@ -627,6 +627,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Database info endpoint (for debugging)
+  app.get("/api/db-info", async (req, res) => {
+    const dbUrl = process.env.DATABASE_URL || '';
+    // Mask password but show host for identification
+    const masked = dbUrl.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
+    res.json({ dbUrl: masked });
+  });
+
   // ==================== CRM ENDPOINTS ====================
 
   // Auto-initialize vendors if database is empty (for production setup)

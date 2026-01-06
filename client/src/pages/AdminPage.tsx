@@ -3185,6 +3185,10 @@ function AnalyticsSection() {
 }
 
 export default function AdminPage() {
+  const { data: dbInfo } = useQuery<{ dbUrl: string }>({
+    queryKey: ['/api/db-info'],
+  });
+
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900">
       <div className="container mx-auto py-8 px-4">
@@ -3229,6 +3233,13 @@ export default function AdminPage() {
             <AnalyticsSection />
           </TabsContent>
         </Tabs>
+
+        {/* Database Info Footer */}
+        <div className="mt-8 pt-4 border-t border-gray-200">
+          <p className="text-xs text-gray-400 font-mono break-all" data-testid="db-url-footer">
+            DB: {dbInfo?.dbUrl || 'Carregando...'}
+          </p>
+        </div>
       </div>
     </div>
   );

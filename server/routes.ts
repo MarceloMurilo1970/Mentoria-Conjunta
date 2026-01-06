@@ -1039,7 +1039,7 @@ function generateAISuggestions(lead: any, activities: any[]): { nextSteps: strin
   // Temperature-based arguments
   if (lead.temperature === 'hot') {
     args.push('Lead quente: tem perfil ideal e demonstra urgência. Priorize o atendimento!');
-    args.push('Destaque: Turma 2 começa em Janeiro 2026 - vagas limitadas');
+    args.push('Destaque: Turma 2 começa em 23/02/2026 - vagas limitadas');
   } else if (lead.temperature === 'warm') {
     args.push('Lead morno: demonstra interesse mas pode precisar de mais informações');
     args.push('Foque em entender as dúvidas e objeções específicas');

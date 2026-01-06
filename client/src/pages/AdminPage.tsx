@@ -2502,17 +2502,37 @@ function CRMSection() {
                     </CardContent>
                   </Card>
 
-                  {/* AI Summary */}
-                  {selectedLead.aiSummary && (
+                  {/* AI Summary with Score Breakdown */}
+                  {(selectedLead.scoreBreakdown || selectedLead.aiSummary) && (
                     <Card className="bg-blue-50 border-blue-200">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium flex items-center gap-2">
                           <Bot className="w-4 h-4 text-blue-600" />
-                          Análise do Perfil
+                          Análise do Perfil (Score: {selectedLead.score})
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-blue-800">{selectedLead.aiSummary}</p>
+                      <CardContent className="space-y-2">
+                        {selectedLead.scoreBreakdown && Array.isArray(selectedLead.scoreBreakdown) && selectedLead.scoreBreakdown.length > 0 ? (
+                          <ScrollArea className="h-40">
+                            <div className="space-y-2">
+                              {(selectedLead.scoreBreakdown as { category: string; points: number; reason: string; question: string; answer: string }[]).map((item, i) => (
+                                <div key={i} className="bg-white p-2 rounded border border-blue-100">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <Badge className="bg-blue-100 text-blue-700">{item.category}</Badge>
+                                    <span className="text-sm font-bold text-blue-700">+{item.points} pts</span>
+                                  </div>
+                                  <p className="text-xs text-blue-800 mb-1">{item.reason}</p>
+                                  <div className="text-xs text-gray-600 mt-1 pt-1 border-t border-blue-50">
+                                    <p className="font-medium">Pergunta: {item.question}</p>
+                                    <p className="italic">Resposta: {item.answer}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        ) : (
+                          <p className="text-sm text-blue-800">{selectedLead.aiSummary}</p>
+                        )}
                       </CardContent>
                     </Card>
                   )}
@@ -2526,12 +2546,42 @@ function CRMSection() {
                       <CardContent>
                         <ScrollArea className="h-48">
                           <div className="space-y-2 text-sm">
-                            {Object.entries(selectedLead.surveyResponses as Record<string, string>).map(([q, a], i) => (
-                              <div key={i} className="border-b border-gray-200 pb-2">
-                                <p className="font-medium text-gray-700 text-xs">{q}</p>
-                                <p className="text-gray-900">{a || ''}</p>
-                              </div>
-                            ))}
+                            {(() => {
+                              const importantKeywords = [
+                                'atuação principal',
+                                'mentoria',
+                                'transição',
+                                'conselho',
+                                'posicionamento',
+                                'networking',
+                                'formação',
+                                'investiu',
+                                'interesse',
+                                'precisa neste momento'
+                              ];
+                              const entries = Object.entries(selectedLead.surveyResponses as Record<string, string>);
+                              const sortedEntries = entries.sort(([q1], [q2]) => {
+                                const q1Lower = q1.toLowerCase();
+                                const q2Lower = q2.toLowerCase();
+                                const q1Important = importantKeywords.some(kw => q1Lower.includes(kw));
+                                const q2Important = importantKeywords.some(kw => q2Lower.includes(kw));
+                                if (q1Important && !q2Important) return -1;
+                                if (!q1Important && q2Important) return 1;
+                                return 0;
+                              });
+                              return sortedEntries.map(([q, a], i) => {
+                                const isImportant = importantKeywords.some(kw => q.toLowerCase().includes(kw));
+                                return (
+                                  <div key={i} className={`border-b pb-2 ${isImportant ? 'border-blue-200 bg-blue-50 p-2 rounded' : 'border-gray-200'}`}>
+                                    <p className={`font-medium text-xs ${isImportant ? 'text-blue-700' : 'text-gray-700'}`}>
+                                      {isImportant && <span className="mr-1">★</span>}
+                                      {q}
+                                    </p>
+                                    <p className={`${isImportant ? 'text-blue-900 font-medium' : 'text-gray-900'}`}>{a || ''}</p>
+                                  </div>
+                                );
+                              });
+                            })()}
                           </div>
                         </ScrollArea>
                       </CardContent>

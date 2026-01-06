@@ -629,6 +629,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== CRM ENDPOINTS ====================
 
+  // Auto-initialize vendors if database is empty (for production setup)
+  app.post("/api/crm/init", async (req, res) => {
+    try {
+      const existingVendors = await storage.getAllVendors();
+      
+      if (existingVendors.length > 0) {
+        return res.json({ message: "Já existem vendedores cadastrados", initialized: false });
+      }
+
+      // Create default vendors
+      const defaultVendors = [
+        { name: "Marcelo Murilo", email: "contato@marcelomurilo.com.br" },
+        { name: "Hamilton Felix", email: "hamiltonfelix@gmail.com" },
+        { name: "Leandro Massaneiro", email: "leandro@felixempresarial.com.br" },
+      ];
+
+      for (const vendor of defaultVendors) {
+        await storage.createVendor(vendor);
+      }
+
+      console.log("CRM initialized with default vendors");
+      res.json({ 
+        message: "Sistema inicializado com sucesso!", 
+        initialized: true,
+        vendors: defaultVendors.map(v => v.name)
+      });
+    } catch (error) {
+      console.error("Error initializing CRM:", error);
+      res.status(500).json({ error: "Erro ao inicializar sistema" });
+    }
+  });
+
   // Vendors CRUD
   app.get("/api/crm/vendors", async (req, res) => {
     try {

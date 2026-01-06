@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2 } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -2174,6 +2174,46 @@ function CRMSection() {
   }
 
   if (!currentVendorEmail) {
+    // Show initialization option if no vendors exist
+    if (vendors.length === 0) {
+      return (
+        <Card className="bg-white border-gray-200 max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="text-gray-900 flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Configuração Inicial
+            </CardTitle>
+            <CardDescription className="text-gray-500">
+              O sistema precisa ser inicializado. Clique abaixo para criar os vendedores padrão.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/crm/init', { method: 'POST' });
+                  const data = await res.json();
+                  if (data.initialized) {
+                    toast({ title: 'Sistema inicializado!', description: 'Vendedores criados com sucesso.' });
+                    queryClient.invalidateQueries({ queryKey: ['/api/crm/vendors'] });
+                  } else {
+                    toast({ title: 'Aviso', description: data.message });
+                  }
+                } catch (error) {
+                  toast({ title: 'Erro', description: 'Falha ao inicializar sistema', variant: 'destructive' });
+                }
+              }} 
+              className="w-full" 
+              data-testid="button-init-system"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Inicializar Sistema
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card className="bg-white border-gray-200 max-w-md mx-auto">
         <CardHeader>

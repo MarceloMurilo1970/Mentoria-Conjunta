@@ -1962,6 +1962,23 @@ function CRMSection() {
     enabled: !!selectedLead,
   });
 
+  // Pending follow-ups for current vendor
+  const { data: pendingFollowUps = [] } = useQuery<(LeadFollowUp & { leadName?: string })[]>({
+    queryKey: ['/api/crm/followups/pending', currentVendor?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/crm/followups/pending?vendorId=${currentVendor?.id}`);
+      if (!res.ok) throw new Error('Erro ao buscar pendências');
+      return res.json();
+    },
+    enabled: !!currentVendor?.id,
+  });
+
+  // Enrich follow-ups with lead names
+  const enrichedFollowUps = pendingFollowUps.map(fu => ({
+    ...fu,
+    leadName: leads.find(l => l.id === fu.leadId)?.name || 'Lead desconhecido'
+  }));
+
   const syncMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest('POST', '/api/crm/leads/sync');
@@ -2006,6 +2023,8 @@ function CRMSection() {
       apiRequest('POST', `/api/crm/leads/${leadId}/claim`, { vendorId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/followups/pending'] });
+      setSelectedVendorId('');
       toast({ title: 'Lead reservado com sucesso' });
     },
     onError: (error: Error) => {
@@ -2017,6 +2036,7 @@ function CRMSection() {
     mutationFn: (leadId: string) => apiRequest('POST', `/api/crm/leads/${leadId}/release`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      setSelectedVendorId('');
       toast({ title: 'Lead liberado' });
     },
   });
@@ -2201,6 +2221,60 @@ function CRMSection() {
           Sair
         </Button>
       </div>
+
+      {/* Pending Follow-ups Section */}
+      {enrichedFollowUps.length > 0 && (
+        <Card className="bg-amber-50 border-amber-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CalendarClock className="w-4 h-4 text-amber-600" />
+              Minhas Pendências ({enrichedFollowUps.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {enrichedFollowUps.slice(0, 5).map(fu => (
+                <div 
+                  key={fu.id} 
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border cursor-pointer hover:bg-gray-50"
+                  onClick={() => {
+                    const lead = leads.find(l => l.id === fu.leadId);
+                    if (lead) setSelectedLead(lead);
+                  }}
+                  data-testid={`followup-item-${fu.id}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-xs">
+                      {fu.type === 'call' && 'Ligar'}
+                      {fu.type === 'whatsapp' && 'WhatsApp'}
+                      {fu.type === 'email' && 'Email'}
+                      {fu.type === 'meeting' && 'Reunião'}
+                    </Badge>
+                    <div>
+                      <p className="font-medium text-sm">{fu.leadName}</p>
+                      <p className="text-xs text-gray-500">{fu.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {fu.scheduledAt ? (
+                      <p className="text-xs text-gray-500">
+                        {new Date(fu.scheduledAt).toLocaleDateString('pt-BR')}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">Sem data</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {enrichedFollowUps.length > 5 && (
+                <p className="text-xs text-gray-500 text-center pt-2">
+                  +{enrichedFollowUps.length - 5} pendências...
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Header Actions */}
       <div className="flex flex-wrap gap-4 items-center justify-between">
@@ -2496,30 +2570,49 @@ function CRMSection() {
                             <UserCheck className="w-3 h-3 mr-1" />
                             {getVendorName(selectedLead.vendorId)}
                           </Badge>
-                          <Button size="sm" variant="outline" onClick={() => releaseMutation.mutate(selectedLead.id)}>
-                            Liberar
-                          </Button>
+                          {/* Only show release button if admin OR if current vendor owns this lead */}
+                          {(isAdmin || selectedLead.vendorId === currentVendor?.id) && (
+                            <Button size="sm" variant="outline" onClick={() => releaseMutation.mutate(selectedLead.id)} data-testid="button-release-lead">
+                              Liberar
+                            </Button>
+                          )}
                         </div>
                       ) : (
-                        <div className="flex gap-2">
-                          <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
-                            <SelectTrigger className="bg-white">
-                              <SelectValue placeholder="Selecionar vendedor" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {vendors.filter(v => v.isActive).map(vendor => (
-                                <SelectItem key={vendor.id} value={vendor.id}>{vendor.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button 
-                            size="sm" 
-                            disabled={!selectedVendorId}
-                            onClick={() => claimMutation.mutate({ leadId: selectedLead.id, vendorId: selectedVendorId })}
-                          >
-                            Reservar
-                          </Button>
-                        </div>
+                        <>
+                          {/* Non-admin vendors see simple "Pegar para mim" button */}
+                          {!isAdmin && currentVendor && (
+                            <Button 
+                              onClick={() => claimMutation.mutate({ leadId: selectedLead.id, vendorId: currentVendor.id })}
+                              data-testid="button-claim-lead-self"
+                            >
+                              <User className="w-4 h-4 mr-2" />
+                              Pegar para mim
+                            </Button>
+                          )}
+                          {/* Admin sees vendor selector */}
+                          {isAdmin && (
+                            <div className="flex gap-2">
+                              <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+                                <SelectTrigger className="bg-white">
+                                  <SelectValue placeholder="Selecionar vendedor" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {vendors.filter(v => v.isActive).map(vendor => (
+                                    <SelectItem key={vendor.id} value={vendor.id}>{vendor.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button 
+                                size="sm" 
+                                disabled={!selectedVendorId}
+                                onClick={() => claimMutation.mutate({ leadId: selectedLead.id, vendorId: selectedVendorId })}
+                                data-testid="button-assign-lead"
+                              >
+                                Atribuir
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </CardContent>
                   </Card>

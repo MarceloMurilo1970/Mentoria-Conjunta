@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2 } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -1976,6 +1976,20 @@ function CRMSection() {
     },
   });
 
+  const regenerateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/crm/leads/regenerate');
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      toast({ title: 'Perfis regenerados', description: `${data.regenerated} atualizados, ${data.skipped} ignorados` });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro ao regenerar', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const createVendorMutation = useMutation({
     mutationFn: (data: { name: string; email: string }) => apiRequest('POST', '/api/crm/vendors', data),
     onSuccess: () => {
@@ -2004,6 +2018,18 @@ function CRMSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
       toast({ title: 'Lead liberado' });
+    },
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: ({ leadId, phone, linkedin }: { leadId: string; phone?: string; linkedin?: string }) => 
+      apiRequest('PATCH', `/api/crm/leads/${leadId}/contact`, { phone, linkedin }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      toast({ title: 'Contato atualizado' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro ao atualizar contato', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -2184,6 +2210,10 @@ function CRMSection() {
               <Button onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending} data-testid="button-sync-leads">
                 {syncMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                 Sincronizar Planilha
+              </Button>
+              <Button variant="secondary" onClick={() => regenerateMutation.mutate()} disabled={regenerateMutation.isPending} data-testid="button-regenerate-leads">
+                {regenerateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                Regenerar Perfis
               </Button>
               <Button variant="outline" onClick={() => setVendorModalOpen(true)} data-testid="button-add-vendor">
                 <UserPlus className="w-4 h-4 mr-2" />
@@ -2411,17 +2441,36 @@ function CRMSection() {
                         <MessageSquare className="w-4 h-4 text-gray-400" />
                         <span>{selectedLead.email}</span>
                       </div>
-                      {selectedLead.phone && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-gray-400" />
-                          <span>{selectedLead.phone}</span>
-                          <Button size="sm" variant="outline" asChild>
-                            <a href={`https://wa.me/55${selectedLead.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
-                              WhatsApp
-                            </a>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-gray-400" />
+                        {selectedLead.phone ? (
+                          <>
+                            <span>{selectedLead.phone}</span>
+                            <Button size="sm" variant="outline" asChild>
+                              <a href={`https://wa.me/55${selectedLead.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                WhatsApp
+                              </a>
+                            </Button>
+                          </>
+                        ) : (
+                          <span className="text-gray-400 italic">Não informado</span>
+                        )}
+                        {isAdmin && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => {
+                              const phone = prompt('Digite o telefone (com DDD):', selectedLead.phone || '');
+                              if (phone !== null) {
+                                updateContactMutation.mutate({ leadId: selectedLead.id, phone });
+                              }
+                            }}
+                            data-testid="button-edit-phone"
+                          >
+                            <Edit className="w-3 h-3" />
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                       {selectedLead.linkedin && (
                         <div className="flex items-center gap-2">
                           <Linkedin className="w-4 h-4 text-gray-400" />

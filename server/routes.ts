@@ -741,15 +741,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
           
+          // Always update phone if available in sheet but not in DB
+          const updateData: any = {};
+          if (response.phone && !existingLead.phone) {
+            updateData.phone = response.phone;
+          }
+          if (response.linkedin && !existingLead.linkedin) {
+            updateData.linkedin = response.linkedin;
+          }
+          
           // Update existing lead with new score if higher
           if (score > existingLead.score) {
-            await storage.updateLead(existingLead.id, {
-              score,
-              temperature,
-              surveyResponses: response.responses,
-              scoreBreakdown: breakdown,
-              aiSummary,
-            });
+            updateData.score = score;
+            updateData.temperature = temperature;
+            updateData.surveyResponses = response.responses;
+            updateData.scoreBreakdown = breakdown;
+            updateData.aiSummary = aiSummary;
+          }
+          
+          if (Object.keys(updateData).length > 0) {
+            await storage.updateLead(existingLead.id, updateData);
             updated++;
           } else {
             skipped++;
@@ -783,6 +794,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error syncing leads:", error);
       res.status(500).json({ error: "Erro ao sincronizar leads: " + (error as Error).message });
+    }
+  });
+
+  // Regenerate all lead profiles (recalculate scores and ai_summary)
+  app.post("/api/crm/leads/regenerate", requireAdmin, async (req, res) => {
+    try {
+      const allLeads = await storage.getAllLeads();
+      let regenerated = 0;
+      let skipped = 0;
+
+      for (const lead of allLeads) {
+        // Skip leads without survey responses
+        if (!lead.surveyResponses || Object.keys(lead.surveyResponses).length === 0) {
+          skipped++;
+          continue;
+        }
+
+        // Recalculate score with proper deduplication
+        const { score, temperature, breakdown } = calculateLeadScore(lead.surveyResponses as Record<string, string>);
+        
+        // Generate ai_summary from unique categories only
+        const uniqueCategories = Array.from(new Set(breakdown.map(b => b.category)));
+        const aiSummary = uniqueCategories.join(', ');
+
+        // Update lead with regenerated profile
+        await storage.updateLead(lead.id, {
+          score,
+          temperature,
+          scoreBreakdown: breakdown,
+          aiSummary,
+        });
+        regenerated++;
+      }
+
+      res.json({
+        success: true,
+        regenerated,
+        skipped,
+        total: allLeads.length
+      });
+    } catch (error) {
+      console.error("Error regenerating lead profiles:", error);
+      res.status(500).json({ error: "Erro ao regenerar perfis: " + (error as Error).message });
+    }
+  });
+
+  // Update phone from Google Sheets for specific lead
+  app.post("/api/crm/leads/:id/sync-phone", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const lead = await storage.getLead(id);
+      
+      if (!lead) {
+        return res.status(404).json({ error: "Lead não encontrado" });
+      }
+
+      // Fetch fresh data from Google Sheets
+      const surveyResponses = await fetchSurveyResponses();
+      const sheetLead = surveyResponses.find(r => r.email === lead.email);
+      
+      if (!sheetLead) {
+        return res.status(404).json({ error: "Lead não encontrado na planilha" });
+      }
+
+      if (sheetLead.phone) {
+        await storage.updateLead(id, { phone: sheetLead.phone });
+        res.json({ success: true, phone: sheetLead.phone });
+      } else {
+        res.json({ success: false, message: "Telefone não encontrado na planilha" });
+      }
+    } catch (error) {
+      console.error("Error syncing phone:", error);
+      res.status(500).json({ error: "Erro ao sincronizar telefone" });
     }
   });
 
@@ -827,6 +911,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error releasing lead:", error);
       res.status(500).json({ error: "Erro ao liberar lead" });
+    }
+  });
+
+  // Update lead contact info (phone, linkedin)
+  app.patch("/api/crm/leads/:id/contact", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { phone, linkedin } = req.body;
+      
+      const updateData: any = {};
+      if (phone !== undefined) updateData.phone = phone;
+      if (linkedin !== undefined) updateData.linkedin = linkedin;
+      
+      const lead = await storage.updateLead(id, updateData);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error updating lead contact:", error);
+      res.status(500).json({ error: "Erro ao atualizar contato" });
     }
   });
 

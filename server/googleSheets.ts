@@ -200,11 +200,22 @@ export function calculateLeadScore(responses: Record<string, string>): {
   const breakdown: ScoreBreakdownItem[] = [];
   const addedCategories = new Set<string>();
 
+  // Questions that should NOT generate points (informational only)
+  const excludedQuestionPatterns = [
+    'você já publica conteúdos',
+    'quais formações, programas ou conteúdos ainda faltam',
+  ];
+
   Object.entries(responses).forEach(([question, answer]) => {
     if (!answer) return;
     
     const q = question.toLowerCase();
     const a = answer.toLowerCase();
+
+    // Skip excluded questions
+    if (excludedQuestionPatterns.some(pattern => q.includes(pattern))) {
+      return;
+    }
 
     // Education/Formation signals
     if (q.includes('formação') || q.includes('educação') || q.includes('curso') || q.includes('certificação')) {

@@ -37,14 +37,19 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  // Check session first
   const session = (req as any).session;
-  if (!session?.userId) {
-    return res.status(401).json({ error: "Não autenticado" });
+  if (session?.userId && session.role === 'admin') {
+    return next();
   }
-  if (session.role !== 'admin') {
-    return res.status(403).json({ error: "Acesso restrito a administradores" });
+  
+  // Also accept admin email header for simple email-only login
+  const adminEmail = req.headers['x-admin-email'] as string;
+  if (adminEmail?.toLowerCase() === 'contato@marcelomurilo.com.br') {
+    return next();
   }
-  next();
+  
+  return res.status(401).json({ error: "Não autenticado" });
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {

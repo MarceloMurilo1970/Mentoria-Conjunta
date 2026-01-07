@@ -1895,6 +1895,7 @@ function MentorshipRegistrationsSection() {
 function CRMSection() {
   const { toast } = useToast();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [showSurveyPopup, setShowSurveyPopup] = useState(false);
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
   const [newVendorName, setNewVendorName] = useState('');
   const [newVendorEmail, setNewVendorEmail] = useState('');
@@ -2015,7 +2016,14 @@ function CRMSection() {
 
   const regenerateMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/crm/leads/regenerate');
+      const res = await fetch('/api/crm/leads/regenerate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': currentVendorEmail || '',
+        },
+      });
+      if (!res.ok) throw new Error('Erro ao regenerar perfis');
       return res.json();
     },
     onSuccess: (data: any) => {
@@ -2495,7 +2503,16 @@ function CRMSection() {
                         {lead.score}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium text-gray-900">{lead.name}</TableCell>
+                    <TableCell className="font-medium text-gray-900">
+                      <div className="flex items-center gap-1.5">
+                        {lead.name}
+                        {lead.phone && (
+                          <span title="WhatsApp disponível">
+                            <MessageCircle className="w-3.5 h-3.5 text-green-500" />
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{getStatusBadge(lead.status)}</TableCell>
                     <TableCell>
                       {lead.vendorId ? (
@@ -2546,7 +2563,7 @@ function CRMSection() {
       </Card>
 
       {/* Lead Detail Modal */}
-      <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
+      <Dialog open={!!selectedLead} onOpenChange={(open) => { if (!open) { setSelectedLead(null); setShowSurveyPopup(false); } }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedLead && (
             <>
@@ -2704,7 +2721,7 @@ function CRMSection() {
                     </CardContent>
                   </Card>
 
-                  {/* AI Summary with Score Breakdown */}
+                  {/* AI Summary with Score Breakdown - Simplified */}
                   {(selectedLead.scoreBreakdown || selectedLead.aiSummary) && (
                     <Card className="bg-blue-50 border-blue-200">
                       <CardHeader className="pb-2">
@@ -2715,23 +2732,17 @@ function CRMSection() {
                       </CardHeader>
                       <CardContent className="space-y-2">
                         {selectedLead.scoreBreakdown && Array.isArray(selectedLead.scoreBreakdown) && selectedLead.scoreBreakdown.length > 0 ? (
-                          <ScrollArea className="h-40">
-                            <div className="space-y-2">
-                              {(selectedLead.scoreBreakdown as { category: string; points: number; reason: string; question: string; answer: string }[]).map((item, i) => (
-                                <div key={i} className="bg-white p-2 rounded border border-blue-100">
-                                  <div className="flex justify-between items-center mb-1">
-                                    <Badge className="bg-blue-100 text-blue-700">{item.category}</Badge>
-                                    <span className="text-sm font-bold text-blue-700">+{item.points} pts</span>
-                                  </div>
-                                  <p className="text-xs text-blue-800 mb-1">{item.reason}</p>
-                                  <div className="text-xs text-gray-600 mt-1 pt-1 border-t border-blue-50">
-                                    <p className="font-medium">Pergunta: {item.question}</p>
-                                    <p className="italic">Resposta: {item.answer}</p>
-                                  </div>
+                          <div className="space-y-1.5">
+                            {(selectedLead.scoreBreakdown as { category: string; points: number; reason: string }[]).map((item, i) => (
+                              <div key={i} className="flex items-center justify-between bg-white px-3 py-1.5 rounded border border-blue-100">
+                                <div className="flex items-center gap-2">
+                                  <Badge className="bg-blue-100 text-blue-700 text-xs">{item.category}</Badge>
+                                  <span className="text-xs text-gray-600">{item.reason}</span>
                                 </div>
-                              ))}
-                            </div>
-                          </ScrollArea>
+                                <span className="text-sm font-bold text-blue-700">+{item.points}</span>
+                              </div>
+                            ))}
+                          </div>
                         ) : (
                           <p className="text-sm text-blue-800">{selectedLead.aiSummary}</p>
                         )}
@@ -2739,55 +2750,17 @@ function CRMSection() {
                     </Card>
                   )}
 
-                  {/* Survey Responses */}
+                  {/* Survey Button */}
                   {selectedLead.surveyResponses && (
-                    <Card className="bg-gray-50">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Respostas do Questionário</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ScrollArea className="h-48">
-                          <div className="space-y-2 text-sm">
-                            {(() => {
-                              const importantKeywords = [
-                                'atuação principal',
-                                'mentoria',
-                                'transição',
-                                'conselho',
-                                'posicionamento',
-                                'networking',
-                                'formação',
-                                'investiu',
-                                'interesse',
-                                'precisa neste momento'
-                              ];
-                              const entries = Object.entries(selectedLead.surveyResponses as Record<string, string>);
-                              const sortedEntries = entries.sort(([q1], [q2]) => {
-                                const q1Lower = q1.toLowerCase();
-                                const q2Lower = q2.toLowerCase();
-                                const q1Important = importantKeywords.some(kw => q1Lower.includes(kw));
-                                const q2Important = importantKeywords.some(kw => q2Lower.includes(kw));
-                                if (q1Important && !q2Important) return -1;
-                                if (!q1Important && q2Important) return 1;
-                                return 0;
-                              });
-                              return sortedEntries.map(([q, a], i) => {
-                                const isImportant = importantKeywords.some(kw => q.toLowerCase().includes(kw));
-                                return (
-                                  <div key={i} className={`border-b pb-2 ${isImportant ? 'border-blue-200 bg-blue-50 p-2 rounded' : 'border-gray-200'}`}>
-                                    <p className={`font-medium text-xs ${isImportant ? 'text-blue-700' : 'text-gray-700'}`}>
-                                      {isImportant && <span className="mr-1">★</span>}
-                                      {q}
-                                    </p>
-                                    <p className={`${isImportant ? 'text-blue-900 font-medium' : 'text-gray-900'}`}>{a || ''}</p>
-                                  </div>
-                                );
-                              });
-                            })()}
-                          </div>
-                        </ScrollArea>
-                      </CardContent>
-                    </Card>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setShowSurveyPopup(true)}
+                      data-testid="button-view-survey"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Ver Questionário Completo
+                    </Button>
                   )}
                 </div>
 
@@ -2972,6 +2945,31 @@ function CRMSection() {
                 </div>
               </div>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Survey Popup */}
+      <Dialog open={showSurveyPopup} onOpenChange={setShowSurveyPopup}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="dialog-survey">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Respostas do Questionário
+            </DialogTitle>
+            <DialogDescription data-testid="text-survey-lead-name">
+              {selectedLead?.name}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedLead?.surveyResponses && (
+            <div className="space-y-3 text-sm" data-testid="container-survey-responses">
+              {Object.entries(selectedLead.surveyResponses as Record<string, string>).map(([q, a], i) => (
+                <div key={i} className="border-b pb-2 border-gray-200" data-testid={`row-survey-${i}`}>
+                  <p className="font-medium text-gray-700 text-xs">{q}</p>
+                  <p className="text-gray-900 mt-1">{a || '-'}</p>
+                </div>
+              ))}
+            </div>
           )}
         </DialogContent>
       </Dialog>

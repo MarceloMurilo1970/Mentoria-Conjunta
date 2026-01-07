@@ -1909,7 +1909,9 @@ function CRMSection() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showMyLeadsOnly, setShowMyLeadsOnly] = useState<boolean>(false);
   const [loginEmail, setLoginEmail] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoginPending, setIsLoginPending] = useState<boolean>(false);
   const [currentVendorEmail, setCurrentVendorEmail] = useState<string | null>(() => {
     return localStorage.getItem('crm_vendor_email');
   });
@@ -1925,11 +1927,42 @@ function CRMSection() {
   const currentVendor = vendors.find(v => v.email?.toLowerCase() === currentVendorEmail?.toLowerCase()) || null;
   const isAdmin = currentVendorEmail?.toLowerCase() === 'contato@marcelomurilo.com.br';
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!loginEmail.trim()) {
       toast({ title: 'Digite seu email', variant: 'destructive' });
       return;
     }
+    
+    const isAdminEmail = loginEmail.toLowerCase() === 'contato@marcelomurilo.com.br';
+    
+    // For admin, require password and authenticate with backend
+    if (isAdminEmail) {
+      if (!loginPassword.trim()) {
+        toast({ title: 'Digite sua senha', variant: 'destructive' });
+        return;
+      }
+      
+      setIsLoginPending(true);
+      try {
+        const res = await apiRequest('POST', '/api/auth/login', {
+          email: loginEmail.toLowerCase(),
+          password: loginPassword,
+        });
+        const data = await res.json();
+        localStorage.setItem('crm_vendor_email', loginEmail.toLowerCase());
+        setCurrentVendorEmail(loginEmail.toLowerCase());
+        setIsLoggedIn(true);
+        setLoginPassword('');
+        toast({ title: `Bem-vindo, ${data.name}!` });
+      } catch (error: any) {
+        toast({ title: 'Erro no login', description: error.message || 'Credenciais inválidas', variant: 'destructive' });
+      } finally {
+        setIsLoginPending(false);
+      }
+      return;
+    }
+    
+    // For vendors, use simple email identification
     const vendor = vendors.find(v => v.email?.toLowerCase() === loginEmail.toLowerCase());
     if (!vendor) {
       toast({ title: 'Email não encontrado', description: 'Este email não está cadastrado como vendedor.', variant: 'destructive' });
@@ -1941,7 +1974,13 @@ function CRMSection() {
     toast({ title: `Bem-vindo, ${vendor.name}!` });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Logout from backend session too
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) {
+      // Ignore errors
+    }
     localStorage.removeItem('crm_vendor_email');
     setCurrentVendorEmail(null);
     setIsLoggedIn(false);
@@ -2234,12 +2273,28 @@ function CRMSection() {
               placeholder="seu@email.com"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              onKeyDown={(e) => e.key === 'Enter' && !loginEmail.toLowerCase().includes('marcelomurilo') && handleLogin()}
               className="bg-white border-gray-300"
               data-testid="input-login-email"
             />
           </div>
-          <Button onClick={handleLogin} className="w-full" data-testid="button-login">
+          {loginEmail.toLowerCase() === 'contato@marcelomurilo.com.br' && (
+            <div className="space-y-2">
+              <Label htmlFor="login-password" className="text-gray-700">Senha (Admin)</Label>
+              <Input
+                id="login-password"
+                type="password"
+                placeholder="Digite sua senha"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                className="bg-white border-gray-300"
+                data-testid="input-login-password"
+              />
+            </div>
+          )}
+          <Button onClick={handleLogin} className="w-full" disabled={isLoginPending} data-testid="button-login">
+            {isLoginPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Entrar
           </Button>
         </CardContent>

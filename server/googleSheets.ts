@@ -219,7 +219,7 @@ export interface ScoreBreakdownItem {
   answer: string;
 }
 
-// Lead scoring algorithm with detailed breakdown
+// Lead scoring algorithm - ONLY analyzes 3 specific questions
 export function calculateLeadScore(responses: Record<string, string>): { 
   score: number; 
   temperature: string; 
@@ -229,191 +229,152 @@ export function calculateLeadScore(responses: Record<string, string>): {
   let score = 0;
   const reasons: string[] = [];
   const breakdown: ScoreBreakdownItem[] = [];
-  const addedCategories = new Set<string>();
 
-  // Questions that should NOT generate points (informational only)
-  const excludedQuestionPatterns = [
-    'você já publica conteúdos',
-    'quais formações, programas ou conteúdos ainda faltam',
-  ];
+  // Find the 3 specific questions we care about
+  const foundQuestions: {
+    atuacao: { q: string; a: string } | null;
+    formacao: { q: string; a: string } | null;
+    transicao: { q: string; a: string } | null;
+  } = { atuacao: null, formacao: null, transicao: null };
 
   Object.entries(responses).forEach(([question, answer]) => {
     if (!answer) return;
-    
-    const q = question.toLowerCase();
-    const a = answer.toLowerCase();
+    const qLower = question.toLowerCase();
 
-    // Skip excluded questions
-    if (excludedQuestionPatterns.some(pattern => q.includes(pattern))) {
-      return;
+    // Question 1: "Hoje, qual das opções melhor descreve sua atuação principal?"
+    if (qLower.includes('qual das opções melhor descreve sua atuação principal') || 
+        qLower.includes('melhor descreve sua atuação')) {
+      foundQuestions.atuacao = { q: question, a: answer };
     }
 
-    // Education/Formation signals
-    if (q.includes('formação') || q.includes('educação') || q.includes('curso') || q.includes('certificação')) {
-      if (a.includes('mba') || a.includes('mestrado') || a.includes('doutorado') || a.includes('pós') || a.includes('ibgc')) {
-        if (!addedCategories.has('education_advanced')) {
-          score += 15;
-          reasons.push('Formação avançada');
-          breakdown.push({
-            category: 'Formação',
-            points: 15,
-            reason: 'Possui MBA, Mestrado, Doutorado ou certificação IBGC',
-            question,
-            answer
-          });
-          addedCategories.add('education_advanced');
-        }
-      } else if (a.includes('graduação') || a.includes('faculdade') || a.includes('superior')) {
-        if (!addedCategories.has('education_basic')) {
-          score += 10;
-          reasons.push('Formação superior');
-          breakdown.push({
-            category: 'Formação',
-            points: 10,
-            reason: 'Possui formação superior completa',
-            question,
-            answer
-          });
-          addedCategories.add('education_basic');
-        }
-      }
+    // Question 2: "Você já participou de algum dos seguintes programas de formação para conselheiros?"
+    if (qLower.includes('participou de algum dos seguintes programas de formação para conselheiros') ||
+        (qLower.includes('programas de formação') && qLower.includes('conselheiros'))) {
+      foundQuestions.formacao = { q: question, a: answer };
     }
 
-    // Mentorship interest
-    if (q.includes('mentoria') || q.includes('acompanhamento') || q.includes('ajuda') || q.includes('apoio')) {
-      if (a.includes('sim') || a.includes('muito') || a.includes('interesse') || a.includes('preciso') || a.includes('gostaria')) {
-        if (!addedCategories.has('mentorship')) {
-          score += 20;
-          reasons.push('Interesse em mentoria');
-          breakdown.push({
-            category: 'Interesse em Mentoria',
-            points: 20,
-            reason: 'Demonstra interesse direto em acompanhamento/mentoria',
-            question,
-            answer
-          });
-          addedCategories.add('mentorship');
-        }
-      }
-    }
-
-    // LinkedIn/Authority interest
-    if (q.includes('linkedin') || q.includes('autoridade') || q.includes('visibilidade') || q.includes('marca pessoal')) {
-      if (a.includes('sim') || a.includes('muito') || a.includes('quero') || a.includes('preciso') || a.includes('desenvolver') || a.includes('melhorar')) {
-        if (!addedCategories.has('authority')) {
-          score += 15;
-          reasons.push('Quer desenvolver autoridade');
-          breakdown.push({
-            category: 'Autoridade/LinkedIn',
-            points: 15,
-            reason: 'Quer desenvolver visibilidade e autoridade',
-            question,
-            answer
-          });
-          addedCategories.add('authority');
-        }
-      }
-    }
-
-    // Board transition interest
-    if (q.includes('conselho') || q.includes('conselheiro') || q.includes('transição')) {
-      if (a.includes('sim') || a.includes('muito') || a.includes('objetivo') || a.includes('desejo') || a.includes('busco') || a.includes('quero')) {
-        if (!addedCategories.has('board_interest')) {
-          score += 20;
-          reasons.push('Busca transição para conselho');
-          breakdown.push({
-            category: 'Transição para Conselho',
-            points: 20,
-            reason: 'Tem como objetivo atuar em conselhos',
-            question,
-            answer
-          });
-          addedCategories.add('board_interest');
-        }
-      }
-      if (a.includes('não sei') || a.includes('dificuldade') || a.includes('não sabe') || a.includes('como começar') || a.includes('dúvida')) {
-        if (!addedCategories.has('board_help')) {
-          score += 20;
-          reasons.push('Precisa de orientação para conselhos');
-          breakdown.push({
-            category: 'Necessita Orientação',
-            points: 20,
-            reason: 'Não sabe como iniciar jornada em conselhos',
-            question,
-            answer
-          });
-          addedCategories.add('board_help');
-        }
-      }
-    }
-
-    // Current position
-    if (q.includes('cargo') || q.includes('posição') || q.includes('atuação') || q.includes('ocupação')) {
-      if (a.includes('diretor') || a.includes('c-level') || a.includes('ceo') || a.includes('cfo') || a.includes('cto') || a.includes('presidente')) {
-        if (!addedCategories.has('position_exec')) {
-          score += 15;
-          reasons.push('Cargo C-Level/Diretor');
-          breakdown.push({
-            category: 'Cargo Atual',
-            points: 15,
-            reason: 'Ocupa cargo de alta liderança (C-Level/Diretor)',
-            question,
-            answer
-          });
-          addedCategories.add('position_exec');
-        }
-      } else if (a.includes('gerente') || a.includes('coordenador') || a.includes('head') || a.includes('superintendente')) {
-        if (!addedCategories.has('position_manager')) {
-          score += 10;
-          reasons.push('Cargo de gestão');
-          breakdown.push({
-            category: 'Cargo Atual',
-            points: 10,
-            reason: 'Ocupa cargo de gestão (Gerente/Coordenador)',
-            question,
-            answer
-          });
-          addedCategories.add('position_manager');
-        }
-      }
-    }
-
-    // Board experience (might be less urgent)
-    if (q.includes('quantos conselhos') || q.includes('atua em conselho')) {
-      if (a === '0' || a.includes('nenhum') || a.includes('zero')) {
-        if (!addedCategories.has('no_board')) {
-          score += 10;
-          reasons.push('Ainda não atua em conselhos');
-          breakdown.push({
-            category: 'Experiência em Conselhos',
-            points: 10,
-            reason: 'Ainda não atua em conselhos - precisa de apoio',
-            question,
-            answer
-          });
-          addedCategories.add('no_board');
-        }
-      }
-    }
-
-    // Urgency
-    if (q.includes('urgência') || q.includes('prazo') || q.includes('quando') || q.includes('timing')) {
-      if (a.includes('agora') || a.includes('imediato') || a.includes('urgente') || a.includes('próximo') || a.includes('esse ano')) {
-        if (!addedCategories.has('urgency')) {
-          score += 10;
-          reasons.push('Urgência no objetivo');
-          breakdown.push({
-            category: 'Urgência',
-            points: 10,
-            reason: 'Tem urgência em iniciar a transição',
-            question,
-            answer
-          });
-          addedCategories.add('urgency');
-        }
-      }
+    // Question 3: "O que você acredita que mais precisa neste momento para acelerar sua transição para conselhos?"
+    if (qLower.includes('mais precisa neste momento para acelerar sua transição') ||
+        qLower.includes('acelerar sua transição para conselhos')) {
+      foundQuestions.transicao = { q: question, a: answer };
     }
   });
+
+  const atuacaoQuestion = foundQuestions.atuacao;
+  const formacaoQuestion = foundQuestions.formacao;
+  const transicaoQuestion = foundQuestions.transicao;
+
+  // Score Question 1: Atuação Principal (max 35 pts)
+  if (atuacaoQuestion) {
+    const answer = atuacaoQuestion.a.toLowerCase();
+    let points = 0;
+    let reason = '';
+
+    // Check for option indicators (1, 2, 3 = highest; 4 = lower; 5 = zero)
+    // Options typically are: 1-Executivo/Diretor, 2-Empresário, 3-Conselheiro, 4-Em transição, 5-Outro
+    if (answer.includes('executivo') || answer.includes('diretor') || answer.includes('c-level') ||
+        answer.includes('empresário') || answer.includes('sócio') || answer.includes('dono') ||
+        answer.includes('conselheiro') || answer.includes('já atuo em conselho')) {
+      points = 35;
+      reason = 'Perfil executivo/empresário ou já conselheiro - alto potencial';
+    } else if (answer.includes('transição') || answer.includes('saindo') || answer.includes('buscando') ||
+               answer.includes('gerente') || answer.includes('gestor')) {
+      points = 20;
+      reason = 'Em transição de carreira ou gestão - potencial médio';
+    } else if (answer.includes('outro') || answer.includes('estudante') || answer.includes('aposentado')) {
+      points = 0;
+      reason = 'Perfil não prioritário para mentoria de conselhos';
+    } else {
+      // Default to intermediate if can't determine
+      points = 15;
+      reason = 'Perfil não identificado claramente';
+    }
+
+    if (points > 0) {
+      score += points;
+      reasons.push(reason);
+    }
+    breakdown.push({
+      category: 'Atuação Profissional',
+      points,
+      reason,
+      question: atuacaoQuestion.q,
+      answer: atuacaoQuestion.a
+    });
+  }
+
+  // Score Question 2: Formação para Conselheiros (max 30 pts)
+  if (formacaoQuestion) {
+    const answer = formacaoQuestion.a.toLowerCase();
+    let points = 0;
+    let reason = '';
+
+    if (answer.includes('não participei') || answer.includes('nenhum') || answer === 'não') {
+      points = 30; // Needs training = higher interest in mentorship
+      reason = 'Não possui formação específica - precisa de mentoria';
+    } else if (answer.includes('ibgc') || answer.includes('board academy') || answer.includes('fdc') ||
+               answer.includes('insper') || answer.includes('saint paul')) {
+      points = 15; // Has formal training, may need less support
+      reason = 'Possui formação reconhecida em conselhos';
+    } else {
+      // Has some training but not major institutions
+      points = 20;
+      reason = 'Possui alguma formação em conselhos';
+    }
+
+    score += points;
+    reasons.push(reason);
+    breakdown.push({
+      category: 'Formação em Conselhos',
+      points,
+      reason,
+      question: formacaoQuestion.q,
+      answer: formacaoQuestion.a
+    });
+  }
+
+  // Score Question 3: Necessidade para Transição (max 35 pts)
+  if (transicaoQuestion) {
+    const answer = transicaoQuestion.a.toLowerCase();
+    let points = 0;
+    let reason = '';
+
+    // Options 4, 5 = highest (networking, mentoria/orientação)
+    // Option 6 = zero (já está bem posicionado)
+    // Others = intermediate
+    if (answer.includes('mentoria') || answer.includes('acompanhamento') || answer.includes('orientação') ||
+        answer.includes('networking') || answer.includes('conexões') || answer.includes('indicações')) {
+      points = 35;
+      reason = 'Precisa de mentoria/networking - candidato ideal';
+    } else if (answer.includes('já estou bem') || answer.includes('não preciso') || 
+               answer.includes('já consegui') || answer.includes('nada')) {
+      points = 0;
+      reason = 'Não demonstra necessidade de apoio';
+    } else if (answer.includes('visibilidade') || answer.includes('autoridade') || 
+               answer.includes('linkedin') || answer.includes('marca pessoal')) {
+      points = 25;
+      reason = 'Precisa desenvolver visibilidade/autoridade';
+    } else if (answer.includes('formação') || answer.includes('conhecimento') || 
+               answer.includes('certificação') || answer.includes('curso')) {
+      points = 20;
+      reason = 'Busca formação/conhecimento adicional';
+    } else {
+      points = 15;
+      reason = 'Necessidade não identificada claramente';
+    }
+
+    if (points > 0) {
+      score += points;
+      reasons.push(reason);
+    }
+    breakdown.push({
+      category: 'Necessidade para Transição',
+      points,
+      reason,
+      question: transicaoQuestion.q,
+      answer: transicaoQuestion.a
+    });
+  }
 
   score = Math.max(0, Math.min(100, score));
 

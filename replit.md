@@ -50,3 +50,7 @@ Preferred communication style: Simple, everyday language.
 - **Development Tools:** Replit-specific Vite plugins (error overlay, development banner), Cartographer plugin.
 - **Third-Party UI Libraries:** Radix UI, Lucide React, Embla Carousel, CMDK.
 - **Google Sheets Integration:** Replit's native Google Sheets connector for event registrations (ID: 1-fCalJZRLnerVeTsPQhetEOjM816FxLWquS6kX47o1k) and CRM lead syncing (ID: 1iOSApmifjm54hpGx5vPYWkfBwGNMM5PO57PrD70DgHI).
+  - **KNOWN ISSUE (Production):** Google Sheets sync may fail in production deployment with "invalid authentication credentials" error. This occurs because the Replit connector uses OAuth tokens that may not transfer correctly to deployed instances. Solution options:
+    1. Re-authorize the Google Sheets integration after deployment
+    2. Use a Google Service Account for production (requires GOOGLE_SERVICE_ACCOUNT_KEY secret)
+    3. Manually sync leads via development environment

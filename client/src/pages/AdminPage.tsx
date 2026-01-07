@@ -1931,43 +1931,26 @@ function CRMSection() {
       return;
     }
     
-    const isAdminEmail = loginEmail.toLowerCase() === 'contato@marcelomurilo.com.br';
+    const email = loginEmail.toLowerCase();
+    const isAdminEmail = email === 'contato@marcelomurilo.com.br';
     
-    // For admin, require password and authenticate with backend
+    // Admin can login directly with email
     if (isAdminEmail) {
-      if (!loginPassword.trim()) {
-        toast({ title: 'Digite sua senha', variant: 'destructive' });
-        return;
-      }
-      
-      setIsLoginPending(true);
-      try {
-        const res = await apiRequest('POST', '/api/auth/login', {
-          email: loginEmail.toLowerCase(),
-          password: loginPassword,
-        });
-        const data = await res.json();
-        localStorage.setItem('crm_vendor_email', loginEmail.toLowerCase());
-        setCurrentVendorEmail(loginEmail.toLowerCase());
-        setIsLoggedIn(true);
-        setLoginPassword('');
-        toast({ title: `Bem-vindo, ${data.name}!` });
-      } catch (error: any) {
-        toast({ title: 'Erro no login', description: error.message || 'Credenciais inválidas', variant: 'destructive' });
-      } finally {
-        setIsLoginPending(false);
-      }
+      localStorage.setItem('crm_vendor_email', email);
+      setCurrentVendorEmail(email);
+      setIsLoggedIn(true);
+      toast({ title: 'Bem-vindo, Marcelo!' });
       return;
     }
     
-    // For vendors, use simple email identification
-    const vendor = vendors.find(v => v.email?.toLowerCase() === loginEmail.toLowerCase());
+    // For vendors, check if email is registered
+    const vendor = vendors.find(v => v.email?.toLowerCase() === email);
     if (!vendor) {
       toast({ title: 'Email não encontrado', description: 'Este email não está cadastrado como vendedor.', variant: 'destructive' });
       return;
     }
-    localStorage.setItem('crm_vendor_email', loginEmail.toLowerCase());
-    setCurrentVendorEmail(loginEmail.toLowerCase());
+    localStorage.setItem('crm_vendor_email', email);
+    setCurrentVendorEmail(email);
     setIsLoggedIn(true);
     toast({ title: `Bem-vindo, ${vendor.name}!` });
   };
@@ -2271,28 +2254,12 @@ function CRMSection() {
               placeholder="seu@email.com"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !loginEmail.toLowerCase().includes('marcelomurilo') && handleLogin()}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
               className="bg-white border-gray-300"
               data-testid="input-login-email"
             />
           </div>
-          {loginEmail.toLowerCase() === 'contato@marcelomurilo.com.br' && (
-            <div className="space-y-2">
-              <Label htmlFor="login-password" className="text-gray-700">Senha (Admin)</Label>
-              <Input
-                id="login-password"
-                type="password"
-                placeholder="Digite sua senha"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                className="bg-white border-gray-300"
-                data-testid="input-login-password"
-              />
-            </div>
-          )}
-          <Button onClick={handleLogin} className="w-full" disabled={isLoginPending} data-testid="button-login">
-            {isLoginPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          <Button onClick={handleLogin} className="w-full" data-testid="button-login">
             Entrar
           </Button>
         </CardContent>

@@ -160,7 +160,7 @@ export async function fetchSurveyResponses(): Promise<SurveyResponse[]> {
     
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SURVEY_SPREADSHEET_ID,
-      range: 'A:Z',
+      range: 'A:AZ',  // Extended range to include columns beyond Z (like column 30 for WhatsApp)
     });
 
     const rows = response.data.values;

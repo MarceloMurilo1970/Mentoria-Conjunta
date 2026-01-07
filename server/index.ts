@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { ensureConnection } from "./db";
 
 const app = express();
 
@@ -44,6 +45,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Ensure database connection with retry logic for Neon cold starts
+  log('Connecting to database...');
+  const connected = await ensureConnection();
+  if (!connected) {
+    log('Warning: Could not establish initial database connection, will retry on first query');
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

@@ -1909,9 +1909,7 @@ function CRMSection() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showMyLeadsOnly, setShowMyLeadsOnly] = useState<boolean>(false);
   const [loginEmail, setLoginEmail] = useState<string>('');
-  const [loginPassword, setLoginPassword] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isLoginPending, setIsLoginPending] = useState<boolean>(false);
   const [currentVendorEmail, setCurrentVendorEmail] = useState<string | null>(() => {
     return localStorage.getItem('crm_vendor_email');
   });

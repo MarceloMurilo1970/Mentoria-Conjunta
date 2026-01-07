@@ -1984,21 +1984,22 @@ function CRMSection() {
     enabled: !!selectedLead,
   });
 
-  // Pending follow-ups for current vendor
-  const { data: pendingFollowUps = [] } = useQuery<(LeadFollowUp & { leadName?: string })[]>({
-    queryKey: ['/api/crm/followups/pending', currentVendor?.id],
+  // Pending follow-ups - admin sees all, vendors see only theirs
+  const { data: pendingFollowUps = [] } = useQuery<(LeadFollowUp & { leadName?: string | null; leadEmail?: string | null })[]>({
+    queryKey: ['/api/crm/followups/pending', isAdmin ? 'all' : currentVendor?.id],
     queryFn: async () => {
-      const res = await fetch(`/api/crm/followups/pending?vendorId=${currentVendor?.id}`);
+      const url = isAdmin ? '/api/crm/followups/pending' : `/api/crm/followups/pending?vendorId=${currentVendor?.id}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Erro ao buscar pendências');
       return res.json();
     },
-    enabled: !!currentVendor?.id,
+    enabled: isAdmin || !!currentVendor?.id,
   });
 
-  // Enrich follow-ups with lead names
+  // Enrich follow-ups with lead names (fallback if not included from backend)
   const enrichedFollowUps = pendingFollowUps.map(fu => ({
     ...fu,
-    leadName: leads.find(l => l.id === fu.leadId)?.name || 'Lead desconhecido'
+    leadName: fu.leadName || leads.find(l => l.id === fu.leadId)?.name || 'Lead desconhecido'
   }));
 
   const syncMutation = useMutation({
@@ -2295,58 +2296,66 @@ function CRMSection() {
       </div>
 
       {/* Pending Follow-ups Section */}
-      {enrichedFollowUps.length > 0 && (
-        <Card className="bg-amber-50 border-amber-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CalendarClock className="w-4 h-4 text-amber-600" />
-              Minhas Pendências ({enrichedFollowUps.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card className="bg-amber-50 border-amber-200">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CalendarClock className="w-4 h-4 text-amber-600" />
+            {isAdmin ? 'Todos os Follow-ups Agendados' : 'Meus Follow-ups Agendados'} ({enrichedFollowUps.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {enrichedFollowUps.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">Nenhum follow-up agendado</p>
+          ) : (
             <div className="space-y-2">
-              {enrichedFollowUps.slice(0, 5).map(fu => (
-                <div 
-                  key={fu.id} 
-                  className="flex items-center justify-between bg-white rounded-lg p-3 border cursor-pointer hover:bg-gray-50"
-                  onClick={() => {
-                    const lead = leads.find(l => l.id === fu.leadId);
-                    if (lead) setSelectedLead(lead);
-                  }}
-                  data-testid={`followup-item-${fu.id}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="text-xs">
-                      {fu.type === 'call' && 'Ligar'}
-                      {fu.type === 'whatsapp' && 'WhatsApp'}
-                      {fu.type === 'email' && 'Email'}
-                      {fu.type === 'meeting' && 'Reunião'}
-                    </Badge>
-                    <div>
-                      <p className="font-medium text-sm">{fu.leadName}</p>
-                      <p className="text-xs text-gray-500">{fu.description}</p>
+              {enrichedFollowUps.slice(0, 10).map(fu => {
+                const vendorName = vendors.find(v => v.id === fu.vendorId)?.name;
+                const isOverdue = fu.scheduledAt && new Date(fu.scheduledAt) < new Date();
+                return (
+                  <div 
+                    key={fu.id} 
+                    className={`flex items-center justify-between bg-white rounded-lg p-3 border cursor-pointer hover:bg-gray-50 ${isOverdue ? 'border-red-300' : ''}`}
+                    onClick={() => {
+                      const lead = leads.find(l => l.id === fu.leadId);
+                      if (lead) setSelectedLead(lead);
+                    }}
+                    data-testid={`followup-item-${fu.id}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className={`text-xs ${isOverdue ? 'border-red-400 text-red-600' : ''}`}>
+                        {fu.type === 'call' && 'Ligar'}
+                        {fu.type === 'whatsapp' && 'WhatsApp'}
+                        {fu.type === 'email' && 'Email'}
+                        {fu.type === 'meeting' && 'Reunião'}
+                      </Badge>
+                      <div>
+                        <p className="font-medium text-sm">{fu.leadName}</p>
+                        <p className="text-xs text-gray-500 line-clamp-1">{fu.description}</p>
+                      </div>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                      {fu.scheduledAt && (
+                        <p className={`text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                          {new Date(fu.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          {isOverdue && ' (atrasado)'}
+                        </p>
+                      )}
+                      {isAdmin && vendorName && (
+                        <p className="text-xs text-gray-400">{vendorName}</p>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    {fu.scheduledAt ? (
-                      <p className="text-xs text-gray-500">
-                        {new Date(fu.scheduledAt).toLocaleDateString('pt-BR')}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-400 italic">Sem data</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {enrichedFollowUps.length > 5 && (
+                );
+              })}
+              {enrichedFollowUps.length > 10 && (
                 <p className="text-xs text-gray-500 text-center pt-2">
-                  +{enrichedFollowUps.length - 5} pendências...
+                  +{enrichedFollowUps.length - 10} pendências...
                 </p>
               )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* Header Actions */}
       <div className="flex flex-wrap gap-4 items-center justify-between">

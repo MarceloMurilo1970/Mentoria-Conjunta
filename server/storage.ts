@@ -347,15 +347,29 @@ export class DbStorage implements IStorage {
       .orderBy(leadFollowUps.scheduledAt);
   }
 
-  async getPendingFollowUps(vendorId?: string): Promise<LeadFollowUp[]> {
+  async getPendingFollowUps(vendorId?: string): Promise<(LeadFollowUp & { leadName?: string | null; leadEmail?: string | null })[]> {
     const conditions = [eq(leadFollowUps.isCompleted, false)];
     if (vendorId) {
       conditions.push(eq(leadFollowUps.vendorId, vendorId));
     }
-    return await db.select()
+    const result = await db.select({
+      id: leadFollowUps.id,
+      leadId: leadFollowUps.leadId,
+      vendorId: leadFollowUps.vendorId,
+      type: leadFollowUps.type,
+      description: leadFollowUps.description,
+      scheduledAt: leadFollowUps.scheduledAt,
+      isCompleted: leadFollowUps.isCompleted,
+      completedAt: leadFollowUps.completedAt,
+      createdAt: leadFollowUps.createdAt,
+      leadName: leads.name,
+      leadEmail: leads.email,
+    })
       .from(leadFollowUps)
+      .leftJoin(leads, eq(leadFollowUps.leadId, leads.id))
       .where(and(...conditions))
       .orderBy(leadFollowUps.scheduledAt);
+    return result;
   }
 
   async createLeadFollowUp(followUp: InsertLeadFollowUp): Promise<LeadFollowUp> {

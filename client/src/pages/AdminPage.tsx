@@ -2115,6 +2115,7 @@ function CRMSection() {
       if (selectedLead) {
         queryClient.invalidateQueries({ queryKey: ['/api/crm/leads', selectedLead.id, 'followups'] });
       }
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/followups/pending'] });
       setFollowUpDate('');
       setFollowUpDescription('');
       toast({ title: 'Follow-up agendado' });
@@ -2127,6 +2128,7 @@ function CRMSection() {
       if (selectedLead) {
         queryClient.invalidateQueries({ queryKey: ['/api/crm/leads', selectedLead.id, 'followups'] });
       }
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/followups/pending'] });
       toast({ title: 'Follow-up concluído' });
     },
   });

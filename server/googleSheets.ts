@@ -170,6 +170,17 @@ export async function fetchSurveyResponses(): Promise<SurveyResponse[]> {
 
     const headers = rows[0] as string[];
     const dataRows = rows.slice(1);
+    
+    // Log all headers to debug column detection
+    console.log('[GoogleSheets] Total headers:', headers.length);
+    console.log('[GoogleSheets] ALL Headers:', headers);
+    const phoneHeaders = headers.filter(h => 
+      h.toLowerCase().includes('telefone') || 
+      h.toLowerCase().includes('whatsapp') || 
+      h.toLowerCase().includes('celular') ||
+      h.toLowerCase().includes('phone')
+    );
+    console.log('[GoogleSheets] Phone/WhatsApp columns detected:', phoneHeaders);
 
     return dataRows.map((row, index) => {
       const result: SurveyResponse = {

@@ -1909,6 +1909,7 @@ function CRMSection() {
   const [temperatureFilter, setTemperatureFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showMyLeadsOnly, setShowMyLeadsOnly] = useState<boolean>(false);
+  const [contactFilter, setContactFilter] = useState<string>('all');
   const [loginEmail, setLoginEmail] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [currentVendorEmail, setCurrentVendorEmail] = useState<string | null>(() => {
@@ -2172,6 +2173,9 @@ function CRMSection() {
   const filteredLeads = leads.filter(lead => {
     if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
     if (temperatureFilter !== 'all' && lead.temperature !== temperatureFilter) return false;
+    if (contactFilter === 'whatsapp' && !lead.phone) return false;
+    if (contactFilter === 'linkedin' && !lead.linkedin) return false;
+    if (contactFilter === 'both' && (!lead.phone || !lead.linkedin)) return false;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       const nameMatch = (lead.name ?? '').toLowerCase().includes(query);
@@ -2402,9 +2406,20 @@ function CRMSection() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas Temp.</SelectItem>
-              <SelectItem value="hot">🔥 Quente</SelectItem>
-              <SelectItem value="warm">🌡️ Morno</SelectItem>
-              <SelectItem value="cold">❄️ Frio</SelectItem>
+              <SelectItem value="hot">Quente</SelectItem>
+              <SelectItem value="warm">Morno</SelectItem>
+              <SelectItem value="cold">Frio</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={contactFilter} onValueChange={setContactFilter}>
+            <SelectTrigger className="w-44 bg-white" data-testid="select-contact-filter">
+              <SelectValue placeholder="Contato" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos Contatos</SelectItem>
+              <SelectItem value="whatsapp">Com WhatsApp</SelectItem>
+              <SelectItem value="linkedin">Com LinkedIn</SelectItem>
+              <SelectItem value="both">Ambos</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -2509,6 +2524,11 @@ function CRMSection() {
                         {lead.phone && (
                           <span title="WhatsApp disponível">
                             <MessageCircle className="w-3.5 h-3.5 text-green-500" />
+                          </span>
+                        )}
+                        {lead.linkedin && (
+                          <span title="LinkedIn disponível">
+                            <Linkedin className="w-3.5 h-3.5 text-blue-600" />
                           </span>
                         )}
                       </div>

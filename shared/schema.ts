@@ -211,3 +211,24 @@ export const insertPageViewSchema = createInsertSchema(pageViews).omit({
 
 export type InsertPageView = z.infer<typeof insertPageViewSchema>;
 export type PageView = typeof pageViews.$inferSelect;
+
+// Vendor Activity Log for tracking all vendor actions
+export const vendorActivityLog = pgTable("vendor_activity_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").references(() => vendors.id),
+  vendorName: text("vendor_name").notNull(),
+  leadId: varchar("lead_id").references(() => leads.id),
+  leadName: text("lead_name"),
+  actionType: text("action_type").notNull(), // claim_lead, release_lead, add_activity, create_followup, complete_followup, update_status, view_lead
+  actionDescription: text("action_description").notNull(),
+  metadata: text("metadata"), // JSON string for additional data
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertVendorActivityLogSchema = createInsertSchema(vendorActivityLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertVendorActivityLog = z.infer<typeof insertVendorActivityLogSchema>;
+export type VendorActivityLog = typeof vendorActivityLog.$inferSelect;

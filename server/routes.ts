@@ -1166,14 +1166,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // Get follow-up before completing to log the action
-      const existingFollowUps = await storage.getLeadFollowUps(id);
-      const followUpBefore = existingFollowUps.find(fu => fu.id === id);
-      
       const followUp = await storage.completeFollowUp(id);
 
+      if (!followUp) {
+        return res.status(404).json({ error: "Follow-up não encontrado" });
+      }
+
       // Log vendor action if vendor was assigned
-      if (followUp?.vendorId) {
+      if (followUp.vendorId) {
         const [vendor, lead] = await Promise.all([
           storage.getVendor(followUp.vendorId),
           storage.getLead(followUp.leadId),
@@ -1246,7 +1246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vendor Activity Log endpoints (admin only)
-  app.get("/api/crm/vendor-activity", async (req, res) => {
+  app.get("/api/crm/vendor-activity", requireAdmin, async (req, res) => {
     try {
       const { vendorId, startDate, endDate, actionType, limit, offset } = req.query;
       
@@ -1266,7 +1266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/crm/vendor-activity/summary", async (req, res) => {
+  app.get("/api/crm/vendor-activity/summary", requireAdmin, async (req, res) => {
     try {
       const { vendorId, days } = req.query;
       const summary = await storage.getVendorActivitySummary(

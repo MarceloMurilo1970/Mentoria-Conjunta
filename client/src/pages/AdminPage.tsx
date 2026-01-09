@@ -3059,6 +3059,258 @@ function CRMSection() {
   );
 }
 
+// Vendor Activity Log Section Component
+function VendorActivitySection() {
+  interface VendorActivityLog {
+    id: string;
+    vendorId: string;
+    vendorName: string;
+    leadId: string | null;
+    leadName: string | null;
+    actionType: string;
+    actionDescription: string;
+    metadata: string | null;
+    createdAt: string;
+  }
+
+  interface ActivityLogResponse {
+    logs: VendorActivityLog[];
+    total: number;
+  }
+
+  interface ActivitySummary {
+    totalActions: number;
+    byActionType: Record<string, number>;
+    byVendor: Record<string, number>;
+  }
+
+  const [vendorFilter, setVendorFilter] = useState<string>('all');
+  const [actionTypeFilter, setActionTypeFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<string>('7');
+  const [page, setPage] = useState(0);
+  const pageSize = 20;
+
+  const { data: vendors = [] } = useQuery<Vendor[]>({
+    queryKey: ['/api/crm/vendors'],
+  });
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - parseInt(dateRange));
+
+  const { data: activityData, isLoading } = useQuery<ActivityLogResponse>({
+    queryKey: ['/api/crm/vendor-activity', vendorFilter, actionTypeFilter, dateRange, page],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (vendorFilter !== 'all') params.set('vendorId', vendorFilter);
+      if (actionTypeFilter !== 'all') params.set('actionType', actionTypeFilter);
+      params.set('startDate', startDate.toISOString());
+      params.set('limit', pageSize.toString());
+      params.set('offset', (page * pageSize).toString());
+      const res = await fetch(`/api/crm/vendor-activity?${params}`);
+      return res.json();
+    },
+  });
+
+  const { data: summary } = useQuery<ActivitySummary>({
+    queryKey: ['/api/crm/vendor-activity/summary', vendorFilter, dateRange],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (vendorFilter !== 'all') params.set('vendorId', vendorFilter);
+      params.set('days', dateRange);
+      const res = await fetch(`/api/crm/vendor-activity/summary?${params}`);
+      return res.json();
+    },
+  });
+
+  const actionTypeLabels: Record<string, { label: string; color: string }> = {
+    'claim_lead': { label: 'Reservar Lead', color: 'bg-blue-100 text-blue-700' },
+    'release_lead': { label: 'Liberar Lead', color: 'bg-gray-100 text-gray-700' },
+    'add_activity': { label: 'Registrar Atividade', color: 'bg-green-100 text-green-700' },
+    'create_followup': { label: 'Criar Follow-up', color: 'bg-purple-100 text-purple-700' },
+    'complete_followup': { label: 'Concluir Follow-up', color: 'bg-emerald-100 text-emerald-700' },
+    'update_status': { label: 'Alterar Status', color: 'bg-orange-100 text-orange-700' },
+    'view_lead': { label: 'Visualizar Lead', color: 'bg-slate-100 text-slate-700' },
+  };
+
+  const logs = activityData?.logs || [];
+  const total = activityData?.total || 0;
+  const totalPages = Math.ceil(total / pageSize);
+
+  if (isLoading) {
+    return (
+      <Card className="bg-white border-gray-200">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-white border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-gray-900 flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Log de Atividades dos Vendedores
+          </CardTitle>
+          <CardDescription>
+            Acompanhe todas as ações realizadas pelos vendedores no CRM
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-gray-600">Vendedor:</Label>
+              <Select value={vendorFilter} onValueChange={(v) => { setVendorFilter(v); setPage(0); }}>
+                <SelectTrigger className="w-48" data-testid="select-vendor-filter">
+                  <SelectValue placeholder="Todos os vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os vendedores</SelectItem>
+                  {vendors.map(v => (
+                    <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-gray-600">Tipo de Ação:</Label>
+              <Select value={actionTypeFilter} onValueChange={(v) => { setActionTypeFilter(v); setPage(0); }}>
+                <SelectTrigger className="w-48" data-testid="select-action-filter">
+                  <SelectValue placeholder="Todas as ações" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as ações</SelectItem>
+                  {Object.entries(actionTypeLabels).map(([key, { label }]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-gray-600">Período:</Label>
+              <Select value={dateRange} onValueChange={(v) => { setDateRange(v); setPage(0); }}>
+                <SelectTrigger className="w-36" data-testid="select-period-filter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Últimas 24h</SelectItem>
+                  <SelectItem value="7">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30">Últimos 30 dias</SelectItem>
+                  <SelectItem value="90">Últimos 90 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {summary && (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+              <Card className="bg-gray-50 border-gray-200">
+                <CardContent className="pt-4">
+                  <div className="text-2xl font-bold text-gray-900">{summary.totalActions}</div>
+                  <div className="text-sm text-gray-500">Total de Ações</div>
+                </CardContent>
+              </Card>
+              {Object.entries(summary.byActionType || {}).slice(0, 4).map(([type, count]) => (
+                <Card key={type} className="bg-gray-50 border-gray-200">
+                  <CardContent className="pt-4">
+                    <div className="text-2xl font-bold text-gray-900">{count}</div>
+                    <div className="text-sm text-gray-500">{actionTypeLabels[type]?.label || type}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {logs.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              Nenhuma atividade encontrada para os filtros selecionados.
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="text-gray-600">Data/Hora</TableHead>
+                    <TableHead className="text-gray-600">Vendedor</TableHead>
+                    <TableHead className="text-gray-600">Ação</TableHead>
+                    <TableHead className="text-gray-600">Lead</TableHead>
+                    <TableHead className="text-gray-600">Descrição</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow key={log.id} className="border-b border-gray-100">
+                      <TableCell className="text-sm text-gray-600 whitespace-nowrap">
+                        {new Date(log.createdAt).toLocaleDateString('pt-BR')}{' '}
+                        <span className="text-gray-400">
+                          {new Date(log.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="bg-white">
+                          <User className="w-3 h-3 mr-1" />
+                          {log.vendorName}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={actionTypeLabels[log.actionType]?.color || 'bg-gray-100'}>
+                          {actionTypeLabels[log.actionType]?.label || log.actionType}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {log.leadName ? (
+                          <span className="text-gray-700">{log.leadName}</span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600 max-w-md truncate">
+                        {log.actionDescription}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-gray-500">
+                    Mostrando {page * pageSize + 1} a {Math.min((page + 1) * pageSize, total)} de {total} registros
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                      data-testid="btn-prev-page"
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={page >= totalPages - 1}
+                      data-testid="btn-next-page"
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // Analytics Section Component
 function AnalyticsSection() {
   interface AnalyticsData {
@@ -3247,10 +3499,14 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="crm" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4 bg-white border border-gray-200">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5 bg-white border border-gray-200">
             <TabsTrigger value="crm" data-testid="tab-crm" className="data-[state=active]:bg-gray-100">
               <Target className="w-4 h-4 mr-2" />
               CRM
+            </TabsTrigger>
+            <TabsTrigger value="activity-log" data-testid="tab-activity-log" className="data-[state=active]:bg-gray-100">
+              <FileText className="w-4 h-4 mr-2" />
+              Atividades
             </TabsTrigger>
             <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-100">
               <Users className="w-4 h-4 mr-2" />
@@ -3268,6 +3524,10 @@ export default function AdminPage() {
 
           <TabsContent value="crm">
             <CRMSection />
+          </TabsContent>
+
+          <TabsContent value="activity-log">
+            <VendorActivitySection />
           </TabsContent>
 
           <TabsContent value="mentorship">

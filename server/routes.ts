@@ -920,6 +920,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { vendorId } = req.body;
+      const leadBefore = await storage.getLead(id);
+      const vendor = await storage.getVendor(vendorId);
       const lead = await storage.claimLead(id, vendorId);
       
       // Log activity
@@ -929,6 +931,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'status_change',
         content: 'Lead reservado para trabalho',
         scoreChange: 0,
+      });
+
+      // Log vendor action
+      await storage.logVendorAction({
+        vendorId,
+        vendorName: vendor?.name || 'Desconhecido',
+        leadId: id,
+        leadName: lead?.name || leadBefore?.name,
+        actionType: 'claim_lead',
+        actionDescription: `Reservou o lead "${lead?.name || leadBefore?.name}"`,
       });
       
       res.json(lead);
@@ -941,6 +953,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/crm/leads/:id/release", async (req, res) => {
     try {
       const { id } = req.params;
+      const leadBefore = await storage.getLead(id);
+      const vendorId = leadBefore?.vendorId;
+      const vendor = vendorId ? await storage.getVendor(vendorId) : null;
       const lead = await storage.releaseLead(id);
       
       // Log activity
@@ -951,6 +966,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: 'Lead liberado',
         scoreChange: 0,
       });
+
+      // Log vendor action (if there was a vendor)
+      if (vendorId && vendor) {
+        await storage.logVendorAction({
+          vendorId,
+          vendorName: vendor.name,
+          leadId: id,
+          leadName: leadBefore?.name,
+          actionType: 'release_lead',
+          actionDescription: `Liberou o lead "${leadBefore?.name}"`,
+        });
+      }
       
       res.json(lead);
     } catch (error) {
@@ -1024,6 +1051,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content,
         scoreChange: scoreChange || 0,
       });
+
+      // Log vendor action if vendor is provided
+      if (vendorId) {
+        const [vendor, lead] = await Promise.all([
+          storage.getVendor(vendorId),
+          storage.getLead(id),
+        ]);
+        const typeLabels: Record<string, string> = {
+          'call': 'Ligação',
+          'whatsapp': 'WhatsApp',
+          'email': 'Email',
+          'meeting': 'Reunião',
+          'note': 'Nota',
+          'status_change': 'Alteração de status',
+        };
+        await storage.logVendorAction({
+          vendorId,
+          vendorName: vendor?.name || 'Desconhecido',
+          leadId: id,
+          leadName: lead?.name,
+          actionType: 'add_activity',
+          actionDescription: `Registrou atividade (${typeLabels[type] || type}): "${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"`,
+          metadata: JSON.stringify({ activityType: type, content }),
+        });
+      }
       
       res.json(activity);
     } catch (error) {
@@ -1079,6 +1131,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description,
         scheduledAt: new Date(scheduledAt),
       });
+
+      // Log vendor action if vendor is provided
+      if (vendorId) {
+        const [vendor, lead] = await Promise.all([
+          storage.getVendor(vendorId),
+          storage.getLead(id),
+        ]);
+        const typeLabels: Record<string, string> = {
+          'call': 'Ligação',
+          'whatsapp': 'WhatsApp',
+          'email': 'Email',
+          'meeting': 'Reunião',
+        };
+        await storage.logVendorAction({
+          vendorId,
+          vendorName: vendor?.name || 'Desconhecido',
+          leadId: id,
+          leadName: lead?.name,
+          actionType: 'create_followup',
+          actionDescription: `Agendou follow-up (${typeLabels[type] || type}) para ${new Date(scheduledAt).toLocaleDateString('pt-BR')}: "${description.substring(0, 80)}${description.length > 80 ? '...' : ''}"`,
+          metadata: JSON.stringify({ followUpType: type, scheduledAt, description }),
+        });
+      }
       
       res.json(followUp);
     } catch (error) {
@@ -1090,7 +1165,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/crm/followups/:id/complete", async (req, res) => {
     try {
       const { id } = req.params;
+      
+      // Get follow-up before completing to log the action
+      const existingFollowUps = await storage.getLeadFollowUps(id);
+      const followUpBefore = existingFollowUps.find(fu => fu.id === id);
+      
       const followUp = await storage.completeFollowUp(id);
+
+      // Log vendor action if vendor was assigned
+      if (followUp?.vendorId) {
+        const [vendor, lead] = await Promise.all([
+          storage.getVendor(followUp.vendorId),
+          storage.getLead(followUp.leadId),
+        ]);
+        const typeLabels: Record<string, string> = {
+          'call': 'Ligação',
+          'whatsapp': 'WhatsApp',
+          'email': 'Email',
+          'meeting': 'Reunião',
+        };
+        await storage.logVendorAction({
+          vendorId: followUp.vendorId,
+          vendorName: vendor?.name || 'Desconhecido',
+          leadId: followUp.leadId,
+          leadName: lead?.name,
+          actionType: 'complete_followup',
+          actionDescription: `Concluiu follow-up (${typeLabels[followUp.type] || followUp.type}): "${followUp.description.substring(0, 80)}${followUp.description.length > 80 ? '...' : ''}"`,
+        });
+      }
+
       res.json(followUp);
     } catch (error) {
       console.error("Error completing follow-up:", error);
@@ -1139,6 +1242,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching converted leads:", error);
       res.status(500).json({ error: "Erro ao buscar leads convertidos" });
+    }
+  });
+
+  // Vendor Activity Log endpoints (admin only)
+  app.get("/api/crm/vendor-activity", async (req, res) => {
+    try {
+      const { vendorId, startDate, endDate, actionType, limit, offset } = req.query;
+      
+      const filters: any = {};
+      if (vendorId && vendorId !== 'all') filters.vendorId = vendorId as string;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+      if (actionType && actionType !== 'all') filters.actionType = actionType as string;
+      if (limit) filters.limit = parseInt(limit as string);
+      if (offset) filters.offset = parseInt(offset as string);
+
+      const result = await storage.getVendorActivityLogs(filters);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching vendor activity logs:", error);
+      res.status(500).json({ error: "Erro ao buscar logs de atividades" });
+    }
+  });
+
+  app.get("/api/crm/vendor-activity/summary", async (req, res) => {
+    try {
+      const { vendorId, days } = req.query;
+      const summary = await storage.getVendorActivitySummary(
+        vendorId as string | undefined,
+        days ? parseInt(days as string) : 7
+      );
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching vendor activity summary:", error);
+      res.status(500).json({ error: "Erro ao buscar resumo de atividades" });
     }
   });
 

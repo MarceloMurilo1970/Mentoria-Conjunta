@@ -5,7 +5,8 @@ import {
   type Lead, type InsertLead, leads,
   type LeadActivity, type InsertLeadActivity, leadActivities,
   type LeadFollowUp, type InsertLeadFollowUp, leadFollowUps,
-  type User, type InsertUser, users
+  type User, type InsertUser, users,
+  type VendorActivityLog, type InsertVendorActivityLog, vendorActivityLog
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, gte, isNull, and, or, ilike } from "drizzle-orm";
@@ -454,6 +455,111 @@ export class DbStorage implements IStorage {
     }));
     
     return result;
+  }
+
+  // Vendor Activity Log
+  async logVendorAction(log: InsertVendorActivityLog): Promise<VendorActivityLog> {
+    const result = await db.insert(vendorActivityLog).values(log).returning();
+    return result[0];
+  }
+
+  async getVendorActivityLogs(filters: {
+    vendorId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    actionType?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ logs: VendorActivityLog[]; total: number }> {
+    const conditions = [];
+    
+    if (filters.vendorId) {
+      conditions.push(eq(vendorActivityLog.vendorId, filters.vendorId));
+    }
+    if (filters.startDate) {
+      conditions.push(gte(vendorActivityLog.createdAt, filters.startDate));
+    }
+    if (filters.endDate) {
+      const endOfDay = new Date(filters.endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      conditions.push(sql`${vendorActivityLog.createdAt} <= ${endOfDay}`);
+    }
+    if (filters.actionType) {
+      conditions.push(eq(vendorActivityLog.actionType, filters.actionType));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    // Get total count
+    const countResult = await db.select({ count: sql<number>`count(*)::integer` })
+      .from(vendorActivityLog)
+      .where(whereClause);
+    const total = countResult[0]?.count || 0;
+
+    // Get paginated logs
+    let query = db.select()
+      .from(vendorActivityLog)
+      .where(whereClause)
+      .orderBy(desc(vendorActivityLog.createdAt));
+    
+    if (filters.limit) {
+      query = query.limit(filters.limit) as typeof query;
+    }
+    if (filters.offset) {
+      query = query.offset(filters.offset) as typeof query;
+    }
+
+    const logs = await query;
+    return { logs, total };
+  }
+
+  async getVendorActivitySummary(vendorId?: string, days: number = 7): Promise<{
+    totalActions: number;
+    actionsByType: { actionType: string; count: number }[];
+    actionsByDay: { date: string; count: number }[];
+  }> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const conditions = [gte(vendorActivityLog.createdAt, startDate)];
+    if (vendorId) {
+      conditions.push(eq(vendorActivityLog.vendorId, vendorId));
+    }
+    const whereClause = and(...conditions);
+
+    // Total actions
+    const totalResult = await db.select({ count: sql<number>`count(*)::integer` })
+      .from(vendorActivityLog)
+      .where(whereClause);
+    const totalActions = totalResult[0]?.count || 0;
+
+    // Actions by type
+    const byTypeResult = await db.execute(sql`
+      SELECT action_type as "actionType", COUNT(*)::integer as count
+      FROM vendor_activity_log
+      WHERE created_at >= ${startDate}
+      ${vendorId ? sql`AND vendor_id = ${vendorId}` : sql``}
+      GROUP BY action_type
+      ORDER BY count DESC
+    `);
+
+    // Actions by day
+    const byDayResult = await db.execute(sql`
+      SELECT 
+        TO_CHAR((created_at AT TIME ZONE 'UTC') AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as date,
+        COUNT(*)::integer as count
+      FROM vendor_activity_log
+      WHERE created_at >= ${startDate}
+      ${vendorId ? sql`AND vendor_id = ${vendorId}` : sql``}
+      GROUP BY TO_CHAR((created_at AT TIME ZONE 'UTC') AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD')
+      ORDER BY date DESC
+    `);
+
+    return {
+      totalActions,
+      actionsByType: byTypeResult.rows as { actionType: string; count: number }[],
+      actionsByDay: byDayResult.rows as { date: string; count: number }[],
+    };
   }
 }
 

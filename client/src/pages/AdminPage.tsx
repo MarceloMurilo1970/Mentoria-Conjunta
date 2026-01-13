@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -1068,6 +1068,47 @@ function MentorshipRegistrationsSection() {
     setInvoiceModalOpen(false);
   };
 
+  const copyPaymentInstructions = (reg: Registration) => {
+    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+    const firstName = reg.name.split(' ')[0];
+    
+    let text = '';
+    
+    if (reg.paymentMethod === 'pix') {
+      text = `Olá ${firstName}!
+
+Seguem as instruções para pagamento via PIX:
+
+Valor: R$ ${batchConfig.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+
+Chave PIX (CNPJ): 55.190.093/0001-59
+Nome: MARCELO MURILO DA SILVA ASSESSORIA E CONSULTORIA EMPRESARIAL LTDA
+
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turma 2 (Fevereiro a Abril 2026).
+
+Qualquer dúvida, estamos à disposição!`;
+    } else {
+      text = `Olá ${firstName}!
+
+Seguem as instruções para pagamento no cartão de crédito:
+
+Valor: 5x de R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (sem juros)
+Total: R$ ${batchConfig.installmentTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+
+Link de pagamento: https://infinitepay.io/marcelomurilo
+
+Após o pagamento, sua inscrição na Mentoria Turma 2 (Fevereiro a Abril 2026) será confirmada automaticamente.
+
+Qualquer dúvida, estamos à disposição!`;
+    }
+    
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Instruções copiadas!",
+      description: `Instruções de pagamento via ${reg.paymentMethod === 'pix' ? 'PIX' : 'Cartão'} copiadas para a área de transferência.`,
+    });
+  };
+
   const openVendorPaymentModal = (vendor: string, maxPayment: number) => {
     setSelectedVendor(vendor);
     setVendorMaxPayment(maxPayment);
@@ -1672,6 +1713,16 @@ function MentorshipRegistrationsSection() {
                           )}
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyPaymentInstructions(reg)}
+                        data-testid={`button-copy-payment-${index}`}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                        title="Copiar instruções de pagamento"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

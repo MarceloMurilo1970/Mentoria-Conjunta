@@ -1451,7 +1451,7 @@ function generateAISuggestions(lead: any, activities: any[]): { nextSteps: strin
       args.push('Dificuldade na transição: Fale sobre a metodologia passo-a-passo e o framework 5C');
     }
     if (q.includes('mentoria') || q.includes('acompanhamento')) {
-      args.push('Busca acompanhamento: Enfatize as 8 sessões ao vivo + Módulo 2 com Hamilton Felix');
+      args.push('Busca acompanhamento: Enfatize as 12 sessões ao vivo + Módulo 2 com Hamilton Felix');
     }
   });
 

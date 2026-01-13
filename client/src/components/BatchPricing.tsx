@@ -150,7 +150,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
               Mentoria Completa
             </h4>
             <p className="text-xs text-muted-foreground mt-1">
-              8 sessões ao vivo + materiais exclusivos
+              12 sessões ao vivo + materiais exclusivos
             </p>
           </div>
 

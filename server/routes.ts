@@ -167,16 +167,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let name = 'Admin';
       let vendorId: string | null = null;
       
-      if (ADMIN_EMAILS.includes(normalizedEmail)) {
-        name = normalizedEmail === 'hamilton@opes.com.br' ? 'Hamilton Felix' : 'Marcelo Murilo';
-      } else {
-        // Check if it's a registered vendor
-        const vendor = await storage.getVendorByEmail(normalizedEmail);
-        if (!vendor || !vendor.isActive) {
-          return res.status(401).json({ error: "Email não autorizado" });
-        }
+      // First check if email is registered as a vendor
+      const vendor = await storage.getVendorByEmail(normalizedEmail);
+      if (vendor && vendor.isActive) {
         name = vendor.name;
         vendorId = vendor.id;
+      } else if (ADMIN_EMAILS.includes(normalizedEmail)) {
+        // Admin without vendor registration
+        name = normalizedEmail === 'hamilton@opes.com.br' ? 'Hamilton Felix' : 'Marcelo Murilo';
+      } else {
+        return res.status(401).json({ error: "Email não autorizado" });
       }
       
       // Create session

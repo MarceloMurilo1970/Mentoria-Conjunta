@@ -1084,8 +1084,8 @@ Seguem as instruções para pagamento via PIX:
 
 Valor: R$ ${batchConfig.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
 
-Chave PIX (CNPJ): 55.190.093/0001-59
-Nome: MARCELO MURILO DA SILVA ASSESSORIA E CONSULTORIA EMPRESARIAL LTDA
+Chave PIX (CNPJ): 17.840.516/0001-47
+Beneficiário: Opes Informática Ltda
 
 Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turma 2 (Fevereiro a Abril 2026).
 

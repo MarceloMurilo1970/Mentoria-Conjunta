@@ -620,6 +620,7 @@ const BATCH_CONFIG = [
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
+    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-8875,00",
   },
   { 
     batch: 2, 
@@ -633,6 +634,7 @@ const BATCH_CONFIG = [
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
+    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-9650,00",
   },
   { 
     batch: 3, 
@@ -646,6 +648,7 @@ const BATCH_CONFIG = [
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
+    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00",
   },
 ];
 
@@ -1095,7 +1098,7 @@ Seguem as instruções para pagamento no cartão de crédito:
 Valor: 5x de R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (sem juros)
 Total: R$ ${batchConfig.installmentTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
 
-Link de pagamento: https://infinitepay.io/marcelomurilo
+Link de pagamento: ${batchConfig.paymentLink}
 
 Após o pagamento, sua inscrição na Mentoria Turma 2 (Fevereiro a Abril 2026) será confirmada automaticamente.
 

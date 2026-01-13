@@ -620,7 +620,7 @@ const BATCH_CONFIG = [
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
-    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-8875,00",
+    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00",
   },
   { 
     batch: 2, 
@@ -634,7 +634,7 @@ const BATCH_CONFIG = [
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
-    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-9650,00",
+    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00",
   },
   { 
     batch: 3, 

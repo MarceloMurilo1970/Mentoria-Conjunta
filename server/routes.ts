@@ -385,10 +385,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     razaoSocial: z.string().optional().nullable(),
     paymentMethod: z.enum(["pix", "installments"]),
     paymentStatus: z.enum(["pendente", "parcial", "pago"]),
-    totalAmount: z.number().min(0),
+    totalAmount: z.number().min(100, "Valor total deve ser pelo menos R$ 100"),
     paidAmount: z.number().min(0),
     observations: z.string().optional().nullable(),
     leadId: z.string().optional().nullable(),
+  }).refine((data) => {
+    // Validate payment status coherence
+    if (data.paymentStatus === 'pago' && data.paidAmount < data.totalAmount) {
+      return false;
+    }
+    if (data.paymentStatus === 'pendente' && data.paidAmount > 0) {
+      return false;
+    }
+    if (data.paidAmount > data.totalAmount) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Status de pagamento não corresponde ao valor pago"
   });
 
   app.post("/api/registrations/manual", requireAuth, async (req, res) => {

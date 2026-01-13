@@ -714,6 +714,19 @@ function MentorshipRegistrationsSection() {
   const [selectedInvoiceReg, setSelectedInvoiceReg] = useState<Registration | null>(null);
   const [invoiceAmount, setInvoiceAmount] = useState('');
   const [invoiceDate, setInvoiceDate] = useState('');
+  
+  // Manual registration states
+  const [manualRegModalOpen, setManualRegModalOpen] = useState(false);
+  const [manualRegName, setManualRegName] = useState('');
+  const [manualRegEmail, setManualRegEmail] = useState('');
+  const [manualRegPhone, setManualRegPhone] = useState('');
+  const [manualRegCpfCnpj, setManualRegCpfCnpj] = useState('');
+  const [manualRegRazaoSocial, setManualRegRazaoSocial] = useState('');
+  const [manualRegPaymentMethod, setManualRegPaymentMethod] = useState<'pix' | 'installments'>('pix');
+  const [manualRegPaymentStatus, setManualRegPaymentStatus] = useState<'pendente' | 'parcial' | 'pago'>('pendente');
+  const [manualRegTotalAmount, setManualRegTotalAmount] = useState('9400');
+  const [manualRegPaidAmount, setManualRegPaidAmount] = useState('0');
+  const [manualRegObservations, setManualRegObservations] = useState('');
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ['/api/registrations'],
@@ -884,6 +897,116 @@ function MentorshipRegistrationsSection() {
       });
     },
   });
+
+  const manualRegMutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      email: string;
+      phone: string;
+      cpfCnpj: string;
+      razaoSocial?: string;
+      paymentMethod: 'pix' | 'installments';
+      paymentStatus: 'pendente' | 'parcial' | 'pago';
+      totalAmount: number;
+      paidAmount: number;
+      observations?: string;
+    }) => {
+      return await apiRequest("POST", "/api/registrations/manual", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      setManualRegModalOpen(false);
+      resetManualRegForm();
+      toast({
+        title: "Inscrição criada",
+        description: "A inscrição foi registrada com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error?.message || "Não foi possível criar a inscrição.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetManualRegForm = () => {
+    setManualRegName('');
+    setManualRegEmail('');
+    setManualRegPhone('');
+    setManualRegCpfCnpj('');
+    setManualRegRazaoSocial('');
+    setManualRegPaymentMethod('pix');
+    setManualRegPaymentStatus('pendente');
+    setManualRegTotalAmount('9400');
+    setManualRegPaidAmount('0');
+    setManualRegObservations('');
+  };
+
+  const handleManualRegistration = () => {
+    if (!manualRegName || !manualRegEmail || !manualRegPhone || !manualRegCpfCnpj) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const totalAmount = Number(manualRegTotalAmount) || 0;
+    const paidAmount = Number(manualRegPaidAmount) || 0;
+    
+    if (totalAmount < 100) {
+      toast({
+        title: "Valor inválido",
+        description: "O valor total deve ser pelo menos R$ 100.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (paidAmount > totalAmount) {
+      toast({
+        title: "Valor inválido",
+        description: "O valor pago não pode ser maior que o valor total.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate payment status coherence
+    if (manualRegPaymentStatus === 'pago' && paidAmount < totalAmount) {
+      toast({
+        title: "Status inconsistente",
+        description: "Se o status é 'Pago', o valor pago deve ser igual ao valor total.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (manualRegPaymentStatus === 'pendente' && paidAmount > 0) {
+      toast({
+        title: "Status inconsistente",
+        description: "Se o status é 'Pendente', o valor pago deve ser zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    manualRegMutation.mutate({
+      name: manualRegName.trim(),
+      email: manualRegEmail.trim().toLowerCase(),
+      phone: manualRegPhone.trim(),
+      cpfCnpj: manualRegCpfCnpj.trim(),
+      razaoSocial: manualRegRazaoSocial.trim() || undefined,
+      paymentMethod: manualRegPaymentMethod,
+      paymentStatus: manualRegPaymentStatus,
+      totalAmount,
+      paidAmount,
+      observations: manualRegObservations.trim() || undefined,
+    });
+  };
 
   const handleSaveVendor = (id: string) => {
     vendorMutation.mutate({ id, vendor: vendorValue.trim() || null });
@@ -1302,13 +1425,157 @@ function MentorshipRegistrationsSection() {
         </Card>
       </Collapsible>
 
+      {/* Manual Registration Dialog */}
+      <Dialog open={manualRegModalOpen} onOpenChange={setManualRegModalOpen}>
+        <DialogContent className="max-w-lg bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900">Nova Inscrição Manual</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Cadastre uma nova inscrição manualmente
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label className="text-gray-700">Nome Completo *</Label>
+                <Input
+                  value={manualRegName}
+                  onChange={(e) => setManualRegName(e.target.value)}
+                  placeholder="Nome do aluno"
+                  className="mt-1 bg-white border-gray-300"
+                  data-testid="input-manual-name"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-gray-700">Email *</Label>
+                <Input
+                  type="email"
+                  value={manualRegEmail}
+                  onChange={(e) => setManualRegEmail(e.target.value)}
+                  placeholder="email@exemplo.com"
+                  className="mt-1 bg-white border-gray-300"
+                  data-testid="input-manual-email"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Telefone/WhatsApp *</Label>
+                <Input
+                  value={manualRegPhone}
+                  onChange={(e) => setManualRegPhone(e.target.value)}
+                  placeholder="(11) 99999-9999"
+                  className="mt-1 bg-white border-gray-300"
+                  data-testid="input-manual-phone"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">CPF/CNPJ *</Label>
+                <Input
+                  value={manualRegCpfCnpj}
+                  onChange={(e) => setManualRegCpfCnpj(e.target.value)}
+                  placeholder="000.000.000-00"
+                  className="mt-1 bg-white border-gray-300"
+                  data-testid="input-manual-cpf"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-gray-700">Razão Social (se CNPJ)</Label>
+                <Input
+                  value={manualRegRazaoSocial}
+                  onChange={(e) => setManualRegRazaoSocial(e.target.value)}
+                  placeholder="Razão Social da empresa"
+                  className="mt-1 bg-white border-gray-300"
+                  data-testid="input-manual-razao"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Forma de Pagamento</Label>
+                <Select value={manualRegPaymentMethod} onValueChange={(v: 'pix' | 'installments') => setManualRegPaymentMethod(v)}>
+                  <SelectTrigger className="mt-1 bg-white border-gray-300" data-testid="select-manual-payment-method">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="installments">Parcelado (5x)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-gray-700">Status do Pagamento</Label>
+                <Select value={manualRegPaymentStatus} onValueChange={(v: 'pendente' | 'parcial' | 'pago') => setManualRegPaymentStatus(v)}>
+                  <SelectTrigger className="mt-1 bg-white border-gray-300" data-testid="select-manual-payment-status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="parcial">Parcial</SelectItem>
+                    <SelectItem value="pago">Pago</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-gray-700">Valor Total (R$)</Label>
+                <Input
+                  type="number"
+                  value={manualRegTotalAmount}
+                  onChange={(e) => setManualRegTotalAmount(e.target.value)}
+                  className="mt-1 bg-white border-gray-300"
+                  data-testid="input-manual-total"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Valor Pago (R$)</Label>
+                <Input
+                  type="number"
+                  value={manualRegPaidAmount}
+                  onChange={(e) => setManualRegPaidAmount(e.target.value)}
+                  className="mt-1 bg-white border-gray-300"
+                  data-testid="input-manual-paid"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-gray-700">Observações</Label>
+                <Input
+                  value={manualRegObservations}
+                  onChange={(e) => setManualRegObservations(e.target.value)}
+                  placeholder="Observações sobre a inscrição"
+                  className="mt-1 bg-white border-gray-300"
+                  data-testid="input-manual-obs"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setManualRegModalOpen(false)} className="border-gray-300">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleManualRegistration} 
+              disabled={manualRegMutation.isPending}
+              data-testid="button-save-manual-reg"
+            >
+              {manualRegMutation.isPending ? "Salvando..." : "Cadastrar Inscrição"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Registrations Table - Two-line layout to avoid horizontal scroll */}
       <Card className="bg-white border-gray-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-gray-900">Inscrições da Mentoria - Turma 2</CardTitle>
-          <CardDescription className="text-gray-600">
-            Janeiro a Março 2026 - Marcelo Murilo & Hamilton Felix
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <div>
+            <CardTitle className="text-gray-900">Inscrições da Mentoria - Turma 2</CardTitle>
+            <CardDescription className="text-gray-600">
+              Fevereiro a Abril 2026 - Marcelo Murilo & Hamilton Felix
+            </CardDescription>
+          </div>
+          <Button 
+            onClick={() => setManualRegModalOpen(true)} 
+            className="shrink-0"
+            data-testid="button-new-manual-registration"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Inscrição
+          </Button>
         </CardHeader>
         <CardContent>
           {registrations && registrations.length > 0 ? (

@@ -34,7 +34,7 @@ import ronaldoCarneiroPhoto from "@assets/image_1764434298472.png";
 
 const RECORDING_URL = "https://drive.google.com/file/d/1I5nCVGC15zKOvN1WRoP8vEjbcH5xI7Tm/view?usp=sharing";
 const SUMMARY_URL = "https://docs.google.com/document/d/1PUWN0b9HszMkY45ES-uW4wLgt9P7r3s7oAu33MCdPqc/edit?usp=sharing";
-const PRESENTATION_URL = "https://marcelomurilo-my.sharepoint.com/:b:/g/personal/contato_marcelomurilo_com_br/IQDclKCA-eajQ7V9_tANX-c5AWGdxvs1P8KWSUQW_zw3H6g?e=pmJcnp";
+const PRESENTATION_URL = "https://marcelomurilo-my.sharepoint.com/:b:/g/personal/contato_marcelomurilo_com_br/IQDcqbnY9qMFQYsj_w8k5aw3ASA4EDU0IwZoAwnYItG38SM?e=4md0fE";
 
 const testimonials = [
   {

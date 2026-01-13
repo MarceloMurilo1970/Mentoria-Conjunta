@@ -1100,7 +1100,7 @@ Total: R$ ${batchConfig.installmentTotal.toLocaleString('pt-BR', { minimumFracti
 
 Link de pagamento: ${batchConfig.paymentLink}
 
-Após o pagamento, sua inscrição na Mentoria Turma 2 (Fevereiro a Abril 2026) será confirmada automaticamente.
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turma 2 (Fevereiro a Abril 2026).
 
 Qualquer dúvida, estamos à disposição!`;
     }

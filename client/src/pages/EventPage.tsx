@@ -452,7 +452,7 @@ export default function EventPage() {
               <Sparkles className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm sm:text-base font-medium text-center sm:text-left">
                 <span className="hidden sm:inline">Inscrições abertas! </span>
-                {priceInfo.batchName} - {priceInfo.batchName === "Lote 1" ? "Melhor preço!" : "Garanta sua vaga!"}
+                Garanta sua vaga na Turma 2!
               </span>
             </div>
             <Button 

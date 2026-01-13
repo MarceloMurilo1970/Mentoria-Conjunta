@@ -718,8 +718,10 @@ function MentorshipRegistrationsSection() {
   const [invoiceAmount, setInvoiceAmount] = useState('');
   const [invoiceDate, setInvoiceDate] = useState('');
   
-  // Get current user email from localStorage for authentication fallback
+  // Get current user email and auth token from localStorage
   const currentUserEmail = localStorage.getItem('crm_vendor_email');
+  const currentAuthToken = localStorage.getItem('crm_auth_token');
+  const hasValidAuth = !!(currentUserEmail && currentAuthToken);
   
   // Manual registration states
   const [manualRegModalOpen, setManualRegModalOpen] = useState(false);
@@ -1484,14 +1486,30 @@ Qualquer dúvida, estamos à disposição!`;
 
       {/* Manual Registration Dialog */}
       <Dialog open={manualRegModalOpen} onOpenChange={setManualRegModalOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Nova Inscrição Manual</DialogTitle>
             <DialogDescription className="text-gray-600">
               Cadastre uma nova inscrição manualmente
             </DialogDescription>
           </DialogHeader>
+          
+          {!hasValidAuth ? (
+            <div className="py-6 text-center">
+              <p className="text-red-600 font-medium mb-4">Sessão expirada ou inválida</p>
+              <p className="text-gray-600 mb-4">Faça login novamente na aba CRM para cadastrar inscrições.</p>
+              <Button variant="outline" onClick={() => setManualRegModalOpen(false)}>
+                Fechar
+              </Button>
+            </div>
+          ) : (
+          <>
           <div className="space-y-4 py-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Cadastrando como:</strong> {currentUserEmail}
+              </p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <Label className="text-gray-700">Nome Completo *</Label>
@@ -1613,6 +1631,8 @@ Qualquer dúvida, estamos à disposição!`;
               {manualRegMutation.isPending ? "Salvando..." : "Cadastrar Inscrição"}
             </Button>
           </DialogFooter>
+          </>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -3853,26 +3873,26 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="crm" className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5 bg-white border border-gray-200">
-            <TabsTrigger value="crm" data-testid="tab-crm" className="data-[state=active]:bg-gray-100">
-              <Target className="w-4 h-4 mr-2" />
-              CRM
+          <TabsList className="flex flex-wrap w-full max-w-3xl gap-1 bg-white border border-gray-200 h-auto p-1">
+            <TabsTrigger value="crm" data-testid="tab-crm" className="data-[state=active]:bg-gray-100 flex-1 min-w-[60px] px-2 py-1.5">
+              <Target className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">CRM</span>
             </TabsTrigger>
-            <TabsTrigger value="activity-log" data-testid="tab-activity-log" className="data-[state=active]:bg-gray-100">
-              <FileText className="w-4 h-4 mr-2" />
-              Atividades
+            <TabsTrigger value="activity-log" data-testid="tab-activity-log" className="data-[state=active]:bg-gray-100 flex-1 min-w-[60px] px-2 py-1.5">
+              <FileText className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Atividades</span>
             </TabsTrigger>
-            <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-100">
-              <Users className="w-4 h-4 mr-2" />
-              Inscrições
+            <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-100 flex-1 min-w-[60px] px-2 py-1.5">
+              <Users className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Inscrições</span>
             </TabsTrigger>
-            <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-100">
-              <Calendar className="w-4 h-4 mr-2" />
-              Evento ao Vivo
+            <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-100 flex-1 min-w-[60px] px-2 py-1.5">
+              <Calendar className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Evento</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" data-testid="tab-analytics" className="data-[state=active]:bg-gray-100">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Estatísticas
+            <TabsTrigger value="analytics" data-testid="tab-analytics" className="data-[state=active]:bg-gray-100 flex-1 min-w-[60px] px-2 py-1.5">
+              <TrendingUp className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Stats</span>
             </TabsTrigger>
           </TabsList>
 

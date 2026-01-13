@@ -583,18 +583,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         vendor: vendorName,
       });
       
-      // Log the activity
-      await storage.logVendorAction({
-        vendorId: vendorId || 'admin',
-        vendorName: vendorName,
-        actionType: 'manual_registration',
-        actionDescription: `Cadastrou manualmente a inscrição de ${validatedData.name} (${validatedData.email})`,
-        metadata: JSON.stringify({
-          registrationId: registration.id,
-          totalAmount: validatedData.totalAmount,
-          paymentStatus: validatedData.paymentStatus,
-        }),
-      });
+      // Log the activity only if it's a vendor (admin actions are not logged to vendor_activity_log)
+      if (vendorId) {
+        await storage.logVendorAction({
+          vendorId: vendorId,
+          vendorName: vendorName,
+          actionType: 'manual_registration',
+          actionDescription: `Cadastrou manualmente a inscrição de ${validatedData.name} (${validatedData.email})`,
+          metadata: JSON.stringify({
+            registrationId: registration.id,
+            totalAmount: validatedData.totalAmount,
+            paymentStatus: validatedData.paymentStatus,
+          }),
+        });
+      }
       
       // If linked to a lead, update the lead status to converted
       if (validatedData.leadId) {

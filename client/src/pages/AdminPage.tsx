@@ -734,6 +734,10 @@ function MentorshipRegistrationsSection() {
     refetchOnWindowFocus: true,
   });
 
+  const { data: vendors = [] } = useQuery<Vendor[]>({
+    queryKey: ['/api/crm/vendors'],
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/registrations/${id}`);
@@ -1009,7 +1013,8 @@ function MentorshipRegistrationsSection() {
   };
 
   const handleSaveVendor = (id: string) => {
-    vendorMutation.mutate({ id, vendor: vendorValue.trim() || null });
+    const vendor = vendorValue === '__none__' ? null : (vendorValue.trim() || null);
+    vendorMutation.mutate({ id, vendor });
   };
 
   const handleSaveObservations = (id: string) => {
@@ -1703,13 +1708,20 @@ function MentorshipRegistrationsSection() {
                         <span className="text-gray-500 text-xs">Vendedor:</span>
                         {editingVendorId === reg.id ? (
                           <div className="flex items-center gap-1">
-                            <Input
+                            <Select
                               value={vendorValue}
-                              onChange={(e) => setVendorValue(e.target.value)}
-                              placeholder="Nome"
-                              className="w-24 h-7 bg-white border-gray-300 text-sm"
-                              data-testid={`input-vendor-${index}`}
-                            />
+                              onValueChange={(value) => setVendorValue(value)}
+                            >
+                              <SelectTrigger className="w-36 h-7 bg-white border-gray-300 text-sm" data-testid={`select-vendor-${index}`}>
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">Nenhum</SelectItem>
+                                {vendors.filter(v => v.isActive).map(v => (
+                                  <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <Button 
                               size="icon" 
                               variant="ghost" 

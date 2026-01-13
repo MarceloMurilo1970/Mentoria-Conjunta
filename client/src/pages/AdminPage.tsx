@@ -3510,7 +3510,7 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="mentorship" data-testid="tab-mentorship" className="data-[state=active]:bg-gray-100">
               <Users className="w-4 h-4 mr-2" />
-              Mentoria
+              Inscrições
             </TabsTrigger>
             <TabsTrigger value="event" data-testid="tab-event" className="data-[state=active]:bg-gray-100">
               <Calendar className="w-4 h-4 mr-2" />

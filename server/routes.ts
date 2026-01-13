@@ -376,6 +376,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual registration by vendors (authenticated)
+  const manualRegistrationSchema = z.object({
+    name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+    email: z.string().email("Email inválido"),
+    phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
+    cpfCnpj: z.string().min(11, "CPF/CNPJ deve ter pelo menos 11 dígitos"),
+    razaoSocial: z.string().optional().nullable(),
+    paymentMethod: z.enum(["pix", "installments"]),
+    paymentStatus: z.enum(["pendente", "parcial", "pago"]),
+    totalAmount: z.number().min(0),
+    paidAmount: z.number().min(0),
+    observations: z.string().optional().nullable(),
+    leadId: z.string().optional().nullable(),
+  });
+
+  app.post("/api/registrations/manual", requireAuth, async (req, res) => {
+    try {
+      const validatedData = manualRegistrationSchema.parse(req.body);
+      const user = req.user as any;
+      
+      // Get vendor name for the registration
+      let vendorName = user.name;
+      if (user.vendorId) {
+        const vendor = await storage.getVendor(user.vendorId);
+        if (vendor) {
+          vendorName = vendor.name;
+        }
+      }
+      
+      // Check if email already exists
+      const existingRegistration = await storage.getRegistrationByEmail(validatedData.email);
+      if (existingRegistration) {
+        return res.status(400).json({ 
+          error: "Este email já foi cadastrado" 
+        });
+      }
+      
+      const registration = await storage.createManualRegistration({
+        ...validatedData,
+        vendor: vendorName,
+      });
+      
+      // Log the activity
+      await storage.logVendorAction({
+        vendorId: user.vendorId || user.id,
+        vendorName: vendorName,
+        actionType: 'manual_registration',
+        actionDescription: `Cadastrou manualmente a inscrição de ${validatedData.name} (${validatedData.email})`,
+        metadata: JSON.stringify({
+          registrationId: registration.id,
+          totalAmount: validatedData.totalAmount,
+          paymentStatus: validatedData.paymentStatus,
+        }),
+      });
+      
+      // If linked to a lead, update the lead status to converted
+      if (validatedData.leadId) {
+        try {
+          await storage.convertLead(validatedData.leadId, registration.id);
+        } catch (leadError) {
+          console.error("Error updating lead:", leadError);
+        }
+      }
+      
+      res.status(201).json({ 
+        success: true, 
+        registration: {
+          id: registration.id,
+          name: registration.name,
+          email: registration.email,
+          paymentMethod: registration.paymentMethod,
+          totalAmount: registration.totalAmount,
+          paidAmount: registration.paidAmount,
+          paymentStatus: registration.paymentStatus,
+        }
+      });
+    } catch (error: any) {
+      console.error("Manual registration error:", error);
+      
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          error: "Dados inválidos", 
+          details: error.errors 
+        });
+      }
+      
+      res.status(500).json({ 
+        error: "Erro ao processar inscrição manual" 
+      });
+    }
+  });
+
   // Delete a registration
   app.delete("/api/registrations/:id", async (req, res) => {
     try {

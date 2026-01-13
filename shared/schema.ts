@@ -193,6 +193,26 @@ export const insertRegistrationSchema = createInsertSchema(registrations).omit({
 export type InsertRegistration = z.infer<typeof insertRegistrationSchema>;
 export type Registration = typeof registrations.$inferSelect;
 
+// Manual registration schema for vendors (includes payment fields)
+export const insertManualRegistrationSchema = createInsertSchema(registrations).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email inválido"),
+  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
+  cpfCnpj: z.string().min(11, "CPF/CNPJ deve ter pelo menos 11 dígitos").max(18, "CPF/CNPJ inválido"),
+  razaoSocial: z.string().optional().nullable(),
+  paymentMethod: z.enum(["pix", "installments"]),
+  paymentStatus: z.enum(["pendente", "parcial", "pago"]),
+  totalAmount: z.number().min(0, "Valor total deve ser positivo"),
+  paidAmount: z.number().min(0, "Valor pago deve ser positivo"),
+  observations: z.string().optional().nullable(),
+  leadId: z.string().optional().nullable(), // Optional link to a lead
+});
+
+export type InsertManualRegistration = z.infer<typeof insertManualRegistrationSchema>;
+
 // Page Views table for analytics
 export const pageViews = pgTable("page_views", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

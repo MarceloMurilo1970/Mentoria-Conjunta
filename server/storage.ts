@@ -41,11 +41,27 @@ export interface BatchUpdate {
   batch: number;
 }
 
+export interface ManualRegistrationData {
+  name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  razaoSocial?: string | null;
+  paymentMethod: 'pix' | 'installments';
+  paymentStatus: 'pendente' | 'parcial' | 'pago';
+  totalAmount: number;
+  paidAmount: number;
+  observations?: string | null;
+  vendor?: string | null;
+  leadId?: string | null;
+}
+
 export interface IStorage {
   getRegistration(id: string): Promise<Registration | undefined>;
   getRegistrationByEmail(email: string): Promise<Registration | undefined>;
   getAllRegistrations(): Promise<Registration[]>;
   createRegistration(registration: InsertRegistration): Promise<Registration>;
+  createManualRegistration(data: ManualRegistrationData): Promise<Registration>;
   deleteRegistration(id: string): Promise<boolean>;
   updatePaymentReceived(id: string, received: boolean): Promise<Registration | undefined>;
   updatePaymentStatus(id: string, update: PaymentUpdate): Promise<Registration | undefined>;
@@ -73,6 +89,25 @@ export class DbStorage implements IStorage {
 
   async createRegistration(insertRegistration: InsertRegistration): Promise<Registration> {
     const result = await db.insert(registrations).values(insertRegistration).returning();
+    return result[0];
+  }
+
+  async createManualRegistration(data: ManualRegistrationData): Promise<Registration> {
+    const result = await db.insert(registrations).values({
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      cpfCnpj: data.cpfCnpj,
+      razaoSocial: data.razaoSocial || null,
+      paymentMethod: data.paymentMethod,
+      paymentStatus: data.paymentStatus,
+      paymentReceived: data.paymentStatus === 'pago',
+      totalAmount: data.totalAmount,
+      paidAmount: data.paidAmount,
+      vendor: data.vendor || null,
+      observations: data.observations || null,
+      batch: 3, // Current batch
+    }).returning();
     return result[0];
   }
 

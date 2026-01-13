@@ -7,6 +7,11 @@ import { ensureConnection } from "./db";
 
 const app = express();
 
+// Trust proxy for production (behind reverse proxy/load balancer)
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // Health check endpoint - responds immediately before any other routes
 // This ensures deployment health checks pass quickly
 app.get("/health", (_req, res) => {

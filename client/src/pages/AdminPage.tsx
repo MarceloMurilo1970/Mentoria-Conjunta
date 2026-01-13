@@ -3373,7 +3373,9 @@ function VendorActivitySection() {
       params.set('startDate', startDate.toISOString());
       params.set('limit', pageSize.toString());
       params.set('offset', (page * pageSize).toString());
-      const res = await fetch(`/api/crm/vendor-activity?${params}`);
+      const res = await fetch(`/api/crm/vendor-activity?${params}`, {
+        credentials: 'include',
+      });
       return res.json();
     },
   });
@@ -3384,7 +3386,9 @@ function VendorActivitySection() {
       const params = new URLSearchParams();
       if (vendorFilter !== 'all') params.set('vendorId', vendorFilter);
       params.set('days', dateRange);
-      const res = await fetch(`/api/crm/vendor-activity/summary?${params}`);
+      const res = await fetch(`/api/crm/vendor-activity/summary?${params}`, {
+        credentials: 'include',
+      });
       return res.json();
     },
   });

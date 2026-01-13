@@ -255,6 +255,11 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
+  async getVendorByEmail(email: string): Promise<Vendor | undefined> {
+    const result = await db.select().from(vendors).where(eq(vendors.email, email)).limit(1);
+    return result[0];
+  }
+
   async createVendor(vendor: InsertVendor): Promise<Vendor> {
     const result = await db.insert(vendors).values(vendor).returning();
     return result[0];

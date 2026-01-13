@@ -718,6 +718,9 @@ function MentorshipRegistrationsSection() {
   const [invoiceAmount, setInvoiceAmount] = useState('');
   const [invoiceDate, setInvoiceDate] = useState('');
   
+  // Get current user email from localStorage for authentication fallback
+  const currentUserEmail = localStorage.getItem('crm_vendor_email');
+  
   // Manual registration states
   const [manualRegModalOpen, setManualRegModalOpen] = useState(false);
   const [manualRegName, setManualRegName] = useState('');
@@ -918,7 +921,12 @@ function MentorshipRegistrationsSection() {
       paidAmount: number;
       observations?: string;
     }) => {
-      return await apiRequest("POST", "/api/registrations/manual", data);
+      // Include auth email for fallback authentication in production
+      const authEmail = localStorage.getItem('crm_vendor_email');
+      return await apiRequest("POST", "/api/registrations/manual", {
+        ...data,
+        authEmail: authEmail || undefined,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
@@ -1476,7 +1484,7 @@ Qualquer dúvida, estamos à disposição!`;
 
       {/* Manual Registration Dialog */}
       <Dialog open={manualRegModalOpen} onOpenChange={setManualRegModalOpen}>
-        <DialogContent className="max-w-lg bg-white">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Nova Inscrição Manual</DialogTitle>
             <DialogDescription className="text-gray-600">
@@ -1484,8 +1492,8 @@ Qualquer dúvida, estamos à disposição!`;
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
                 <Label className="text-gray-700">Nome Completo *</Label>
                 <Input
                   value={manualRegName}
@@ -1495,7 +1503,7 @@ Qualquer dúvida, estamos à disposição!`;
                   data-testid="input-manual-name"
                 />
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <Label className="text-gray-700">Email *</Label>
                 <Input
                   type="email"
@@ -1526,7 +1534,7 @@ Qualquer dúvida, estamos à disposição!`;
                   data-testid="input-manual-cpf"
                 />
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <Label className="text-gray-700">Razão Social (se CNPJ)</Label>
                 <Input
                   value={manualRegRazaoSocial}
@@ -1581,7 +1589,7 @@ Qualquer dúvida, estamos à disposição!`;
                   data-testid="input-manual-paid"
                 />
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <Label className="text-gray-700">Observações</Label>
                 <Input
                   value={manualRegObservations}

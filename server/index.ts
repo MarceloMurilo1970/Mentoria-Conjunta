@@ -1,9 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import pgSession from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { ensureConnection } from "./db";
+import { pool } from "./db";
 
 const app = express();
 
@@ -21,16 +23,26 @@ app.get("/health", (_req, res) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Session configuration
+// Session configuration - use PostgreSQL in production for persistence
 const MemoryStore = createMemoryStore(session);
+const PgStore = pgSession(session);
+
+const sessionStore = process.env.NODE_ENV === "production" && process.env.DATABASE_URL
+  ? new PgStore({
+      pool: pool,
+      tableName: 'session',
+      createTableIfMissing: true,
+    })
+  : new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    });
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "mentorship-crm-secret-key-2025",
     resave: false,
     saveUninitialized: false,
-    store: new MemoryStore({
-      checkPeriod: 86400000, // prune expired entries every 24h
-    }),
+    store: sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,

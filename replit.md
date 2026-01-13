@@ -46,7 +46,14 @@ Preferred communication style: Simple, everyday language.
 - **Email Service:** SendGrid for transactional emails, secured via Replit Connectors.
 - **Payment Integration:** PIX payment and credit card installments via Infinite Pay.
 - **Database:** PostgreSQL (Neon serverless) managed by Drizzle ORM, utilizing `@neondatabase/serverless`.
-- **Authentication & Security:** Replit identity tokens for API authentication and Replit Connectors for secure API key management.
+- **Authentication & Security:** 
+  - Email-only authentication for CRM admin panel (no passwords required)
+  - HMAC SHA-256 signed tokens with 7-day expiry for session fallback authentication
+  - Admin emails: contato@marcelomurilo.com.br, marcelo@marcelomurilo.com.br, hamilton@opes.com.br
+  - Vendors authenticate via registered email (must be active in database)
+  - `SESSION_SECRET` environment variable required for token signing (no hardcoded fallback)
+  - PostgreSQL session store (connect-pg-simple) for production session persistence
+  - Trust proxy configured for HTTPS cookie handling in production
 - **Development Tools:** Replit-specific Vite plugins (error overlay, development banner), Cartographer plugin.
 - **Third-Party UI Libraries:** Radix UI, Lucide React, Embla Carousel, CMDK.
 - **Google Sheets Integration:** Replit's native Google Sheets connector for event registrations (ID: 1-fCalJZRLnerVeTsPQhetEOjM816FxLWquS6kX47o1k) and CRM lead syncing (ID: 1iOSApmifjm54hpGx5vPYWkfBwGNMM5PO57PrD70DgHI).

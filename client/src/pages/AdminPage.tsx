@@ -921,11 +921,11 @@ function MentorshipRegistrationsSection() {
       paidAmount: number;
       observations?: string;
     }) => {
-      // Include auth email for fallback authentication in production
-      const authEmail = localStorage.getItem('crm_vendor_email');
+      // Include signed auth token for fallback authentication in production
+      const authToken = localStorage.getItem('crm_auth_token');
       return await apiRequest("POST", "/api/registrations/manual", {
         ...data,
-        authEmail: authEmail || undefined,
+        authToken: authToken || undefined,
       });
     },
     onSuccess: () => {
@@ -2266,7 +2266,8 @@ function CRMSection() {
   });
 
   const currentVendor = vendors.find(v => v.email?.toLowerCase() === currentVendorEmail?.toLowerCase()) || null;
-  const isAdmin = currentVendorEmail?.toLowerCase() === 'contato@marcelomurilo.com.br';
+  const ADMIN_EMAILS = ["contato@marcelomurilo.com.br", "marcelo@marcelomurilo.com.br", "hamilton@opes.com.br"];
+  const isAdmin = currentVendorEmail ? ADMIN_EMAILS.includes(currentVendorEmail.toLowerCase()) : false;
 
   const handleLogin = async () => {
     if (!loginEmail.trim()) {
@@ -2274,28 +2275,35 @@ function CRMSection() {
       return;
     }
     
-    const email = loginEmail.toLowerCase();
-    const isAdminEmail = email === 'contato@marcelomurilo.com.br';
+    const email = loginEmail.toLowerCase().trim();
     
-    // Admin can login directly with email
-    if (isAdminEmail) {
-      localStorage.setItem('crm_vendor_email', email);
-      setCurrentVendorEmail(email);
+    try {
+      // Call backend to authenticate and get signed token
+      const response = await fetch('/api/auth/email-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        toast({ title: 'Erro no login', description: error.error || 'Email não autorizado', variant: 'destructive' });
+        return;
+      }
+      
+      const data = await response.json();
+      
+      // Store email and auth token in localStorage
+      localStorage.setItem('crm_vendor_email', data.email);
+      localStorage.setItem('crm_auth_token', data.authToken);
+      
+      setCurrentVendorEmail(data.email);
       setIsLoggedIn(true);
-      toast({ title: 'Bem-vindo, Marcelo!' });
-      return;
+      toast({ title: `Bem-vindo, ${data.name}!` });
+    } catch (error) {
+      toast({ title: 'Erro no login', description: 'Erro de conexão', variant: 'destructive' });
     }
-    
-    // For vendors, check if email is registered
-    const vendor = vendors.find(v => v.email?.toLowerCase() === email);
-    if (!vendor) {
-      toast({ title: 'Email não encontrado', description: 'Este email não está cadastrado como vendedor.', variant: 'destructive' });
-      return;
-    }
-    localStorage.setItem('crm_vendor_email', email);
-    setCurrentVendorEmail(email);
-    setIsLoggedIn(true);
-    toast({ title: `Bem-vindo, ${vendor.name}!` });
   };
 
   const handleLogout = async () => {
@@ -2306,6 +2314,7 @@ function CRMSection() {
       // Ignore errors
     }
     localStorage.removeItem('crm_vendor_email');
+    localStorage.removeItem('crm_auth_token');
     setCurrentVendorEmail(null);
     setIsLoggedIn(false);
   };

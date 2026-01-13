@@ -9,6 +9,52 @@ import { addEventRegistration, getAllEventRegistrations, type EventRegistration,
 import path from "path";
 import { z } from "zod";
 
+// Secret for signing tokens - must be set via environment
+const TOKEN_SECRET = process.env.SESSION_SECRET;
+if (!TOKEN_SECRET) {
+  console.error("FATAL: SESSION_SECRET environment variable is required for token signing");
+}
+
+// Generate a signed auth token for email-based authentication
+function generateAuthToken(email: string): string {
+  if (!TOKEN_SECRET) {
+    throw new Error("SESSION_SECRET not configured");
+  }
+  const timestamp = Date.now();
+  const data = `${email}:${timestamp}`;
+  const signature = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('hex');
+  return Buffer.from(`${data}:${signature}`).toString('base64');
+}
+
+// Verify a signed auth token (valid for 7 days)
+function verifyAuthToken(token: string): { email: string; valid: boolean } {
+  try {
+    if (!TOKEN_SECRET) {
+      return { email: '', valid: false };
+    }
+    
+    const decoded = Buffer.from(token, 'base64').toString('utf-8');
+    const [email, timestampStr, signature] = decoded.split(':');
+    const timestamp = parseInt(timestampStr, 10);
+    
+    // Check expiry (7 days)
+    const maxAge = 7 * 24 * 60 * 60 * 1000;
+    if (Date.now() - timestamp > maxAge) {
+      return { email: '', valid: false };
+    }
+    
+    // Verify signature
+    const expectedSig = crypto.createHmac('sha256', TOKEN_SECRET).update(`${email}:${timestampStr}`).digest('hex');
+    if (signature !== expectedSig) {
+      return { email: '', valid: false };
+    }
+    
+    return { email, valid: true };
+  } catch {
+    return { email: '', valid: false };
+  }
+}
+
 // Password hashing with bcrypt
 async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
@@ -90,15 +136,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       session.userName = user.name;
       session.userEmail = user.email;
 
+      // Generate auth token for fallback authentication
+      const authToken = generateAuthToken(user.email);
+
       res.json({ 
         id: user.id, 
         name: user.name, 
         email: user.email, 
         role: user.role,
-        vendorId: user.vendorId 
+        vendorId: user.vendorId,
+        authToken,
       });
     } catch (error) {
       console.error("Login error:", error);
+      res.status(500).json({ error: "Erro no login" });
+    }
+  });
+
+  // Email-only login for CRM (vendors and admin)
+  app.post("/api/auth/email-login", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Email é obrigatório" });
+      }
+      
+      const normalizedEmail = email.toLowerCase().trim();
+      const ADMIN_EMAILS = ["contato@marcelomurilo.com.br", "marcelo@marcelomurilo.com.br", "hamilton@opes.com.br"];
+      
+      let name = 'Admin';
+      let vendorId: string | null = null;
+      
+      if (ADMIN_EMAILS.includes(normalizedEmail)) {
+        name = normalizedEmail === 'hamilton@opes.com.br' ? 'Hamilton Felix' : 'Marcelo Murilo';
+      } else {
+        // Check if it's a registered vendor
+        const vendor = await storage.getVendorByEmail(normalizedEmail);
+        if (!vendor || !vendor.isActive) {
+          return res.status(401).json({ error: "Email não autorizado" });
+        }
+        name = vendor.name;
+        vendorId = vendor.id;
+      }
+      
+      // Create session
+      const session = (req as any).session;
+      session.userId = `email-${normalizedEmail}`;
+      session.role = ADMIN_EMAILS.includes(normalizedEmail) ? 'admin' : 'vendor';
+      session.vendorId = vendorId;
+      session.userName = name;
+      session.userEmail = normalizedEmail;
+      
+      // Generate signed auth token
+      const authToken = generateAuthToken(normalizedEmail);
+      
+      res.json({
+        email: normalizedEmail,
+        name,
+        vendorId,
+        authToken,
+      });
+    } catch (error) {
+      console.error("Email login error:", error);
       res.status(500).json({ error: "Erro no login" });
     }
   });
@@ -407,7 +506,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Extended schema with auth token for session-less authentication
   const manualRegistrationSchemaWithAuth = manualRegistrationSchema.and(z.object({
-    authEmail: z.string().email().optional(),
     authToken: z.string().optional(),
   }));
 
@@ -417,36 +515,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Try session-based auth first
       const session = (req as any).session;
-      let user = req.user as any;
       let vendorName = 'Admin';
       let vendorId: string | null = null;
+      let isAuthenticated = false;
       
       if (session?.userId) {
-        // Session auth works
-        if (user?.vendorId) {
-          const vendor = await storage.getVendor(user.vendorId);
+        // Session auth works - get user info from session
+        isAuthenticated = true;
+        if (session.vendorId) {
+          const vendor = await storage.getVendor(session.vendorId);
           if (vendor) {
             vendorName = vendor.name;
             vendorId = vendor.id;
           }
-        } else if (user?.name) {
-          vendorName = user.name;
+        } else if (session.userName) {
+          vendorName = session.userName;
         }
-      } else if (validatedData.authEmail) {
-        // Fallback: verify by email (for production where sessions may not work)
-        const vendor = await storage.getVendorByEmail(validatedData.authEmail);
+      } else if (validatedData.authToken) {
+        // Fallback: verify signed token (for production where sessions may not work)
+        const tokenResult = verifyAuthToken(validatedData.authToken);
+        if (!tokenResult.valid) {
+          return res.status(401).json({ error: "Token inválido ou expirado" });
+        }
+        
+        const authenticatedEmail = tokenResult.email.toLowerCase();
+        
+        // Check if it's a vendor
+        const vendor = await storage.getVendorByEmail(authenticatedEmail);
         if (vendor && vendor.isActive) {
           vendorName = vendor.name;
           vendorId = vendor.id;
+          isAuthenticated = true;
         } else {
           // Check if it's an admin email
-          const ADMIN_EMAILS = ["marcelo@marcelomurilo.com.br", "hamilton@opes.com.br"];
-          if (!ADMIN_EMAILS.includes(validatedData.authEmail)) {
-            return res.status(401).json({ error: "Não autorizado" });
+          const ADMIN_EMAILS = ["contato@marcelomurilo.com.br", "marcelo@marcelomurilo.com.br", "hamilton@opes.com.br"];
+          if (ADMIN_EMAILS.includes(authenticatedEmail)) {
+            vendorName = 'Admin';
+            isAuthenticated = true;
           }
-          vendorName = 'Admin';
         }
-      } else {
+      }
+      
+      if (!isAuthenticated) {
         return res.status(401).json({ error: "Não autenticado" });
       }
       

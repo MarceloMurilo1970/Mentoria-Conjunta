@@ -1675,6 +1675,16 @@ Qualquer dúvida, estamos à disposição!`;
                           ? `PIX R$ ${batchConfig.pixPrice.toLocaleString('pt-BR')}` 
                           : `5x R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR')}`}
                       </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyPaymentInstructions(reg)}
+                        data-testid={`button-copy-payment-${index}`}
+                        className="text-blue-400 border-blue-500 hover:bg-blue-900/20"
+                      >
+                        <Copy className="w-3 h-3 mr-1" />
+                        Link de pagto
+                      </Button>
                       {reg.paymentMethod === 'pix' ? (
                         <Button
                           variant="outline"
@@ -1716,16 +1726,6 @@ Qualquer dúvida, estamos à disposição!`;
                           )}
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => copyPaymentInstructions(reg)}
-                        data-testid={`button-copy-payment-${index}`}
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                        title="Copiar instruções de pagamento"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

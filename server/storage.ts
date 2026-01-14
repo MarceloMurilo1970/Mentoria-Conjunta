@@ -301,6 +301,24 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
+  async findLeadByPhone(phone: string): Promise<Lead | undefined> {
+    // Normalize phone number - remove all non-digits
+    const normalizedPhone = phone.replace(/\D/g, '');
+    if (normalizedPhone.length < 8) return undefined;
+    
+    // Get all leads and match by normalized phone
+    const allLeads = await db.select().from(leads);
+    return allLeads.find(lead => {
+      if (!lead.phone) return false;
+      const leadPhone = lead.phone.replace(/\D/g, '');
+      // Match last 8-9 digits to handle different formats
+      const phoneToMatch = normalizedPhone.slice(-9);
+      const leadPhoneToMatch = leadPhone.slice(-9);
+      return phoneToMatch === leadPhoneToMatch || 
+             normalizedPhone.slice(-8) === leadPhone.slice(-8);
+    });
+  }
+
   async createLead(lead: InsertLead): Promise<Lead> {
     const result = await db.insert(leads).values(lead).returning();
     return result[0];

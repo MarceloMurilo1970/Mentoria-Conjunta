@@ -410,6 +410,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const registration = await storage.createRegistration(validatedData);
 
+      // Try to find and convert matching lead by phone
+      try {
+        const matchingLead = await storage.findLeadByPhone(validatedData.phone);
+        if (matchingLead && matchingLead.status !== 'convertido') {
+          await storage.convertLead(matchingLead.id, registration.id);
+          console.log(`Lead ${matchingLead.name} (${matchingLead.id}) marked as converted for registration ${registration.id}`);
+        }
+      } catch (leadError) {
+        console.error("Error matching lead:", leadError);
+        // Don't fail registration if lead matching fails
+      }
+
       try {
         await sendRegistrationEmail(
           registration.email,
@@ -605,6 +617,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.convertLead(validatedData.leadId, registration.id);
         } catch (leadError) {
           console.error("Error updating lead:", leadError);
+        }
+      } else {
+        // Try to find matching lead by phone if not explicitly linked
+        try {
+          const matchingLead = await storage.findLeadByPhone(validatedData.phone);
+          if (matchingLead && matchingLead.status !== 'convertido') {
+            await storage.convertLead(matchingLead.id, registration.id);
+            console.log(`Lead ${matchingLead.name} (${matchingLead.id}) marked as converted for manual registration ${registration.id}`);
+          }
+        } catch (leadError) {
+          console.error("Error matching lead by phone:", leadError);
         }
       }
       
@@ -1480,6 +1503,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error regenerating lead profiles:", error);
       res.status(500).json({ error: "Erro ao regenerar perfis: " + (error as Error).message });
+    }
+  });
+
+  // Sync existing registrations with leads (mark matching leads as converted)
+  app.post("/api/crm/leads/sync-registrations", requireAdmin, async (req, res) => {
+    try {
+      const allRegistrations = await storage.getAllRegistrations();
+      const allLeads = await storage.getAllLeads();
+      let converted = 0;
+      let alreadyConverted = 0;
+      let notFound = 0;
+
+      for (const registration of allRegistrations) {
+        // Skip if we don't have a phone number
+        if (!registration.phone) {
+          notFound++;
+          continue;
+        }
+        
+        // Find matching lead by phone
+        const matchingLead = await storage.findLeadByPhone(registration.phone);
+        
+        if (matchingLead) {
+          if (matchingLead.status === 'convertido') {
+            alreadyConverted++;
+          } else {
+            await storage.convertLead(matchingLead.id, registration.id);
+            converted++;
+            console.log(`Synced: Lead ${matchingLead.name} marked as converted for registration ${registration.name}`);
+          }
+        } else {
+          notFound++;
+        }
+      }
+
+      res.json({
+        success: true,
+        converted,
+        alreadyConverted,
+        notFound,
+        totalRegistrations: allRegistrations.length,
+        totalLeads: allLeads.length
+      });
+    } catch (error) {
+      console.error("Error syncing registrations with leads:", error);
+      res.status(500).json({ error: "Erro ao sincronizar: " + (error as Error).message });
     }
   });
 

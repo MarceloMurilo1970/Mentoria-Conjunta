@@ -2482,6 +2482,30 @@ function CRMSection() {
     },
   });
 
+  const syncRegistrationsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/crm/leads/sync-registrations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': currentVendorEmail || '',
+        },
+      });
+      if (!res.ok) throw new Error('Erro ao sincronizar');
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      toast({ 
+        title: 'Sincronização concluída', 
+        description: `${data.converted} leads marcados como convertidos, ${data.alreadyConverted} já estavam convertidos` 
+      });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro ao sincronizar', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const regenerateMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch('/api/crm/leads/regenerate', {
@@ -2515,8 +2539,19 @@ function CRMSection() {
   });
 
   const updateVendorMutation = useMutation({
-    mutationFn: (data: { id: string; name?: string; email?: string; isActive?: boolean; hasCommission?: boolean }) => 
-      apiRequest('PATCH', `/api/crm/vendors/${data.id}`, data),
+    mutationFn: async (data: { id: string; name?: string; email?: string; isActive?: boolean; hasCommission?: boolean }) => {
+      const res = await fetch(`/api/crm/vendors/${data.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': currentVendorEmail || '',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Erro ao atualizar vendedor');
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/crm/vendors'] });
       toast({ title: 'Vendedor atualizado' });
@@ -2527,7 +2562,17 @@ function CRMSection() {
   });
 
   const deleteVendorMutation = useMutation({
-    mutationFn: (id: string) => apiRequest('DELETE', `/api/crm/vendors/${id}`),
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/crm/vendors/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin-email': currentVendorEmail || '',
+        },
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Erro ao excluir vendedor');
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/crm/vendors'] });
       toast({ title: 'Vendedor excluído' });
@@ -2860,6 +2905,10 @@ function CRMSection() {
               <Button variant="secondary" onClick={() => regenerateMutation.mutate()} disabled={regenerateMutation.isPending} data-testid="button-regenerate-leads">
                 {regenerateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                 Regenerar Perfis
+              </Button>
+              <Button variant="secondary" onClick={() => syncRegistrationsMutation.mutate()} disabled={syncRegistrationsMutation.isPending} data-testid="button-sync-registrations">
+                {syncRegistrationsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                Sincronizar Convertidos
               </Button>
               <Button variant="outline" onClick={() => setVendorModalOpen(true)} data-testid="button-add-vendor">
                 <UserPlus className="w-4 h-4 mr-2" />

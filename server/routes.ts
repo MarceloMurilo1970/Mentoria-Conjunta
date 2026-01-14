@@ -865,6 +865,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Batch pricing configuration
+  const BATCH_CONFIG = [
+    { batch: 1, pixPrice: 8000, installmentPrice: 1775, installments: 5, installmentTotal: 8875, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00" },
+    { batch: 2, pixPrice: 8700, installmentPrice: 1930, installments: 5, installmentTotal: 9650, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00" },
+    { batch: 3, pixPrice: 9400, installmentPrice: 2085, installments: 5, installmentTotal: 10425, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00" },
+  ];
+
   // Generate contract PDF for a registration (authenticated users - admin or vendor)
   app.get("/api/registrations/:id/contract-pdf", requireAuth, async (req, res) => {
     try {
@@ -876,6 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const isPix = registration.paymentMethod === 'pix';
+      const batchConfig = BATCH_CONFIG.find(b => b.batch === (registration.batch || 1)) || BATCH_CONFIG[0];
       
       // Create PDF document
       const doc = new PDFDocument({
@@ -960,16 +968,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       doc.text('Marque com um "X" uma das opções abaixo:');
       doc.moveDown(0.5);
       
-      // Plan options with checkbox
+      // Plan options with checkbox - using dynamic values from batch
       const pixChecked = isPix ? '[X]' : '[  ]';
       const cardChecked = !isPix ? '[X]' : '[  ]';
       
-      doc.font('Helvetica-Bold').text(`${pixChecked} Plano P1 - Mentoria Conjunta à Vista`);
-      doc.font('Helvetica').text('R$ 9.400,00 (pagamento único via PIX) – 12 Sessões remotas em grupo de uma hora, semanais.');
+      // Format currency helper
+      const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const formatCurrencyWord = (value: number) => {
+        const words: Record<number, string> = {
+          8000: 'oito mil reais',
+          8700: 'oito mil e setecentos reais',
+          8875: 'oito mil oitocentos e setenta e cinco reais',
+          9400: 'nove mil e quatrocentos reais',
+          9650: 'nove mil seiscentos e cinquenta reais',
+          10425: 'dez mil quatrocentos e vinte e cinco reais',
+          1775: 'mil setecentos e setenta e cinco reais',
+          1930: 'mil novecentos e trinta reais',
+          2085: 'dois mil e oitenta e cinco reais',
+        };
+        return words[value] || `${formatCurrency(value)} reais`;
+      };
+      
+      doc.font('Helvetica-Bold').text(`${pixChecked} Plano P1 - Mentoria Conjunta à Vista (Lote ${batchConfig.batch})`);
+      doc.font('Helvetica').text(`R$ ${formatCurrency(batchConfig.pixPrice)} (pagamento único via PIX) – 12 Sessões remotas em grupo de uma hora, semanais.`);
       doc.moveDown(0.5);
       
-      doc.font('Helvetica-Bold').text(`${cardChecked} Plano P2 - Mentoria Conjunta Parcelada`);
-      doc.font('Helvetica').text('5x R$ 2.085,00 sem juros (Total: R$ 10.425,00) - 12 Sessões remotas em grupo de uma hora, semanais.');
+      doc.font('Helvetica-Bold').text(`${cardChecked} Plano P2 - Mentoria Conjunta Parcelada (Lote ${batchConfig.batch})`);
+      doc.font('Helvetica').text(`${batchConfig.installments}x R$ ${formatCurrency(batchConfig.installmentPrice)} sem juros (Total: R$ ${formatCurrency(batchConfig.installmentTotal)}) - 12 Sessões remotas em grupo de uma hora, semanais.`);
       
       doc.moveDown(0.8);
       
@@ -1031,10 +1056,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // ==================== CLÁUSULA TERCEIRA ====================
       checkPageBreak();
       addSectionTitle('CLÁUSULA TERCEIRA – DO VALOR E CONDIÇÕES DE PAGAMENTO');
-      addParagraph('O valor da mentoria corresponde ao plano escolhido na capa deste contrato, sendo o pagamento realizado no ato da assinatura, da seguinte forma:');
-      doc.moveDown(0.3);
-      addParagraph('• À vista, via PIX, no valor de R$ 9.400,00 (nove mil e quatrocentos reais), utilizando como chave o CNPJ da OPES INFORMATICA LTDA: 17.840.516/0001-47.', true);
-      addParagraph('• Parcelado em 5x sem juros de R$ 2.085,00 (dois mil e oitenta e cinco reais), totalizando R$ 10.425,00 (dez mil quatrocentos e vinte e cinco reais), mediante cartão de crédito, através do link de pagamento enviado juntamente com este contrato.', true);
+      
+      // Dynamic values clause based on registration batch and payment method
+      if (isPix) {
+        addParagraph(`O(A) MENTORADO(A) optou pelo pagamento à vista, via PIX, no valor de R$ ${formatCurrency(batchConfig.pixPrice)} (${formatCurrencyWord(batchConfig.pixPrice)}), utilizando como chave o CNPJ da OPES INFORMATICA LTDA: 17.840.516/0001-47.`);
+      } else {
+        addParagraph(`O(A) MENTORADO(A) optou pelo pagamento parcelado em ${batchConfig.installments}x sem juros de R$ ${formatCurrency(batchConfig.installmentPrice)} (${formatCurrencyWord(batchConfig.installmentPrice)}), totalizando R$ ${formatCurrency(batchConfig.installmentTotal)} (${formatCurrencyWord(batchConfig.installmentTotal)}), mediante cartão de crédito, através do link de pagamento: ${batchConfig.paymentLink}`);
+      }
       doc.moveDown(0.3);
       addParagraph('Este contrato somente terá validade mediante assinatura e comprovação do pagamento integral, seja à vista ou parcelado no cartão de crédito.');
       doc.moveDown(0.3);

@@ -1252,14 +1252,19 @@ Qualquer dúvida, estamos à disposição!`;
   const pixCount = registrations?.filter(r => r.paymentMethod === 'pix').length || 0;
   const installmentsCount = totalCount - pixCount;
   
-  // Calculate total commissions
+  // Get list of vendors with commission enabled for filtering
+  const vendorsWithCommission = vendors.filter(v => v.hasCommission !== false).map(v => v.name);
+  
+  // Calculate total commissions (only count vendor commissions for vendors with hasCommission=true)
   const totalCommissions = (registrations || []).reduce((acc, reg) => {
     const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
     const comms = calculateCommissions(reg, batchConfig);
+    // Only add vendor commission if vendor has commission enabled
+    const vendorHasCommission = reg.vendor && vendorsWithCommission.includes(reg.vendor);
     return {
       mm: acc.mm + comms.mmComm,
       hf: acc.hf + comms.hfComm,
-      vendor: acc.vendor + comms.vendorComm,
+      vendor: acc.vendor + (vendorHasCommission ? comms.vendorComm : 0),
       gross: acc.gross + comms.gross,
       net: acc.net + comms.netAfterTax
     };
@@ -1402,7 +1407,10 @@ Qualquer dúvida, estamos à disposição!`;
           <CollapsibleContent>
             <CardContent>
               {(() => {
-                const vendorStats = registrations?.filter(r => r.vendor).reduce((acc, reg) => {
+                // Get list of vendors with commission enabled
+                const vendorsWithCommission = vendors.filter(v => v.hasCommission !== false).map(v => v.name);
+                
+                const vendorStats = registrations?.filter(r => r.vendor && vendorsWithCommission.includes(r.vendor)).reduce((acc, reg) => {
                   const vendor = reg.vendor!;
                   if (!acc[vendor]) {
                     acc[vendor] = { 

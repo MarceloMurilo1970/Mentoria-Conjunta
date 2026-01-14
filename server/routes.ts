@@ -852,21 +852,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
       
-      // Batch pricing configuration
-      const BATCH_CONFIG = [
-        { batch: 1, pixPrice: 9000, installmentTotal: 9900, deadline: '31/12/2025' },
-        { batch: 2, pixPrice: 10800, installmentTotal: 11880, deadline: '12/01/2026' },
-        { batch: 3, pixPrice: 13500, installmentTotal: 14850, deadline: '25/01/2026' },
-      ];
-      
-      const batchConfig = BATCH_CONFIG.find(b => b.batch === (registration.batch || 1)) || BATCH_CONFIG[0];
       const isPix = registration.paymentMethod === 'pix';
-      const totalValue = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
       
       // Create PDF document
       const doc = new PDFDocument({
         size: 'A4',
-        margins: { top: 50, bottom: 50, left: 50, right: 50 }
+        margins: { top: 40, bottom: 40, left: 50, right: 50 }
       });
       
       // Set response headers for PDF download
@@ -877,83 +868,277 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Pipe PDF to response
       doc.pipe(res);
       
-      // Header
-      doc.fontSize(16).font('Helvetica-Bold')
-         .text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS', { align: 'center' });
-      doc.moveDown();
-      doc.fontSize(12).font('Helvetica-Bold')
-         .text('PROGRAMA DE MENTORIA MARCELO MURILO & HAMILTON FELIX', { align: 'center' });
-      doc.fontSize(10).font('Helvetica')
-         .text('TURMA 2 - JANEIRO A MARÇO 2026', { align: 'center' });
+      // Helper function to add section title
+      const addSectionTitle = (title: string) => {
+        doc.font('Helvetica-Bold').fontSize(11).text(title);
+        doc.moveDown(0.3);
+      };
       
-      doc.moveDown(2);
+      // Helper function to add paragraph
+      const addParagraph = (text: string, indent = false) => {
+        doc.font('Helvetica').fontSize(9);
+        if (indent) {
+          doc.text(text, { indent: 20 });
+        } else {
+          doc.text(text);
+        }
+      };
       
-      // Contract parties
-      doc.fontSize(11).font('Helvetica-Bold').text('DAS PARTES:');
+      // Helper to check page break
+      const checkPageBreak = (neededSpace = 100) => {
+        if (doc.y > 700) {
+          doc.addPage();
+        }
+      };
+      
+      // ==================== PAGE 1 - HEADER AND QUALIFICATION ====================
+      
+      // Header - Program title
+      doc.fontSize(14).font('Helvetica-Bold')
+         .text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE MENTORIA CONJUNTA', { align: 'center' });
       doc.moveDown(0.5);
-      doc.fontSize(10).font('Helvetica');
+      doc.fontSize(11).font('Helvetica')
+         .text('Marcelo Murilo & Hamilton Felix', { align: 'center' });
       
-      doc.text('CONTRATANTE:', { continued: true }).font('Helvetica-Bold')
-         .text(` ${registration.name}`);
-      doc.font('Helvetica').text(`CPF/CNPJ: ${registration.cpfCnpj}`);
+      doc.moveDown(1.5);
+      
+      // QUALIFICAÇÃO DAS PARTES
+      addSectionTitle('QUALIFICAÇÃO DAS PARTES');
+      doc.moveDown(0.5);
+      
+      // MENTORADO(A)
+      doc.font('Helvetica-Bold').fontSize(10).text('MENTORADO(A):');
+      doc.moveDown(0.3);
+      doc.font('Helvetica').fontSize(9);
+      doc.text(`Nome Completo: ${registration.name}`);
+      doc.text(`CPF: ${registration.cpfCnpj}                    E-mail: ${registration.email}                    Telefone: ${registration.phone}`);
       if (registration.razaoSocial) {
         doc.text(`Razão Social: ${registration.razaoSocial}`);
       }
-      doc.text(`E-mail: ${registration.email}`);
-      doc.text(`Telefone: ${registration.phone}`);
       
-      doc.moveDown();
+      doc.moveDown(1);
       
-      doc.text('CONTRATADOS:', { continued: true }).font('Helvetica-Bold')
-         .text(' MARCELO MURILO e HAMILTON FELIX');
-      doc.font('Helvetica').text('Mentores especialistas em Governança Corporativa e Conselhos de Administração');
+      // MENTORES
+      doc.font('Helvetica-Bold').fontSize(10).text('MENTORES:');
+      doc.moveDown(0.3);
+      doc.font('Helvetica').fontSize(9);
+      doc.text('OPES INFORMATICA LTDA, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 17.840.516/0001-47, com sede na Rua Afonso Pena nº 384, Florianópolis, Santa Catarina/SC, CEP 88.070.650, neste ato representada por seu Administrador nos termos do Contrato Social, MARCELO MURILO SILVA, portador do RG nº 1.663.196-0 e do CPF/MF 753.118.289-00, residente e domiciliado na Alameda Cambará 829, Santana de Parnaíba, São Paulo/SP, CEP 06539-040, e-mail: contato@marcelomurilo.com.br, Conselheiro de Administração certificado pelo IBGC, especialista em governança corporativa e conselhos empresariais, com mais de 30 anos de experiência como diretor e executivo em multinacionais dos setores de tecnologia, seguros e financeiro, doravante designado MENTOR.');
       
-      doc.moveDown(2);
-      
-      // Object
-      doc.fontSize(11).font('Helvetica-Bold').text('DO OBJETO:');
       doc.moveDown(0.5);
-      doc.fontSize(10).font('Helvetica');
-      doc.text('O presente instrumento tem por objeto a prestação de serviços de mentoria empresarial para desenvolvimento de competências para atuação em Conselhos de Administração, denominado "Programa de Mentoria para Conselheiros - Turma 2".');
       
-      doc.moveDown();
-      doc.text('O programa inclui:');
-      doc.text('• 8 sessões ao vivo com Marcelo Murilo (módulo teórico-estratégico)');
-      doc.text('• 4 sessões ao vivo com Hamilton Felix (módulo prático de prospecção)');
-      doc.text('• Materiais de apoio e templates exclusivos');
-      doc.text('• Acesso à comunidade de mentorados');
-      doc.text('• Gravações das sessões para revisão');
+      doc.text('HAMILTON FERREIRA FELIX, brasileiro, empresário, casado, portador do RG nº 10024242-9 e do CPF/MF 047.886.747-69, residente e domiciliado na SHIN QL12 Quadra 4 Casa 2, Lago Norte, Brasília/DF, CEP 73.252-245, CEO, Conselheiro, Investidor e Mentor, especialista em governança corporativa, crescimento e longevidade empresarial, com mais de 30 anos de experiência em desenvolvimento de negócios e vendas em TI e Consultoria na América Latina, doravante designado COMENTOR.');
       
-      doc.moveDown(2);
+      doc.moveDown(1.5);
       
-      // Value and payment
-      doc.fontSize(11).font('Helvetica-Bold').text('DO VALOR E FORMA DE PAGAMENTO:');
+      // ESCOLHA DO PLANO DE MENTORIA
+      addSectionTitle('ESCOLHA DO PLANO DE MENTORIA');
+      doc.moveDown(0.3);
+      doc.font('Helvetica').fontSize(9);
+      doc.text('Marque com um "X" uma das opções abaixo:');
       doc.moveDown(0.5);
-      doc.fontSize(10).font('Helvetica');
       
-      doc.text(`Lote: ${registration.batch || 1}`);
-      doc.text(`Forma de Pagamento: ${isPix ? 'PIX (à vista)' : 'Cartão de Crédito (parcelado)'}`);
-      doc.font('Helvetica-Bold').text(`Valor Total: R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-      doc.font('Helvetica');
+      // Plan options with checkbox
+      const pixChecked = isPix ? '[X]' : '[  ]';
+      const cardChecked = !isPix ? '[X]' : '[  ]';
       
-      if (!isPix) {
-        doc.text(`Parcelamento: até 12x de R$ ${(totalValue / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-      }
-      
-      doc.moveDown(2);
-      
-      // Period
-      doc.fontSize(11).font('Helvetica-Bold').text('DO PERÍODO:');
+      doc.font('Helvetica-Bold').text(`${pixChecked} Plano P1 - Mentoria Conjunta à Vista`);
+      doc.font('Helvetica').text('R$ 9.400,00 (pagamento único via PIX) – 12 Sessões remotas em grupo de uma hora, semanais.');
       doc.moveDown(0.5);
-      doc.fontSize(10).font('Helvetica');
-      doc.text('O programa terá início em Janeiro de 2026 e término previsto para Março de 2026, com duração aproximada de 3 meses.');
       
-      doc.moveDown(2);
+      doc.font('Helvetica-Bold').text(`${cardChecked} Plano P2 - Mentoria Conjunta Parcelada`);
+      doc.font('Helvetica').text('5x R$ 2.085,00 sem juros (Total: R$ 10.425,00) - 12 Sessões remotas em grupo de uma hora, semanais.');
       
-      // Signatures
-      doc.fontSize(11).font('Helvetica-Bold').text('DA ASSINATURA:');
+      doc.moveDown(0.8);
+      
+      doc.font('Helvetica-Bold').text('Turma de Mentoria:');
+      doc.font('Helvetica').text('TURMA 2 – Fevereiro a Abril de 2026, as segundas feiras das 19h às 21h.');
+      
+      doc.moveDown(1);
+      
+      doc.font('Helvetica').fontSize(9).text('As partes acima qualificadas firmam o presente CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE MENTORIA CONJUNTA, mediante as seguintes cláusulas e condições:');
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA PRIMEIRA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA PRIMEIRA – DO OBJETO');
+      addParagraph('O presente contrato tem por objeto a prestação de serviços de mentoria conjunta para transição da carreira executiva para a de conselheiro e criação de novos conselhos pelos MENTORES ao MENTORADO(A), conforme o plano escolhido acima, visando o desenvolvimento de competências, habilidades de liderança e conhecimentos necessários.');
+      doc.moveDown(0.3);
+      addParagraph('Parágrafo Primeiro – A mentoria será ministrada pelos MENTORES Marcelo Murilo Silva e Hamilton Felix, especialistas em governança corporativa e desenvolvimento de conselhos.');
+      doc.moveDown(0.3);
+      addParagraph('Parágrafo Segundo – O programa é composto por dois módulos:');
+      addParagraph('Módulo 1 - Transição para Conselhos (8 horas): Conduzido por Marcelo Murilo, abordando definição de nicho, perfil de conselheiro, criação de conteúdo, networking estratégico, vendas e aspectos práticos dos conselhos.', true);
+      addParagraph('Módulo 2 - Criando Novos Conselhos (4 horas): Conduzido por Hamilton Felix, abordando prospecção de empresas, fechamento de projetos, implementação e evolução de conselhos.', true);
+      doc.moveDown(0.3);
+      addParagraph('Parágrafo Terceiro – IMPORTANTE: Os MENTORES esclarecem que a mentoria tem caráter educativo e de desenvolvimento profissional, NÃO HAVENDO QUALQUER GARANTIA de que o MENTORADO(A) conseguirá ingressar ou ser indicado para conselhos, uma vez que tais indicações dependem de fatores externos, networking, oportunidades de mercado e decisões de terceiros.');
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA SEGUNDA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA SEGUNDA – DA MODALIDADE E CRONOGRAMA');
+      addParagraph('A Mentoria Conjunta da Turma 2 será realizada conforme o seguinte cronograma:');
       doc.moveDown(0.5);
-      doc.fontSize(10).font('Helvetica');
+      
+      doc.font('Helvetica-Bold').fontSize(9).text('MÓDULO 1 - TRANSIÇÃO PARA CONSELHOS (Marcelo Murilo):');
+      doc.font('Helvetica').fontSize(8);
+      doc.text('Sessão 1 - 23/02/2026 (19h-20h): Definindo seu nicho e propósito');
+      doc.text('Sessão 2 - 02/03/2026 (19h-20h): Perfil de conselheiro que vende');
+      doc.text('Sessão 3 - 09/03/2026 (19h-20h): Posts que geram oportunidades');
+      doc.text('Sessão 4 - 16/03/2026 (19h-20h): Interações que multiplicam alcance');
+      doc.text('Sessão 5 - 23/03/2026 (19h-20h): Conectando com quem importa');
+      doc.text('Sessão 6 - 30/03/2026 (19h-20h): Vendas e eventos estratégicos');
+      doc.text('Sessão 7 - 06/04/2026 (19h-20h): Aspectos práticos dos conselhos');
+      doc.text('Sessão 8 - 13/04/2026 (19h-20h): Integração e planejamento futuros');
+      
+      doc.moveDown(0.5);
+      doc.font('Helvetica-Bold').fontSize(9).text('MÓDULO 2 - CRIANDO NOVOS CONSELHOS (Hamilton Felix):');
+      doc.font('Helvetica').fontSize(8);
+      doc.text('Sessão 9 - 06/04/2026 (19h-20h): Prospecção de empresas');
+      doc.text('Sessão 10 - 06/04/2026 (20h-21h): Fechamento de Projetos');
+      doc.text('Sessão 11 - 13/04/2026 (19h-20h): Implementando o Conselho');
+      doc.text('Sessão 12 - 13/04/2026 (20h-21h): Evoluindo o Conselho');
+      
+      doc.moveDown(0.3);
+      doc.font('Helvetica').fontSize(9);
+      addParagraph('Parágrafo Único – O tempo de tolerância para início das sessões é de no máximo 10 (dez) minutos. Caso o MENTORADO(A) não compareça neste prazo, a sessão será considerada realizada e não haverá reposição.');
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA TERCEIRA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA TERCEIRA – DO VALOR E CONDIÇÕES DE PAGAMENTO');
+      addParagraph('O valor da mentoria corresponde ao plano escolhido na capa deste contrato, sendo o pagamento realizado no ato da assinatura, da seguinte forma:');
+      doc.moveDown(0.3);
+      addParagraph('• À vista, via PIX, no valor de R$ 9.400,00 (nove mil e quatrocentos reais), utilizando como chave o CNPJ da OPES INFORMATICA LTDA: 17.840.516/0001-47.', true);
+      addParagraph('• Parcelado em 5x sem juros de R$ 2.085,00 (dois mil e oitenta e cinco reais), totalizando R$ 10.425,00 (dez mil quatrocentos e vinte e cinco reais), mediante cartão de crédito, através do link de pagamento enviado juntamente com este contrato.', true);
+      doc.moveDown(0.3);
+      addParagraph('Este contrato somente terá validade mediante assinatura e comprovação do pagamento integral, seja à vista ou parcelado no cartão de crédito.');
+      doc.moveDown(0.3);
+      addParagraph('Parágrafo Primeiro – A Nota Fiscal será emitida e enviada ao(à) MENTORADO(A) em até 5 (cinco) dias úteis, no e-mail cadastrado, no valor integral da mentoria.');
+      addParagraph('Parágrafo Segundo – Em caso de pagamento à vista via PIX não realizado no ato da assinatura, o contrato não terá validade e não haverá reserva de vaga na mentoria.');
+      addParagraph('Parágrafo Terceiro – Em caso de parcelamento via cartão de crédito:');
+      addParagraph('• O não processamento de qualquer parcela pela operadora do cartão implicará em imediata suspensão da participação do(a) MENTORADO(A) até a regularização.', true);
+      addParagraph('• Se a inadimplência superar 15 (quinze) dias, o contrato será rescindido de pleno direito, sendo devido o valor proporcional às sessões realizadas, acrescido de multa de 2% (dois por cento), juros de mora de 1% (um por cento) ao mês e correção monetária pelo IPCA.', true);
+      addParagraph('• Caso todas as sessões já tenham sido realizadas, o valor integral será exigível, acrescido de multas, juros, correção monetária, custos de cobrança e honorários advocatícios, se for o caso.', true);
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA QUARTA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA QUARTA – DOS DIREITOS E DEVERES DOS MENTORES');
+      addParagraph('São deveres dos MENTORES:');
+      addParagraph('• Conduzir as sessões com excelência técnica e ética profissional', true);
+      addParagraph('• Manter sigilo absoluto sobre todas as informações compartilhadas', true);
+      addParagraph('• Fornecer conteúdo atualizado sobre governança corporativa e conselhos', true);
+      addParagraph('• Compartilhar conhecimentos e experiências sobre o mercado de conselhos', true);
+      addParagraph('• Respeitar os horários agendados e cronograma estabelecido', true);
+      addParagraph('• Disponibilizar materiais de apoio quando necessário', true);
+      doc.moveDown(0.3);
+      addParagraph('São direitos dos MENTORES:');
+      addParagraph('• Receber pontualmente os valores acordados', true);
+      addParagraph('• Ter suas metodologias e propriedade intelectual respeitadas', true);
+      addParagraph('• Interromper o processo em caso de comportamento inadequado do MENTORADO(A)', true);
+      addParagraph('• Adaptar o conteúdo conforme necessidades identificadas', true);
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA QUINTA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA QUINTA – DOS DEVERES DO MENTORADO(A)');
+      addParagraph('São deveres do MENTORADO(A):');
+      addParagraph('• Comparecer pontualmente às sessões agendadas', true);
+      addParagraph('• Participar ativamente do processo de mentoria', true);
+      addParagraph('• Implementar as orientações e exercícios propostos', true);
+      addParagraph('• Manter sigilo sobre metodologias e materiais fornecidos', true);
+      addParagraph('• Efetuar os pagamentos nas datas acordadas', true);
+      addParagraph('• Tratar os MENTORES e demais participantes com respeito', true);
+      addParagraph('• Fornecer informações verdadeiras sobre sua situação profissional', true);
+      addParagraph('• Estar disposto(a) a mudanças e desenvolvimento pessoal', true);
+      addParagraph('• Compreender que a mentoria é um processo de desenvolvimento sem garantias de resultados externos', true);
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA SEXTA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA SEXTA – DA CONFIDENCIALIDADE E PROPRIEDADE INTELECTUAL');
+      addParagraph('Parágrafo Primeiro – Ambas as partes se comprometem a manter absoluto sigilo sobre todas as informações trocadas durante o processo de mentoria, incluindo dados pessoais, profissionais, estratégias empresariais e metodologias aplicadas.');
+      addParagraph('Parágrafo Segundo – É vedada a gravação, reprodução ou divulgação do conteúdo das sessões sem autorização expressa por escrito dos MENTORES.');
+      addParagraph('Parágrafo Terceiro – Todos os materiais, metodologias, frameworks e ferramentas utilizados pelos MENTORES são de sua propriedade intelectual exclusiva, sendo vedada sua reprodução, adaptação ou comercialização pelo MENTORADO(A).');
+      addParagraph('Parágrafo Quarto – O descumprimento desta cláusula implica em multa de R$ 50.000,00 (cinquenta mil reais), sem prejuízo das demais sanções legais.');
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA SÉTIMA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA SÉTIMA – DAS LIMITAÇÕES E RESPONSABILIDADES');
+      addParagraph('Parágrafo Primeiro – Os MENTORES fornecem conhecimentos, orientações e metodologias sobre o processo de transição da carreira executiva para a de conselheiro e criação de novos conselhos, mas NÃO GARANTEM que o MENTORADO(A) conseguirá ingressar em conselhos empresariais, uma vez que isso depende de fatores como oportunidades de mercado, networking, indicações de terceiros e decisões independentes de empresas e organizações.');
+      addParagraph('Parágrafo Segundo – Os MENTORES não se responsabilizam por decisões tomadas pelo MENTORADO(A) antes, durante ou após o processo de mentoria, nem por resultados obtidos em processos seletivos ou indicações para conselhos.');
+      addParagraph('Parágrafo Terceiro – A mentoria não substitui formação acadêmica específica, certificações exigidas por órgãos reguladores ou experiência prática necessária para atuação em conselhos.');
+      addParagraph('Parágrafo Quarto – O MENTORADO(A) declara estar em pleno gozo de suas faculdades mentais e assume total responsabilidade por suas decisões e ações decorrentes da mentoria.');
+      addParagraph('Parágrafo Quinto – O sucesso do processo depende fundamentalmente do comprometimento, aplicação e networking do próprio MENTORADO(A).');
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA OITAVA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA OITAVA – DA RESCISÃO');
+      addParagraph('Parágrafo Primeiro – O contrato poderá ser rescindido:');
+      addParagraph('• Por mútuo acordo entre as partes', true);
+      addParagraph('• Por inadimplência do MENTORADO(A) superior a 30 dias', true);
+      addParagraph('• Por comportamento inadequado ou desrespeitoso de qualquer das partes', true);
+      addParagraph('• Por impossibilidade de continuidade do MENTORADO(A)', true);
+      doc.moveDown(0.3);
+      addParagraph('Parágrafo Segundo – Em caso de rescisão por iniciativa do MENTORADO(A), será devida multa correspondente a 50% do valor das sessões não realizadas.');
+      addParagraph('Parágrafo Terceiro – Não haverá cobrança de multa rescisória se comprovado descumprimento contratual pelos MENTORES.');
+      addParagraph('Parágrafo Quarto – A rescisão não exime o MENTORADO(A) do pagamento das sessões já realizadas e valores em atraso.');
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA NONA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA NONA – DA REMARCAÇÃO E CANCELAMENTO');
+      addParagraph('Parágrafo Primeiro – Por se tratar de mentoria coletiva com cronograma fixo, não há possibilidade de remarcação individual de sessões.');
+      addParagraph('Parágrafo Segundo – As sessões não assistidas pelo MENTORADO(A) serão consideradas realizadas, sem direito a reposição ou reembolso.');
+      addParagraph('Parágrafo Terceiro – Os MENTORES poderão remarcar sessão em caso de força maior, comunicando com a maior antecedência possível e garantindo a reposição em data alternativa.');
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA DÉCIMA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA DÉCIMA – DO CÓDIGO DE ÉTICA');
+      addParagraph('O processo de mentoria será conduzido observando-se os mais altos padrões éticos, incluindo:');
+      addParagraph('• Respeito mútuo e profissionalismo', true);
+      addParagraph('• Confidencialidade absoluta', true);
+      addParagraph('• Foco no desenvolvimento do MENTORADO(A) para conselhos', true);
+      addParagraph('• Transparência nas orientações e feedback', true);
+      addParagraph('• Compromisso com a excelência dos serviços', true);
+      addParagraph('• Clareza sobre limitações e ausência de garantias de colocação', true);
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA DÉCIMA PRIMEIRA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA DÉCIMA PRIMEIRA – DO FORO');
+      addParagraph('As partes elegem o Foro da Comarca de São Paulo/SP para dirimir quaisquer questões decorrentes deste contrato, renunciando a qualquer outro, por mais privilegiado que seja.');
+      
+      doc.moveDown(1);
+      
+      // ==================== CLÁUSULA DÉCIMA SEGUNDA ====================
+      checkPageBreak();
+      addSectionTitle('CLÁUSULA DÉCIMA SEGUNDA – DAS DISPOSIÇÕES GERAIS');
+      addParagraph('Parágrafo Primeiro – Este contrato constitui o acordo integral entre as partes, revogando qualquer ajuste anterior.');
+      addParagraph('Parágrafo Segundo – Alterações somente serão válidas se feitas por escrito e assinadas por ambas as partes.');
+      addParagraph('Parágrafo Terceiro – A tolerância com eventual descumprimento não constituirá novação ou renúncia aos direitos.');
+      addParagraph('Parágrafo Quarto – Se qualquer cláusula for considerada inválida, as demais permanecerão em vigor.');
+      
+      doc.moveDown(1.5);
+      
+      // ==================== SIGNATURES ====================
+      checkPageBreak(180);
+      addParagraph('E por estarem justas e acordadas, as partes assinam o presente contrato em duas vias de igual teor e forma.');
+      
+      doc.moveDown(1);
       
       const today = new Date().toLocaleDateString('pt-BR', { 
         day: '2-digit', 
@@ -962,20 +1147,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeZone: 'America/Sao_Paulo'
       });
       
-      doc.text(`São Paulo, ${today}`);
-      
-      doc.moveDown(3);
-      
-      // Signature lines
-      doc.text('_'.repeat(50), { align: 'center' });
-      doc.text(registration.name.toUpperCase(), { align: 'center' });
-      doc.text('CONTRATANTE', { align: 'center' });
+      doc.font('Helvetica').fontSize(9).text(`Local e Data: São Paulo, ${today}`);
       
       doc.moveDown(2);
       
-      doc.text('_'.repeat(50), { align: 'center' });
-      doc.text('MARCELO MURILO & HAMILTON FELIX', { align: 'center' });
-      doc.text('CONTRATADOS', { align: 'center' });
+      // Signature lines
+      doc.text('_'.repeat(60), { align: 'center' });
+      doc.font('Helvetica-Bold').text('MARCELO MURILO SILVA', { align: 'center' });
+      doc.font('Helvetica').text('CPF: 753.118.289-00', { align: 'center' });
+      doc.text('OPES INFORMATICA LTDA', { align: 'center' });
+      
+      doc.moveDown(1.5);
+      
+      doc.text('_'.repeat(60), { align: 'center' });
+      doc.font('Helvetica-Bold').text('HAMILTON FERREIRA FELIX', { align: 'center' });
+      doc.font('Helvetica').text('CPF: 047.886.747-69', { align: 'center' });
+      doc.text('COMENTOR', { align: 'center' });
+      
+      doc.moveDown(1.5);
+      
+      doc.text('_'.repeat(60), { align: 'center' });
+      doc.font('Helvetica-Bold').text('MENTORADO(A)', { align: 'center' });
+      doc.font('Helvetica').text(`Nome: ${registration.name}`, { align: 'center' });
+      doc.text(`CPF: ${registration.cpfCnpj}`, { align: 'center' });
       
       // Finalize PDF
       doc.end();

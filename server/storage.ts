@@ -273,6 +273,14 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
+  async updateVendorDetails(id: string, data: { name?: string; email?: string; isActive?: boolean; hasCommission?: boolean }): Promise<Vendor | undefined> {
+    const result = await db.update(vendors)
+      .set(data)
+      .where(eq(vendors.id, id))
+      .returning();
+    return result[0];
+  }
+
   async deleteVendor(id: string): Promise<boolean> {
     const result = await db.delete(vendors).where(eq(vendors.id, id)).returning();
     return result.length > 0;

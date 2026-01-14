@@ -8,8 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy, Pencil, Download } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -706,6 +708,7 @@ function MentorshipRegistrationsSection() {
   const [obsValue, setObsValue] = useState('');
   const [commissionTableOpen, setCommissionTableOpen] = useState(false);
   const [vendorDashboardOpen, setVendorDashboardOpen] = useState(false);
+  const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   const [batchValue, setBatchValue] = useState<number>(1);
   const [vendorPaymentModalOpen, setVendorPaymentModalOpen] = useState(false);
@@ -1432,6 +1435,7 @@ Qualquer dúvida, estamos à disposição!`;
                   <Table>
                     <TableHeader>
                       <TableRow className="border-gray-200">
+                        <TableHead className="text-gray-600 w-8"></TableHead>
                         <TableHead className="text-gray-600">Vendedor</TableHead>
                         <TableHead className="text-gray-600">Vendas</TableHead>
                         <TableHead className="text-gray-600">Total a Receber</TableHead>
@@ -1445,34 +1449,127 @@ Qualquer dúvida, estamos à disposição!`;
                       {vendorList.map(([vendor, stats]) => {
                         const balance = stats.totalDue - stats.totalPaid;
                         const isPaid = balance <= 0;
+                        const isExpanded = expandedVendor === vendor;
                         return (
-                          <TableRow key={vendor} className="border-gray-200">
-                            <TableCell className="text-amber-700 font-medium">{vendor}</TableCell>
-                            <TableCell className="text-gray-900">{stats.sales}</TableCell>
-                            <TableCell className="text-gray-700">R$ {stats.totalDue.toLocaleString('pt-BR')}</TableCell>
-                            <TableCell className="text-green-600">R$ {stats.totalPaid.toLocaleString('pt-BR')}</TableCell>
-                            <TableCell className={balance > 0 ? "text-orange-600" : "text-green-600"}>
-                              R$ {balance.toLocaleString('pt-BR')}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={isPaid ? "bg-green-600" : "bg-orange-500"}>
-                                {isPaid ? "Pago" : "Pendente"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {balance > 0 && (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => openVendorPaymentModal(vendor, balance)}
-                                  className="h-7 text-xs border-amber-400 text-amber-700 hover:bg-amber-50"
-                                >
-                                  <DollarSign className="w-3 h-3 mr-1" />
-                                  Pagar
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
+                          <Fragment key={vendor}>
+                            <TableRow 
+                              className="border-gray-200 cursor-pointer hover:bg-amber-100/50"
+                              onClick={() => setExpandedVendor(isExpanded ? null : vendor)}
+                              data-testid={`row-vendor-${vendor.replace(/\s+/g, '-').toLowerCase()}`}
+                            >
+                              <TableCell className="w-8">
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                                )}
+                              </TableCell>
+                              <TableCell className="text-amber-700 font-medium">{vendor}</TableCell>
+                              <TableCell className="text-gray-900">{stats.sales}</TableCell>
+                              <TableCell className="text-gray-700">R$ {stats.totalDue.toLocaleString('pt-BR')}</TableCell>
+                              <TableCell className="text-green-600">R$ {stats.totalPaid.toLocaleString('pt-BR')}</TableCell>
+                              <TableCell className={balance > 0 ? "text-orange-600" : "text-green-600"}>
+                                R$ {balance.toLocaleString('pt-BR')}
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={isPaid ? "bg-green-600" : "bg-orange-500"}>
+                                  {isPaid ? "Pago" : "Pendente"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {balance > 0 && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openVendorPaymentModal(vendor, balance);
+                                    }}
+                                    className="h-7 text-xs border-amber-400 text-amber-700 hover:bg-amber-50"
+                                  >
+                                    <DollarSign className="w-3 h-3 mr-1" />
+                                    Pagar
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                            {isExpanded && (
+                              <TableRow className="bg-amber-50/50">
+                                <TableCell colSpan={8} className="p-0">
+                                  <div className="p-4 border-l-4 border-amber-400">
+                                    <p className="text-sm font-medium text-gray-700 mb-3">Vendas de {vendor}:</p>
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow className="border-gray-200">
+                                          <TableHead className="text-gray-500 text-xs">Nome</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Email</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Lote</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Pagamento</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Status</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Comissão</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Data</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Contrato</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {stats.registrations?.map((reg) => {
+                                          const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                                          const commissions = calculateCommissions(reg, batchConfig);
+                                          return (
+                                            <TableRow key={reg.id} className="border-gray-100">
+                                              <TableCell className="text-gray-800 text-sm">{reg.name}</TableCell>
+                                              <TableCell className="text-gray-600 text-xs">{reg.email}</TableCell>
+                                              <TableCell>
+                                                <Badge variant="outline" className="text-xs">
+                                                  Lote {reg.batch || 1}
+                                                </Badge>
+                                              </TableCell>
+                                              <TableCell className="text-gray-600 text-xs">
+                                                {reg.paymentMethod === 'pix' ? 'PIX' : 'Cartão'}
+                                              </TableCell>
+                                              <TableCell>
+                                                <Badge 
+                                                  className={
+                                                    reg.paymentStatus === 'pago' 
+                                                      ? 'bg-green-600 text-xs' 
+                                                      : reg.paymentStatus === 'parcial' 
+                                                        ? 'bg-yellow-500 text-xs' 
+                                                        : 'bg-red-500 text-xs'
+                                                  }
+                                                >
+                                                  {reg.paymentStatus === 'pago' ? 'Pago' : reg.paymentStatus === 'parcial' ? 'Parcial' : 'Pendente'}
+                                                </Badge>
+                                              </TableCell>
+                                              <TableCell className="text-amber-700 font-medium text-sm">
+                                                R$ {commissions.vendorComm.toLocaleString('pt-BR')}
+                                              </TableCell>
+                                              <TableCell className="text-gray-500 text-xs">
+                                                {reg.createdAt ? new Date(reg.createdAt).toLocaleDateString('pt-BR') : '-'}
+                                              </TableCell>
+                                              <TableCell>
+                                                <Button 
+                                                  size="icon" 
+                                                  variant="ghost"
+                                                  className="h-6 w-6"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(`/api/registrations/${reg.id}/contract-pdf`, '_blank');
+                                                  }}
+                                                  data-testid={`button-download-contract-${reg.id}`}
+                                                >
+                                                  <Download className="w-3 h-3 text-blue-600" />
+                                                </Button>
+                                              </TableCell>
+                                            </TableRow>
+                                          );
+                                        })}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </Fragment>
                         );
                       })}
                     </TableBody>
@@ -2261,6 +2358,10 @@ function CRMSection() {
   const [newVendorName, setNewVendorName] = useState('');
   const [newVendorEmail, setNewVendorEmail] = useState('');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('');
+  const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
+  const [editVendorName, setEditVendorName] = useState('');
+  const [editVendorEmail, setEditVendorEmail] = useState('');
+  const [vendorToDelete, setVendorToDelete] = useState<{ id: string; name: string } | null>(null);
   const [activityContent, setActivityContent] = useState('');
   const [activityType, setActivityType] = useState('note');
   const [followUpDate, setFollowUpDate] = useState('');
@@ -2415,6 +2516,29 @@ function CRMSection() {
       setNewVendorName('');
       setNewVendorEmail('');
       toast({ title: 'Vendedor cadastrado' });
+    },
+  });
+
+  const updateVendorMutation = useMutation({
+    mutationFn: (data: { id: string; name?: string; email?: string; isActive?: boolean; hasCommission?: boolean }) => 
+      apiRequest('PATCH', `/api/crm/vendors/${data.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/vendors'] });
+      toast({ title: 'Vendedor atualizado' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao atualizar vendedor', variant: 'destructive' });
+    },
+  });
+
+  const deleteVendorMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/crm/vendors/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/vendors'] });
+      toast({ title: 'Vendedor excluído' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao excluir vendedor', variant: 'destructive' });
     },
   });
 
@@ -3409,14 +3533,108 @@ function CRMSection() {
                 <Label className="text-sm text-gray-500">Vendedores cadastrados:</Label>
                 <div className="space-y-2 mt-2">
                   {vendors.map(vendor => (
-                    <div key={vendor.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                      <div>
-                        <span className="font-medium">{vendor.name}</span>
-                        <span className="text-gray-500 text-sm ml-2">{vendor.email}</span>
-                      </div>
-                      <Badge variant={vendor.isActive ? 'default' : 'secondary'}>
-                        {vendor.isActive ? 'Ativo' : 'Inativo'}
-                      </Badge>
+                    <div key={vendor.id} className="bg-gray-50 p-3 rounded space-y-2">
+                      {editingVendorId === vendor.id ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input 
+                              value={editVendorName}
+                              onChange={(e) => setEditVendorName(e.target.value)}
+                              placeholder="Nome"
+                              data-testid={`input-edit-vendor-name-${vendor.id}`}
+                            />
+                            <Input 
+                              value={editVendorEmail}
+                              onChange={(e) => setEditVendorEmail(e.target.value)}
+                              placeholder="Email"
+                              type="email"
+                              data-testid={`input-edit-vendor-email-${vendor.id}`}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm"
+                              onClick={() => {
+                                updateVendorMutation.mutate({ 
+                                  id: vendor.id, 
+                                  name: editVendorName, 
+                                  email: editVendorEmail 
+                                });
+                                setEditingVendorId(null);
+                              }}
+                              disabled={!editVendorName.trim() || !editVendorEmail.trim()}
+                              data-testid={`button-save-vendor-${vendor.id}`}
+                            >
+                              Salvar
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setEditingVendorId(null)}
+                              data-testid={`button-cancel-edit-${vendor.id}`}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="font-medium">{vendor.name}</span>
+                              <span className="text-gray-500 text-sm ml-2">{vendor.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={vendor.isActive ? 'default' : 'secondary'}>
+                                {vendor.isActive ? 'Ativo' : 'Inativo'}
+                              </Badge>
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingVendorId(vendor.id);
+                                  setEditVendorName(vendor.name);
+                                  setEditVendorEmail(vendor.email || '');
+                                }}
+                                data-testid={`button-edit-vendor-${vendor.id}`}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => setVendorToDelete({ id: vendor.id, name: vendor.name })}
+                                data-testid={`button-delete-vendor-${vendor.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between border-t pt-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-600">Recebe comissão:</span>
+                              <Switch 
+                                checked={vendor.hasCommission ?? true}
+                                onCheckedChange={(checked) => 
+                                  updateVendorMutation.mutate({ id: vendor.id, hasCommission: checked })
+                                }
+                                data-testid={`switch-vendor-commission-${vendor.id}`}
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-600">Status:</span>
+                              <Switch 
+                                checked={vendor.isActive}
+                                onCheckedChange={(checked) => 
+                                  updateVendorMutation.mutate({ id: vendor.id, isActive: checked })
+                                }
+                                data-testid={`switch-vendor-active-${vendor.id}`}
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -3425,6 +3643,34 @@ function CRMSection() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Vendor Confirmation Dialog */}
+      <AlertDialog open={!!vendorToDelete} onOpenChange={(open) => !open && setVendorToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Vendedor</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o vendedor <strong>{vendorToDelete?.name}</strong>? 
+              Esta ação não pode ser desfeita e removerá todos os registros associados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-vendor">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-500 hover:bg-red-600"
+              onClick={() => {
+                if (vendorToDelete) {
+                  deleteVendorMutation.mutate(vendorToDelete.id);
+                  setVendorToDelete(null);
+                }
+              }}
+              data-testid="button-confirm-delete-vendor"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

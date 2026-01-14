@@ -8,6 +8,7 @@ import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotif
 import { addEventRegistration, getAllEventRegistrations, type EventRegistration, fetchSurveyResponses, calculateLeadScore } from "./googleSheets";
 import path from "path";
 import { z } from "zod";
+import PDFDocument from "pdfkit";
 
 // Secret for signing tokens - must be set via environment
 const TOKEN_SECRET = process.env.SESSION_SECRET;
@@ -841,6 +842,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate contract PDF for a registration (admin only)
+  app.get("/api/registrations/:id/contract-pdf", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      // Batch pricing configuration
+      const BATCH_CONFIG = [
+        { batch: 1, pixPrice: 9000, installmentTotal: 9900, deadline: '31/12/2025' },
+        { batch: 2, pixPrice: 10800, installmentTotal: 11880, deadline: '12/01/2026' },
+        { batch: 3, pixPrice: 13500, installmentTotal: 14850, deadline: '25/01/2026' },
+      ];
+      
+      const batchConfig = BATCH_CONFIG.find(b => b.batch === (registration.batch || 1)) || BATCH_CONFIG[0];
+      const isPix = registration.paymentMethod === 'pix';
+      const totalValue = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
+      
+      // Create PDF document
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 50, bottom: 50, left: 50, right: 50 }
+      });
+      
+      // Set response headers for PDF download
+      const sanitizedName = registration.name.replace(/[^a-zA-Z0-9]/g, '_');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=Contrato_Mentoria_${sanitizedName}.pdf`);
+      
+      // Pipe PDF to response
+      doc.pipe(res);
+      
+      // Header
+      doc.fontSize(16).font('Helvetica-Bold')
+         .text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).font('Helvetica-Bold')
+         .text('PROGRAMA DE MENTORIA MARCELO MURILO & HAMILTON FELIX', { align: 'center' });
+      doc.fontSize(10).font('Helvetica')
+         .text('TURMA 2 - JANEIRO A MARÇO 2026', { align: 'center' });
+      
+      doc.moveDown(2);
+      
+      // Contract parties
+      doc.fontSize(11).font('Helvetica-Bold').text('DAS PARTES:');
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica');
+      
+      doc.text('CONTRATANTE:', { continued: true }).font('Helvetica-Bold')
+         .text(` ${registration.name}`);
+      doc.font('Helvetica').text(`CPF/CNPJ: ${registration.cpfCnpj}`);
+      if (registration.razaoSocial) {
+        doc.text(`Razão Social: ${registration.razaoSocial}`);
+      }
+      doc.text(`E-mail: ${registration.email}`);
+      doc.text(`Telefone: ${registration.phone}`);
+      
+      doc.moveDown();
+      
+      doc.text('CONTRATADOS:', { continued: true }).font('Helvetica-Bold')
+         .text(' MARCELO MURILO e HAMILTON FELIX');
+      doc.font('Helvetica').text('Mentores especialistas em Governança Corporativa e Conselhos de Administração');
+      
+      doc.moveDown(2);
+      
+      // Object
+      doc.fontSize(11).font('Helvetica-Bold').text('DO OBJETO:');
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica');
+      doc.text('O presente instrumento tem por objeto a prestação de serviços de mentoria empresarial para desenvolvimento de competências para atuação em Conselhos de Administração, denominado "Programa de Mentoria para Conselheiros - Turma 2".');
+      
+      doc.moveDown();
+      doc.text('O programa inclui:');
+      doc.text('• 8 sessões ao vivo com Marcelo Murilo (módulo teórico-estratégico)');
+      doc.text('• 4 sessões ao vivo com Hamilton Felix (módulo prático de prospecção)');
+      doc.text('• Materiais de apoio e templates exclusivos');
+      doc.text('• Acesso à comunidade de mentorados');
+      doc.text('• Gravações das sessões para revisão');
+      
+      doc.moveDown(2);
+      
+      // Value and payment
+      doc.fontSize(11).font('Helvetica-Bold').text('DO VALOR E FORMA DE PAGAMENTO:');
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica');
+      
+      doc.text(`Lote: ${registration.batch || 1}`);
+      doc.text(`Forma de Pagamento: ${isPix ? 'PIX (à vista)' : 'Cartão de Crédito (parcelado)'}`);
+      doc.font('Helvetica-Bold').text(`Valor Total: R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+      doc.font('Helvetica');
+      
+      if (!isPix) {
+        doc.text(`Parcelamento: até 12x de R$ ${(totalValue / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+      }
+      
+      doc.moveDown(2);
+      
+      // Period
+      doc.fontSize(11).font('Helvetica-Bold').text('DO PERÍODO:');
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica');
+      doc.text('O programa terá início em Janeiro de 2026 e término previsto para Março de 2026, com duração aproximada de 3 meses.');
+      
+      doc.moveDown(2);
+      
+      // Signatures
+      doc.fontSize(11).font('Helvetica-Bold').text('DA ASSINATURA:');
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica');
+      
+      const today = new Date().toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric',
+        timeZone: 'America/Sao_Paulo'
+      });
+      
+      doc.text(`São Paulo, ${today}`);
+      
+      doc.moveDown(3);
+      
+      // Signature lines
+      doc.text('_'.repeat(50), { align: 'center' });
+      doc.text(registration.name.toUpperCase(), { align: 'center' });
+      doc.text('CONTRATANTE', { align: 'center' });
+      
+      doc.moveDown(2);
+      
+      doc.text('_'.repeat(50), { align: 'center' });
+      doc.text('MARCELO MURILO & HAMILTON FELIX', { align: 'center' });
+      doc.text('CONTRATADOS', { align: 'center' });
+      
+      // Finalize PDF
+      doc.end();
+      
+    } catch (error) {
+      console.error("Error generating contract PDF:", error);
+      res.status(500).json({ error: "Erro ao gerar PDF do contrato" });
+    }
+  });
+
   // Analytics - Record page view
   app.post("/api/analytics/pageview", async (req, res) => {
     try {
@@ -971,8 +1116,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/crm/vendors/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, email, isActive } = req.body;
-      const vendor = await storage.updateVendorFull(id, { name, email, isActive });
+      const { name, email, isActive, hasCommission } = req.body;
+      const vendor = await storage.updateVendorDetails(id, { name, email, isActive, hasCommission });
       res.json(vendor);
     } catch (error) {
       console.error("Error updating vendor:", error);

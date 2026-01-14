@@ -34,6 +34,7 @@ export const vendors = pgTable("vendors", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   isActive: boolean("is_active").default(true).notNull(),
+  hasCommission: boolean("has_commission").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

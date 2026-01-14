@@ -842,8 +842,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate contract PDF for a registration (admin only)
-  app.get("/api/registrations/:id/contract-pdf", requireAdmin, async (req, res) => {
+  // Generate contract PDF for a registration (authenticated users - admin or vendor)
+  app.get("/api/registrations/:id/contract-pdf", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       

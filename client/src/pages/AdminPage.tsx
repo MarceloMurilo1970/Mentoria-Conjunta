@@ -1508,7 +1508,6 @@ Qualquer dúvida, estamos à disposição!`;
                                           <TableHead className="text-gray-500 text-xs">Status</TableHead>
                                           <TableHead className="text-gray-500 text-xs">Comissão</TableHead>
                                           <TableHead className="text-gray-500 text-xs">Data</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Contrato</TableHead>
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
@@ -1545,20 +1544,6 @@ Qualquer dúvida, estamos à disposição!`;
                                               </TableCell>
                                               <TableCell className="text-gray-500 text-xs">
                                                 {reg.createdAt ? new Date(reg.createdAt).toLocaleDateString('pt-BR') : '-'}
-                                              </TableCell>
-                                              <TableCell>
-                                                <Button 
-                                                  size="icon" 
-                                                  variant="ghost"
-                                                  className="h-6 w-6"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    window.open(`/api/registrations/${reg.id}/contract-pdf`, '_blank');
-                                                  }}
-                                                  data-testid={`button-download-contract-${reg.id}`}
-                                                >
-                                                  <Download className="w-3 h-3 text-blue-600" />
-                                                </Button>
                                               </TableCell>
                                             </TableRow>
                                           );
@@ -1860,6 +1845,16 @@ Qualquer dúvida, estamos à disposição!`;
                         className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
                       >
                         <Trash2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/api/registrations/${reg.id}/contract-pdf`, '_blank')}
+                        data-testid={`button-download-contract-${index}`}
+                        className="text-blue-600 border-blue-500 hover:bg-blue-50"
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        Contrato
                       </Button>
                     </div>
                     

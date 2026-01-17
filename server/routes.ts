@@ -1042,10 +1042,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       doc.moveDown(0.5);
       doc.font('Helvetica-Bold').fontSize(9).text('MÓDULO 2 - CRIANDO NOVOS CONSELHOS (Hamilton Felix):');
       doc.font('Helvetica').fontSize(8);
-      doc.text('Sessão 9 - 06/04/2026 (19h-20h): Prospecção de empresas');
-      doc.text('Sessão 10 - 06/04/2026 (20h-21h): Fechamento de Projetos');
-      doc.text('Sessão 11 - 13/04/2026 (19h-20h): Implementando o Conselho');
-      doc.text('Sessão 12 - 13/04/2026 (20h-21h): Evoluindo o Conselho');
+      doc.text('Sessão 9 - 20/04/2026 (19h-20h): Prospecção de empresas');
+      doc.text('Sessão 10 - 20/04/2026 (20h-21h): Fechamento de Projetos');
+      doc.text('Sessão 11 - 27/04/2026 (19h-20h): Implementando o Conselho');
+      doc.text('Sessão 12 - 27/04/2026 (20h-21h): Evoluindo o Conselho');
       
       doc.moveDown(0.3);
       doc.font('Helvetica').fontSize(9);

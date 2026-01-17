@@ -54,10 +54,10 @@ const modules: Module[] = [
     instructor: "Hamilton Felix",
     duration: "4H",
     sessions: [
-      { number: 1, date: "06/abr", startTime: "19:00", endTime: "20:00", topic: "Prospecção de empresas" },
-      { number: 2, date: "06/abr", startTime: "20:00", endTime: "21:00", topic: "Fechamento de Projetos" },
-      { number: 3, date: "13/abr", startTime: "19:00", endTime: "20:00", topic: "Implementando o Conselho" },
-      { number: 4, date: "13/abr", startTime: "20:00", endTime: "21:00", topic: "Evoluindo o Conselho" },
+      { number: 1, date: "20/abr", startTime: "19:00", endTime: "20:00", topic: "Prospecção de empresas" },
+      { number: 2, date: "20/abr", startTime: "20:00", endTime: "21:00", topic: "Fechamento de Projetos" },
+      { number: 3, date: "27/abr", startTime: "19:00", endTime: "20:00", topic: "Implementando o Conselho" },
+      { number: 4, date: "27/abr", startTime: "20:00", endTime: "21:00", topic: "Evoluindo o Conselho" },
     ]
   }
 ];

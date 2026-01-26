@@ -1,5 +1,5 @@
-// SendGrid integration via Replit Connectors
-import sgMail from '@sendgrid/mail';
+// MailerSend integration
+import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
 interface BatchPriceInfo {
   pixPrice: number;
@@ -69,43 +69,41 @@ function formatPrice(price: number): string {
   return price.toLocaleString("pt-BR", { minimumFractionDigits: 0 });
 }
 
-const FROM_NAME = "Mentoria Marcelo Murilo & Hamilton Felix";
-
-async function getSendGridCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+function getMailerSendClient() {
+  const apiKey = process.env.MAILERSEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("MAILERSEND_API_KEY not configured");
   }
-
-  const connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=sendgrid',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  if (!connectionSettings || (!connectionSettings.settings.api_key || !connectionSettings.settings.from_email)) {
-    throw new Error('SendGrid not connected');
-  }
-  return { apiKey: connectionSettings.settings.api_key, email: connectionSettings.settings.from_email };
+  return new MailerSend({ apiKey });
 }
 
-async function getUncachableSendGridClient() {
-  const { apiKey, email } = await getSendGridCredentials();
-  sgMail.setApiKey(apiKey);
-  return {
-    client: sgMail,
-    fromEmail: email
-  };
+const FROM_EMAIL = "contato@marcelomurilo.com.br";
+const FROM_NAME = "Mentoria Marcelo Murilo & Hamilton Felix";
+
+export async function sendTestEmail(toEmail: string) {
+  const mailerSend = getMailerSendClient();
+  
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #0070f3;">Teste de Email - Mentoria</h2>
+      <p>Este é um email de teste para verificar se o sistema de envio está funcionando corretamente.</p>
+      <p>Data/Hora: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+      <p>Atenciosamente,<br/>Sistema de Inscrições</p>
+    </div>
+  `;
+
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient(toEmail, "Teste")];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject("Teste de Email - Mentoria Marcelo Murilo & Hamilton Felix")
+    .setHtml(htmlContent)
+    .setText("Este é um email de teste para verificar se o sistema de envio está funcionando.");
+
+  await mailerSend.email.send(emailParams);
+  console.log(`Test email sent to ${toEmail}`);
 }
 
 export async function sendRegistrationEmail(
@@ -113,7 +111,7 @@ export async function sendRegistrationEmail(
   name: string,
   paymentMethod: "pix" | "installments"
 ) {
-  const { client, fromEmail } = await getUncachableSendGridClient();
+  const mailerSend = getMailerSendClient();
   const batchInfo = getCurrentBatchInfo();
   
   const replitDomain = process.env.REPLIT_DOMAINS || process.env.REPL_SLUG;
@@ -192,13 +190,17 @@ export async function sendRegistrationEmail(
     </div>
   `;
 
-  await client.send({
-    to,
-    from: { email: fromEmail, name: FROM_NAME },
-    subject: "Confirmação de Inscrição - Mentoria Marcelo Murilo e Hamilton Felix",
-    html: htmlContent,
-    text: `Olá ${name}, sua inscrição para a Mentoria foi recebida com sucesso!`,
-  });
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient(to, name)];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject("Confirmação de Inscrição - Mentoria Marcelo Murilo e Hamilton Felix")
+    .setHtml(htmlContent)
+    .setText(`Olá ${name}, sua inscrição para a Mentoria foi recebida com sucesso!`);
+
+  await mailerSend.email.send(emailParams);
 }
 
 export async function sendRegistrationNotificationEmail(
@@ -209,7 +211,7 @@ export async function sendRegistrationNotificationEmail(
     paymentMethod: string;
   }
 ) {
-  const { client, fromEmail } = await getUncachableSendGridClient();
+  const mailerSend = getMailerSendClient();
   const batchInfo = getCurrentBatchInfo();
 
   const paymentInfo = registration.paymentMethod === 'pix' 
@@ -253,13 +255,17 @@ export async function sendRegistrationNotificationEmail(
     </div>
   `;
 
-  await client.send({
-    to: "contato@marcelomurilo.com.br",
-    from: { email: fromEmail, name: FROM_NAME },
-    subject: `Nova Inscrição: ${registration.name} - ${batchInfo.batchName}`,
-    html: htmlContent,
-    text: `Nova inscrição: ${registration.name} - ${registration.email} - ${paymentInfo}`,
-  });
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo")];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject(`Nova Inscrição: ${registration.name} - ${batchInfo.batchName}`)
+    .setHtml(htmlContent)
+    .setText(`Nova inscrição: ${registration.name} - ${registration.email} - ${paymentInfo}`);
+
+  await mailerSend.email.send(emailParams);
 }
 
 export async function sendRegistrationListEmail(
@@ -270,7 +276,7 @@ export async function sendRegistrationListEmail(
     createdAt: Date;
   }>
 ) {
-  const { client, fromEmail } = await getUncachableSendGridClient();
+  const mailerSend = getMailerSendClient();
   const batchInfo = getCurrentBatchInfo();
 
   const registrationRows = registrations.map((reg, index) => {
@@ -328,14 +334,18 @@ export async function sendRegistrationListEmail(
     </div>
   `;
 
-  await client.send({
-    to: [
-      { email: "contato@marcelomurilo.com.br", name: "Marcelo Murilo" },
-      { email: "hamiltonfelix@gmail.com", name: "Hamilton Felix" },
-    ],
-    from: { email: fromEmail, name: FROM_NAME },
-    subject: `Inscrições Mentoria - Total: ${registrations.length} inscritos`,
-    html: htmlContent,
-    text: `Total de inscritos: ${registrations.length}`,
-  });
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [
+    new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo"),
+    new Recipient("hamiltonfelix@gmail.com", "Hamilton Felix"),
+  ];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject(`Inscrições Mentoria - Total: ${registrations.length} inscritos`)
+    .setHtml(htmlContent)
+    .setText(`Total de inscritos: ${registrations.length}`);
+
+  await mailerSend.email.send(emailParams);
 }

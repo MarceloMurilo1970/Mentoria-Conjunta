@@ -4,7 +4,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema, type User } from "@shared/schema";
-import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail } from "./email";
+import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail, sendTestEmail } from "./email";
 import { addEventRegistration, getAllEventRegistrations, type EventRegistration, fetchSurveyResponses, calculateLeadScore } from "./googleSheets";
 import path from "path";
 import { z } from "zod";
@@ -376,6 +376,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(500).json({ 
         error: "Erro ao processar inscrição" 
+      });
+    }
+  });
+
+  // Test email endpoint (temporarily without auth for testing)
+  app.post("/api/test-email", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Email é obrigatório" });
+      }
+      await sendTestEmail(email);
+      res.json({ success: true, message: `Email de teste enviado para ${email}` });
+    } catch (error: any) {
+      console.error("Error sending test email:", error);
+      res.status(500).json({ 
+        error: "Erro ao enviar email de teste", 
+        details: error.message || String(error)
       });
     }
   });

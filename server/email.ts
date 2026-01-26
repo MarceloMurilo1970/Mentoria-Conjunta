@@ -349,3 +349,259 @@ export async function sendRegistrationListEmail(
 
   await mailerSend.email.send(emailParams);
 }
+
+// Email para inscritos com pagamento PAGO (confirmação)
+export async function sendPaidConfirmationEmail(
+  to: string,
+  name: string
+) {
+  const mailerSend = getMailerSendClient();
+  
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #0070f3;">Pagamento Confirmado!</h2>
+      <p>Olá ${name},</p>
+      <p>Confirmamos o recebimento do seu pagamento para a <strong>Mentoria Conjunta de Marcelo Murilo e Hamilton Felix</strong>.</p>
+      <p>Sua inscrição está <strong style="color: #22c55e;">100% confirmada</strong>!</p>
+      
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+      
+      <h3>Programa da Mentoria</h3>
+      
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo - 8H)</h4>
+      <ul style="line-height: 1.8;">
+        <li><strong>Sessão 1 - 23/fev (19:00-20:00):</strong> Definindo seu nicho e propósito</li>
+        <li><strong>Sessão 2 - 02/mar (19:00-20:00):</strong> Perfil de conselheiro que vende</li>
+        <li><strong>Sessão 3 - 09/mar (19:00-20:00):</strong> Posts que geram oportunidades</li>
+        <li><strong>Sessão 4 - 16/mar (19:00-20:00):</strong> Interações que multiplicam alcance</li>
+        <li><strong>Sessão 5 - 23/mar (19:00-20:00):</strong> Conectando com quem importa</li>
+        <li><strong>Sessão 6 - 30/mar (19:00-20:00):</strong> Vendas e eventos estratégicos</li>
+        <li><strong>Sessão 7 - 06/abr (19:00-20:00):</strong> Aspectos práticos dos conselhos</li>
+        <li><strong>Sessão 8 - 13/abr (19:00-20:00):</strong> Integração e planejamento futuros</li>
+      </ul>
+
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix - 4H)</h4>
+      <ul style="line-height: 1.8;">
+        <li><strong>Sessão 9 - 20/abr (19:00-20:00):</strong> Prospecção de empresas</li>
+        <li><strong>Sessão 10 - 20/abr (20:00-21:00):</strong> Fechamento de Projetos</li>
+        <li><strong>Sessão 11 - 27/abr (19:00-20:00):</strong> Implementando o Conselho</li>
+        <li><strong>Sessão 12 - 27/abr (20:00-21:00):</strong> Evoluindo o Conselho</li>
+      </ul>
+
+      <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin-top: 20px;">
+        <h4 style="color: #0070f3; margin-top: 0;">Grupo de WhatsApp</h4>
+        <p style="margin: 0;">Um grupo de WhatsApp será criado com todos os participantes. Neste grupo você receberá as instruções para participação das lives e todas as informações importantes sobre a mentoria.</p>
+      </div>
+      
+      <p style="margin-top: 30px;">
+        Nos vemos em breve!<br/>
+        Atenciosamente,<br/>
+        Equipe Marcelo Murilo & Hamilton Felix
+      </p>
+    </div>
+  `;
+
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient(to, name)];
+  const ccRecipients = [new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo")];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setCc(ccRecipients)
+    .setSubject("Pagamento Confirmado - Mentoria Marcelo Murilo e Hamilton Felix")
+    .setHtml(htmlContent)
+    .setText(`Olá ${name}, seu pagamento foi confirmado! Sua inscrição está 100% confirmada.`);
+
+  await mailerSend.email.send(emailParams);
+}
+
+// Email para inscritos com pagamento PARCIAL (lembrete do próximo pagamento)
+export async function sendPartialPaymentEmail(
+  to: string,
+  name: string,
+  paymentMethod: "pix" | "installments"
+) {
+  const mailerSend = getMailerSendClient();
+  const batchInfo = getCurrentBatchInfo();
+  
+  const paymentReminder = paymentMethod === "pix" 
+    ? `
+      <div style="background-color: #fef3c7; padding: 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+        <h4 style="color: #b45309; margin-top: 0;">Lembrete de Pagamento</h4>
+        <p style="margin: 0;">Identificamos que seu pagamento está parcial. Para completar sua inscrição, realize o pagamento restante via PIX:</p>
+        <ul style="margin-top: 10px;">
+          <li><strong>Chave PIX (CNPJ):</strong> 17.840.516/0001-47</li>
+          <li><strong>Beneficiário:</strong> Opes Informática Ltda</li>
+        </ul>
+        <p style="margin-top: 10px;"><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante.</p>
+      </div>
+    `
+    : `
+      <div style="background-color: #fef3c7; padding: 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+        <h4 style="color: #b45309; margin-top: 0;">Lembrete de Pagamento</h4>
+        <p style="margin: 0;">Identificamos que seu pagamento está parcial. Para completar sua inscrição, realize o pagamento das parcelas restantes através do link:</p>
+        <p style="margin-top: 10px;"><a href="${batchInfo.paymentLink}" style="color: #0070f3;">${batchInfo.paymentLink}</a></p>
+        <p style="margin-top: 10px;"><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante.</p>
+      </div>
+    `;
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #0070f3;">Confirmação de Inscrição</h2>
+      <p>Olá ${name},</p>
+      <p>Sua inscrição para a <strong>Mentoria Conjunta de Marcelo Murilo e Hamilton Felix</strong> foi recebida!</p>
+      
+      ${paymentReminder}
+      
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+      
+      <h3>Programa da Mentoria</h3>
+      
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo - 8H)</h4>
+      <ul style="line-height: 1.8;">
+        <li><strong>Sessão 1 - 23/fev (19:00-20:00):</strong> Definindo seu nicho e propósito</li>
+        <li><strong>Sessão 2 - 02/mar (19:00-20:00):</strong> Perfil de conselheiro que vende</li>
+        <li><strong>Sessão 3 - 09/mar (19:00-20:00):</strong> Posts que geram oportunidades</li>
+        <li><strong>Sessão 4 - 16/mar (19:00-20:00):</strong> Interações que multiplicam alcance</li>
+        <li><strong>Sessão 5 - 23/mar (19:00-20:00):</strong> Conectando com quem importa</li>
+        <li><strong>Sessão 6 - 30/mar (19:00-20:00):</strong> Vendas e eventos estratégicos</li>
+        <li><strong>Sessão 7 - 06/abr (19:00-20:00):</strong> Aspectos práticos dos conselhos</li>
+        <li><strong>Sessão 8 - 13/abr (19:00-20:00):</strong> Integração e planejamento futuros</li>
+      </ul>
+
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix - 4H)</h4>
+      <ul style="line-height: 1.8;">
+        <li><strong>Sessão 9 - 20/abr (19:00-20:00):</strong> Prospecção de empresas</li>
+        <li><strong>Sessão 10 - 20/abr (20:00-21:00):</strong> Fechamento de Projetos</li>
+        <li><strong>Sessão 11 - 27/abr (19:00-20:00):</strong> Implementando o Conselho</li>
+        <li><strong>Sessão 12 - 27/abr (20:00-21:00):</strong> Evoluindo o Conselho</li>
+      </ul>
+
+      <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin-top: 20px;">
+        <h4 style="color: #0070f3; margin-top: 0;">Grupo de WhatsApp</h4>
+        <p style="margin: 0;">Um grupo de WhatsApp será criado com todos os participantes. Neste grupo você receberá as instruções para participação das lives e todas as informações importantes sobre a mentoria.</p>
+      </div>
+      
+      <p style="margin-top: 30px;">
+        Em caso de dúvidas, entre em contato conosco.<br/>
+        Atenciosamente,<br/>
+        Equipe Marcelo Murilo & Hamilton Felix
+      </p>
+    </div>
+  `;
+
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient(to, name)];
+  const ccRecipients = [new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo")];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setCc(ccRecipients)
+    .setSubject("Confirmação de Inscrição - Lembrete de Pagamento Pendente")
+    .setHtml(htmlContent)
+    .setText(`Olá ${name}, sua inscrição foi recebida! Lembre-se de completar o pagamento.`);
+
+  await mailerSend.email.send(emailParams);
+}
+
+// Email para inscritos com pagamento PENDENTE (instruções completas)
+export async function sendPendingPaymentEmail(
+  to: string,
+  name: string,
+  paymentMethod: "pix" | "installments"
+) {
+  const mailerSend = getMailerSendClient();
+  const batchInfo = getCurrentBatchInfo();
+  
+  const replitDomain = process.env.REPLIT_DOMAINS || process.env.REPL_SLUG;
+  const baseUrl = replitDomain 
+    ? `https://${replitDomain.split(',')[0]}` 
+    : 'http://localhost:5000';
+  const heroImageUrl = `${baseUrl}/email-assets/hero-image.png`;
+
+  const pixInstructions = `
+    <h3>Instruções para Pagamento via PIX (${batchInfo.batchName})</h3>
+    <p>Para confirmar sua inscrição, realize o pagamento via PIX:</p>
+    <ul>
+      <li><strong>Chave PIX (CNPJ):</strong> 17.840.516/0001-47</li>
+      <li><strong>Beneficiário:</strong> Opes Informática Ltda</li>
+      <li><strong>Valor:</strong> R$ ${formatPrice(batchInfo.pixPrice)},00</li>
+    </ul>
+    <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
+  `;
+
+  const installmentsInstructions = `
+    <h3>Instruções para Pagamento Parcelado (${batchInfo.batchName})</h3>
+    <p>Para confirmar sua inscrição, realize o pagamento em 5x de R$ ${formatPrice(batchInfo.installmentPrice)},00 (total R$ ${formatPrice(batchInfo.installmentTotal)},00) através do link abaixo:</p>
+    <p style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin: 16px 0;">
+      <strong>Link de pagamento:</strong><br/>
+      <a href="${batchInfo.paymentLink}" style="color: #0070f3; word-break: break-all;">${batchInfo.paymentLink}</a>
+    </p>
+    <p>Clique no link acima ou copie e cole no seu navegador para realizar o pagamento.</p>
+    <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
+  `;
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <img src="${heroImageUrl}" alt="Mentoria Marcelo Murilo e Hamilton Felix" style="max-width: 100%; height: auto; border-radius: 8px;" />
+      </div>
+      <h2 style="color: #0070f3;">Inscrição Recebida - Aguardando Pagamento</h2>
+      <p>Olá ${name},</p>
+      <p>Sua inscrição para a Mentoria Conjunta de <strong>Marcelo Murilo e Hamilton Felix</strong> foi recebida!</p>
+      
+      ${paymentMethod === "pix" ? pixInstructions : installmentsInstructions}
+      
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+      
+      <h3>Programa da Mentoria</h3>
+      
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo - 8H)</h4>
+      <ul style="line-height: 1.8;">
+        <li><strong>Sessão 1 - 23/fev (19:00-20:00):</strong> Definindo seu nicho e propósito</li>
+        <li><strong>Sessão 2 - 02/mar (19:00-20:00):</strong> Perfil de conselheiro que vende</li>
+        <li><strong>Sessão 3 - 09/mar (19:00-20:00):</strong> Posts que geram oportunidades</li>
+        <li><strong>Sessão 4 - 16/mar (19:00-20:00):</strong> Interações que multiplicam alcance</li>
+        <li><strong>Sessão 5 - 23/mar (19:00-20:00):</strong> Conectando com quem importa</li>
+        <li><strong>Sessão 6 - 30/mar (19:00-20:00):</strong> Vendas e eventos estratégicos</li>
+        <li><strong>Sessão 7 - 06/abr (19:00-20:00):</strong> Aspectos práticos dos conselhos</li>
+        <li><strong>Sessão 8 - 13/abr (19:00-20:00):</strong> Integração e planejamento futuros</li>
+      </ul>
+
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix - 4H)</h4>
+      <ul style="line-height: 1.8;">
+        <li><strong>Sessão 9 - 20/abr (19:00-20:00):</strong> Prospecção de empresas</li>
+        <li><strong>Sessão 10 - 20/abr (20:00-21:00):</strong> Fechamento de Projetos</li>
+        <li><strong>Sessão 11 - 27/abr (19:00-20:00):</strong> Implementando o Conselho</li>
+        <li><strong>Sessão 12 - 27/abr (20:00-21:00):</strong> Evoluindo o Conselho</li>
+      </ul>
+
+      <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin-top: 20px;">
+        <h4 style="color: #0070f3; margin-top: 0;">Grupo de WhatsApp</h4>
+        <p style="margin: 0;">Um grupo de WhatsApp será criado com todos os participantes. Neste grupo você receberá as instruções para participação das lives e todas as informações importantes sobre a mentoria.</p>
+      </div>
+      
+      <p style="margin-top: 30px;">
+        Em caso de dúvidas, entre em contato conosco.<br/>
+        Atenciosamente,<br/>
+        Equipe Marcelo Murilo & Hamilton Felix
+      </p>
+    </div>
+  `;
+
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient(to, name)];
+  const ccRecipients = [new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo")];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setCc(ccRecipients)
+    .setSubject("Confirmação de Inscrição - Mentoria Marcelo Murilo e Hamilton Felix")
+    .setHtml(htmlContent)
+    .setText(`Olá ${name}, sua inscrição para a Mentoria foi recebida! Aguardamos seu pagamento.`);
+
+  await mailerSend.email.send(emailParams);
+}

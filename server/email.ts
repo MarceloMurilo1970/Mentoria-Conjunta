@@ -128,7 +128,7 @@ export async function sendRegistrationEmail(
       <li><strong>Beneficiário:</strong> Opes Informática Ltda</li>
       <li><strong>Valor:</strong> R$ ${formatPrice(batchInfo.pixPrice)},00</li>
     </ul>
-    <p>Após o pagamento, sua inscrição será confirmada e a nota fiscal será enviada em até 5 dias.</p>
+    <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
   `;
 
   const installmentsInstructions = `
@@ -139,7 +139,7 @@ export async function sendRegistrationEmail(
       <a href="${batchInfo.paymentLink}" style="color: #0070f3; word-break: break-all;">${batchInfo.paymentLink}</a>
     </p>
     <p>Clique no link acima ou copie e cole no seu navegador para realizar o pagamento.</p>
-    <p>Após a confirmação do pagamento, sua inscrição será confirmada e a nota fiscal será enviada em até 5 dias.</p>
+    <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
   `;
 
   const htmlContent = `

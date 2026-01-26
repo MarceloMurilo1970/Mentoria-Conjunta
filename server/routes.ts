@@ -4,7 +4,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema, type User } from "@shared/schema";
-import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail, sendTestEmail } from "./email";
+import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail, sendTestEmail, sendPaidConfirmationEmail, sendPartialPaymentEmail, sendPendingPaymentEmail } from "./email";
 import { addEventRegistration, getAllEventRegistrations, type EventRegistration, fetchSurveyResponses, calculateLeadScore } from "./googleSheets";
 import path from "path";
 import { z } from "zod";
@@ -396,6 +396,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: error.message || String(error)
       });
     }
+  });
+
+  // Temporary endpoint to send bulk emails to specific registrations
+  app.post("/api/send-bulk-emails", async (req, res) => {
+    const results: { name: string; email: string; status: string; error?: string }[] = [];
+    
+    // List of registrations provided by user
+    const registrations = [
+      { name: "Marcos Argachoy", email: "marcos.argachoy@outlook.com.br", paymentStatus: "pago", paymentMethod: "installments" as const },
+      { name: "Katya Mangili", email: "kmmangili@gmail.com", paymentStatus: "parcial", paymentMethod: "pix" as const },
+      { name: "Helder Waiandt", email: "h.waiandt@uptecsolutions.com", paymentStatus: "pago", paymentMethod: "pix" as const },
+      { name: "Paulo Figueiredo Neves", email: "psfn2000@gmail.com", paymentStatus: "pendente", paymentMethod: "installments" as const },
+      { name: "Fábio Ricardo Geremias", email: "ffr.geremias@gmail.com", paymentStatus: "pendente", paymentMethod: "installments" as const },
+      { name: "Denys Emilio Nicolosi", email: "denys@wietech.com.br", paymentStatus: "pendente", paymentMethod: "installments" as const },
+    ];
+
+    for (const reg of registrations) {
+      try {
+        if (reg.paymentStatus === "pago") {
+          await sendPaidConfirmationEmail(reg.email, reg.name);
+          results.push({ name: reg.name, email: reg.email, status: "Enviado - Confirmação de Pagamento" });
+        } else if (reg.paymentStatus === "parcial") {
+          await sendPartialPaymentEmail(reg.email, reg.name, reg.paymentMethod);
+          results.push({ name: reg.name, email: reg.email, status: "Enviado - Lembrete Pagamento Parcial" });
+        } else {
+          await sendPendingPaymentEmail(reg.email, reg.name, reg.paymentMethod);
+          results.push({ name: reg.name, email: reg.email, status: "Enviado - Instruções de Pagamento" });
+        }
+        // Small delay between emails to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error: any) {
+        console.error(`Error sending email to ${reg.email}:`, error);
+        results.push({ name: reg.name, email: reg.email, status: "Erro", error: error.message || String(error) });
+      }
+    }
+
+    res.json({ success: true, results });
   });
 
   app.post("/api/registrations", async (req, res) => {

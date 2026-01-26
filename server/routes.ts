@@ -380,8 +380,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test email endpoint (temporarily without auth for testing)
-  app.post("/api/test-email", async (req, res) => {
+  // Test email endpoint (admin only)
+  app.post("/api/test-email", requireAdmin, async (req, res) => {
     try {
       const { email } = req.body;
       if (!email) {

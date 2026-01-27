@@ -500,12 +500,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import follow-ups
       if (followUps && Array.isArray(followUps)) {
         for (const followUp of followUps) {
+          const scheduledAtValue = followUp.scheduledAt ?? followUp.scheduled_at;
           await storage.createLeadFollowUp({
             leadId: followUp.leadId ?? followUp.lead_id,
             vendorId: followUp.vendorId ?? followUp.vendor_id,
             type: followUp.type,
             description: followUp.description,
-            scheduledAt: followUp.scheduledAt ?? followUp.scheduled_at
+            scheduledAt: scheduledAtValue ? new Date(scheduledAtValue) : new Date()
           });
           results.followUps.imported++;
         }

@@ -192,10 +192,15 @@ export async function sendRegistrationEmail(
 
   const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
   const recipients = [new Recipient(to, name)];
+  const ccRecipients = [
+    new Recipient("contato@marcelomurilo.com.br", "Marcelo Murilo"),
+    new Recipient("hamiltonfelix@gmail.com", "Hamilton Felix"),
+  ];
 
   const emailParams = new EmailParams()
     .setFrom(sentFrom)
     .setTo(recipients)
+    .setCc(ccRecipients)
     .setSubject("Confirmação de Inscrição - Mentoria Marcelo Murilo e Hamilton Felix")
     .setHtml(htmlContent)
     .setText(`Olá ${name}, sua inscrição para a Mentoria foi recebida com sucesso!`);

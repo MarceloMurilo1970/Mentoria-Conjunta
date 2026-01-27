@@ -399,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Temporary endpoint to restore registrations data
-  app.post("/api/restore-registrations", async (req, res) => {
+  app.get("/api/restore-registrations", async (req, res) => {
     try {
       const registrationsToRestore = [
         {

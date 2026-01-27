@@ -398,6 +398,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Temporary endpoint to export all CRM data (vendors, leads, activities, follow-ups)
+  app.get("/api/export-crm-data", async (req, res) => {
+    try {
+      const vendors = await storage.getAllVendors();
+      const leads = await storage.getAllLeads();
+      const activities = await storage.getAllLeadActivities();
+      const followUps = await storage.getAllLeadFollowUps();
+      
+      res.json({
+        success: true,
+        data: {
+          vendors,
+          leads,
+          activities,
+          followUps
+        },
+        counts: {
+          vendors: vendors.length,
+          leads: leads.length,
+          activities: activities.length,
+          followUps: followUps.length
+        }
+      });
+    } catch (error: any) {
+      console.error("Error exporting CRM data:", error);
+      res.status(500).json({ error: error.message || String(error) });
+    }
+  });
+
+  // Temporary endpoint to import CRM data (call with POST and JSON body from export)
+  app.post("/api/import-crm-data", async (req, res) => {
+    try {
+      const { vendors, leads, activities, followUps } = req.body.data || req.body;
+      const results = {
+        vendors: { imported: 0, skipped: 0 },
+        leads: { imported: 0, skipped: 0 },
+        activities: { imported: 0, skipped: 0 },
+        followUps: { imported: 0, skipped: 0 }
+      };
+
+      // Import vendors first (leads reference them)
+      if (vendors && Array.isArray(vendors)) {
+        for (const vendor of vendors) {
+          const existing = await storage.getVendorByEmail(vendor.email);
+          if (existing) {
+            results.vendors.skipped++;
+          } else {
+            await storage.createVendor({
+              name: vendor.name,
+              email: vendor.email,
+              isActive: vendor.isActive ?? vendor.is_active ?? true
+            });
+            results.vendors.imported++;
+          }
+        }
+      }
+
+      // Import leads
+      if (leads && Array.isArray(leads)) {
+        for (const lead of leads) {
+          const existing = await storage.getLeadByEmail(lead.email);
+          if (existing) {
+            results.leads.skipped++;
+          } else {
+            await storage.createLead({
+              name: lead.name,
+              email: lead.email,
+              phone: lead.phone,
+              linkedin: lead.linkedin,
+              sheetRowId: lead.sheetRowId ?? lead.sheet_row_id,
+              status: lead.status,
+              temperature: lead.temperature,
+              score: lead.score,
+              vendorId: lead.vendorId ?? lead.vendor_id,
+              aiSummary: lead.aiSummary ?? lead.ai_summary,
+              registrationId: lead.registrationId ?? lead.registration_id,
+              surveyResponses: lead.surveyResponses ?? lead.survey_responses,
+              scoreBreakdown: lead.scoreBreakdown ?? lead.score_breakdown
+            });
+            results.leads.imported++;
+          }
+        }
+      }
+
+      // Import activities
+      if (activities && Array.isArray(activities)) {
+        for (const activity of activities) {
+          await storage.createLeadActivity({
+            leadId: activity.leadId ?? activity.lead_id,
+            vendorId: activity.vendorId ?? activity.vendor_id,
+            type: activity.type,
+            content: activity.content,
+            aiAnalysis: activity.aiAnalysis ?? activity.ai_analysis,
+            scoreChange: activity.scoreChange ?? activity.score_change ?? 0
+          });
+          results.activities.imported++;
+        }
+      }
+
+      // Import follow-ups
+      if (followUps && Array.isArray(followUps)) {
+        for (const followUp of followUps) {
+          await storage.createLeadFollowUp({
+            leadId: followUp.leadId ?? followUp.lead_id,
+            vendorId: followUp.vendorId ?? followUp.vendor_id,
+            type: followUp.type,
+            description: followUp.description,
+            scheduledAt: followUp.scheduledAt ?? followUp.scheduled_at
+          });
+          results.followUps.imported++;
+        }
+      }
+
+      res.json({ success: true, results });
+    } catch (error: any) {
+      console.error("Error importing CRM data:", error);
+      res.status(500).json({ error: error.message || String(error) });
+    }
+  });
+
   // Temporary endpoint to send bulk emails to specific registrations
   app.post("/api/send-bulk-emails", async (req, res) => {
     const results: { name: string; email: string; status: string; error?: string }[] = [];

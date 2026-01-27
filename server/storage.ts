@@ -383,6 +383,12 @@ export class DbStorage implements IStorage {
       .orderBy(desc(leadActivities.createdAt));
   }
 
+  async getAllLeadActivities(): Promise<LeadActivity[]> {
+    return await db.select()
+      .from(leadActivities)
+      .orderBy(desc(leadActivities.createdAt));
+  }
+
   async createLeadActivity(activity: InsertLeadActivity): Promise<LeadActivity> {
     const result = await db.insert(leadActivities).values(activity).returning();
     
@@ -411,6 +417,12 @@ export class DbStorage implements IStorage {
     return await db.select()
       .from(leadFollowUps)
       .where(eq(leadFollowUps.leadId, leadId))
+      .orderBy(leadFollowUps.scheduledAt);
+  }
+
+  async getAllLeadFollowUps(): Promise<LeadFollowUp[]> {
+    return await db.select()
+      .from(leadFollowUps)
       .orderBy(leadFollowUps.scheduledAt);
   }
 

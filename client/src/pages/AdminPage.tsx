@@ -1699,8 +1699,9 @@ Qualquer dúvida, estamos à disposição!`;
                   // When PAGO: use full net amount (after taxes and card fees)
                   // When PARCIAL: use proportional amount based on paidAmount (in cents)
                   const paidAmountReais = (reg.paidAmount || 0) / 100;
-                  const receivedForThisReg = reg.paymentStatus === 'pago' ? comms.netAfterTax : 
-                                            reg.paymentStatus === 'parcial' ? paidAmountReais : 0;
+                  const normalizedStatus = (reg.paymentStatus || '').toLowerCase().trim();
+                  const receivedForThisReg = normalizedStatus === 'pago' ? comms.netAfterTax : 
+                                            normalizedStatus === 'parcial' ? paidAmountReais : 0;
                   
                   return {
                     grossRevenue: acc.grossRevenue + comms.gross,
@@ -1770,12 +1771,13 @@ Qualquer dúvida, estamos à disposição!`;
                           const comms = calculateCommissions(reg, batchConfig);
                           const paidAmountReais = (reg.paidAmount || 0) / 100;
                           
-                          // Calculate received based on payment status
-                          const receivedFromSale = reg.paymentStatus === 'pago' ? comms.netAfterTax : 
-                                                  reg.paymentStatus === 'parcial' ? paidAmountReais : 0;
+                          // Calculate received based on payment status (normalize to handle case differences)
+                          const normalizedStatus = (reg.paymentStatus || '').toLowerCase().trim();
+                          const receivedFromSale = normalizedStatus === 'pago' ? comms.netAfterTax : 
+                                                  normalizedStatus === 'parcial' ? paidAmountReais : 0;
                           
-                          const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                           reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
+                          const paidRatio = normalizedStatus === 'pago' ? 1 : 
+                                           normalizedStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                           const commDueNow = Math.round(comms.vendorComm * paidRatio);
                           
                           return {
@@ -1897,12 +1899,13 @@ Qualquer dúvida, estamos à disposição!`;
                     const comms = calculateCommissions(reg, batchConfig);
                     const paidAmountReais = (reg.paidAmount || 0) / 100;
                     
-                    // Calculate received based on payment status
-                    const receivedFromSale = reg.paymentStatus === 'pago' ? comms.netAfterTax : 
-                                            reg.paymentStatus === 'parcial' ? paidAmountReais : 0;
+                    // Calculate received based on payment status (normalize to handle case differences)
+                    const normalizedStatus = (reg.paymentStatus || '').toLowerCase().trim();
+                    const receivedFromSale = normalizedStatus === 'pago' ? comms.netAfterTax : 
+                                            normalizedStatus === 'parcial' ? paidAmountReais : 0;
                     
-                    const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                     reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
+                    const paidRatio = normalizedStatus === 'pago' ? 1 : 
+                                     normalizedStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                     const hfDueNow = Math.round(comms.hfComm * paidRatio);
                     
                     return {
@@ -2088,8 +2091,9 @@ Qualquer dúvida, estamos à disposição!`;
                     const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                     const comms = calculateCommissions(reg, batchConfig);
                     const paidAmountReais = (reg.paidAmount || 0) / 100;
-                    const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                     reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
+                    const statusNorm = (reg.paymentStatus || '').toLowerCase().trim();
+                    const paidRatio = statusNorm === 'pago' ? 1 : 
+                                     statusNorm === 'parcial' ? paidAmountReais / comms.gross : 0;
                     const commDueNow = Math.round(comms.vendorComm * paidRatio);
                     const due = commDueNow - (reg.vendorCommissionPaid || 0);
                     
@@ -2125,8 +2129,9 @@ Qualquer dúvida, estamos à disposição!`;
                     const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                     const comms = calculateCommissions(reg, batchConfig);
                     const paidAmountReais = (reg.paidAmount || 0) / 100;
-                    const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                     reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
+                    const statusNorm = (reg.paymentStatus || '').toLowerCase().trim();
+                    const paidRatio = statusNorm === 'pago' ? 1 : 
+                                     statusNorm === 'parcial' ? paidAmountReais / comms.gross : 0;
                     const hfDueNow = Math.round(comms.hfComm * paidRatio);
                     const due = hfDueNow - (reg.hamiltonPaid || 0);
                     
@@ -2551,27 +2556,31 @@ Qualquer dúvida, estamos à disposição!`;
                       </div>
                       
                       {/* Net Value and Received Value */}
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="text-green-700 font-medium bg-green-50 px-2 py-0.5 rounded">
-                          Líquido: R$ {commissions.netAfterTax.toLocaleString('pt-BR')}
-                        </span>
-                        <span className="text-gray-400">|</span>
-                        <span className={`font-medium px-2 py-0.5 rounded ${
-                          reg.paymentStatus === 'pago' 
-                            ? 'text-blue-700 bg-blue-50' 
-                            : reg.paymentStatus === 'parcial'
-                              ? 'text-orange-700 bg-orange-50'
-                              : 'text-gray-500 bg-gray-100'
-                        }`}>
-                          Recebido: R$ {(
-                            reg.paymentStatus === 'pago' 
-                              ? commissions.netAfterTax 
-                              : reg.paymentStatus === 'parcial'
-                                ? (reg.paidAmount || 0) / 100
-                                : 0
-                          ).toLocaleString('pt-BR')}
-                        </span>
-                      </div>
+                      {(() => {
+                        const statusNorm = (reg.paymentStatus || '').toLowerCase().trim();
+                        const receivedValue = statusNorm === 'pago' 
+                          ? commissions.netAfterTax 
+                          : statusNorm === 'parcial'
+                            ? (reg.paidAmount || 0) / 100
+                            : 0;
+                        return (
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="text-green-700 font-medium bg-green-50 px-2 py-0.5 rounded">
+                              Líquido: R$ {commissions.netAfterTax.toLocaleString('pt-BR')}
+                            </span>
+                            <span className="text-gray-400">|</span>
+                            <span className={`font-medium px-2 py-0.5 rounded ${
+                              statusNorm === 'pago' 
+                                ? 'text-blue-700 bg-blue-50' 
+                                : statusNorm === 'parcial'
+                                  ? 'text-orange-700 bg-orange-50'
+                                  : 'text-gray-500 bg-gray-100'
+                            }`}>
+                              Recebido: R$ {receivedValue.toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                        );
+                      })()}
                       
                       {/* Partial Payment Info */}
                       {reg.paymentStatus === 'parcial' && (

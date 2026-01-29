@@ -1640,20 +1640,22 @@ Qualquer dúvida, estamos à disposição!`;
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="space-y-6">
-              {/* DRE Card */}
+              {/* DRE Cards - Grid Layout */}
               {(() => {
                 const dreData = registrations?.reduce((acc, reg) => {
                   const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                   const comms = calculateCommissions(reg, batchConfig);
+                  // paidAmount is stored in cents, convert to reais for ratio calculation
+                  const paidAmountReais = (reg.paidAmount || 0) / 100;
                   const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                   reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                                   reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                   
                   return {
                     grossRevenue: acc.grossRevenue + comms.gross,
                     taxes: acc.taxes + comms.taxes,
                     cardFees: acc.cardFees + comms.cardFee,
                     netRevenue: acc.netRevenue + comms.netAfterTax,
-                    receivedGross: acc.receivedGross + (reg.paidAmount || 0),
+                    receivedGross: acc.receivedGross + paidAmountReais,
                     receivedNet: acc.receivedNet + Math.round(comms.netAfterTax * paidRatio),
                   };
                 }, { grossRevenue: 0, taxes: 0, cardFees: 0, netRevenue: 0, receivedGross: 0, receivedNet: 0 }) || { grossRevenue: 0, taxes: 0, cardFees: 0, netRevenue: 0, receivedGross: 0, receivedNet: 0 };
@@ -1662,38 +1664,30 @@ Qualquer dúvida, estamos à disposição!`;
                 const resultadoFinal = receitaLiquida - dreData.cardFees;
 
                 return (
-                  <div className="bg-white rounded-lg border border-slate-300 overflow-hidden">
-                    <div className="bg-slate-700 text-white px-4 py-3">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        DRE Simplificada
-                      </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <div className="bg-white rounded-lg border border-slate-200 p-4 text-center">
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Faturamento Bruto</div>
+                      <div className="text-xl font-bold text-gray-900">R$ {dreData.grossRevenue.toLocaleString('pt-BR')}</div>
                     </div>
-                    <div className="p-4 space-y-2 font-mono text-sm">
-                      <div className="flex justify-between py-1">
-                        <span className="text-gray-700">Faturamento Bruto:</span>
-                        <span className="font-semibold text-gray-900">R$ {dreData.grossRevenue.toLocaleString('pt-BR')}</span>
-                      </div>
-                      <div className="flex justify-between py-1 text-red-600">
-                        <span>(-) Impostos (11,75%):</span>
-                        <span>R$ {dreData.taxes.toLocaleString('pt-BR')}</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-t border-slate-200 pt-2">
-                        <span className="text-gray-700">Receita Líquida:</span>
-                        <span className="font-semibold text-gray-900">R$ {receitaLiquida.toLocaleString('pt-BR')}</span>
-                      </div>
-                      <div className="flex justify-between py-1 text-red-600">
-                        <span>(-) Taxas de Cartão:</span>
-                        <span>R$ {dreData.cardFees.toLocaleString('pt-BR')}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-t-2 border-slate-300 bg-slate-50 -mx-4 px-4">
-                        <span className="font-bold text-gray-900">Resultado Final:</span>
-                        <span className="font-bold text-green-700">R$ {resultadoFinal.toLocaleString('pt-BR')}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-t border-slate-200 mt-2">
-                        <span className="text-blue-700 font-medium">Recebido até o momento:</span>
-                        <span className="font-bold text-blue-700">R$ {dreData.receivedGross.toLocaleString('pt-BR')}</span>
-                      </div>
+                    <div className="bg-red-50 rounded-lg border border-red-200 p-4 text-center">
+                      <div className="text-xs text-red-600 uppercase tracking-wide mb-1">(-) Impostos 11,75%</div>
+                      <div className="text-xl font-bold text-red-700">R$ {dreData.taxes.toLocaleString('pt-BR')}</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-slate-200 p-4 text-center">
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Receita Líquida</div>
+                      <div className="text-xl font-bold text-gray-900">R$ {receitaLiquida.toLocaleString('pt-BR')}</div>
+                    </div>
+                    <div className="bg-red-50 rounded-lg border border-red-200 p-4 text-center">
+                      <div className="text-xs text-red-600 uppercase tracking-wide mb-1">(-) Taxas Cartão</div>
+                      <div className="text-xl font-bold text-red-700">R$ {dreData.cardFees.toLocaleString('pt-BR')}</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg border border-green-300 p-4 text-center">
+                      <div className="text-xs text-green-600 uppercase tracking-wide mb-1">Resultado Final</div>
+                      <div className="text-xl font-bold text-green-700">R$ {resultadoFinal.toLocaleString('pt-BR')}</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg border border-blue-300 p-4 text-center">
+                      <div className="text-xs text-blue-600 uppercase tracking-wide mb-1">Recebido</div>
+                      <div className="text-xl font-bold text-blue-700">R$ {dreData.receivedGross.toLocaleString('pt-BR')}</div>
                     </div>
                   </div>
                 );
@@ -1723,14 +1717,15 @@ Qualquer dúvida, estamos à disposição!`;
                         const vendorStats = vendorRegs.reduce((acc, reg) => {
                           const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                           const comms = calculateCommissions(reg, batchConfig);
+                          const paidAmountReais = (reg.paidAmount || 0) / 100;
                           const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                           reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                                           reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                           const commDueNow = Math.round(comms.vendorComm * paidRatio);
                           
                           return {
                             soldValue: acc.soldValue + comms.gross,
                             commissionTotal: acc.commissionTotal + comms.vendorComm,
-                            receivedValue: acc.receivedValue + (reg.paidAmount || 0),
+                            receivedValue: acc.receivedValue + paidAmountReais,
                             commissionDueNow: acc.commissionDueNow + commDueNow,
                             commissionPaid: acc.commissionPaid + (reg.vendorCommissionPaid || 0),
                             sales: acc.sales + 1,
@@ -1844,14 +1839,15 @@ Qualquer dúvida, estamos à disposição!`;
                   const hamiltonStats = registrations?.reduce((acc, reg) => {
                     const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                     const comms = calculateCommissions(reg, batchConfig);
+                    const paidAmountReais = (reg.paidAmount || 0) / 100;
                     const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                     reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                                     reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                     const hfDueNow = Math.round(comms.hfComm * paidRatio);
                     
                     return {
                       soldValue: acc.soldValue + comms.gross,
                       hfTotal: acc.hfTotal + comms.hfComm,
-                      receivedValue: acc.receivedValue + (reg.paidAmount || 0),
+                      receivedValue: acc.receivedValue + paidAmountReais,
                       hfDueNow: acc.hfDueNow + hfDueNow,
                       hfPaid: acc.hfPaid + (reg.hamiltonPaid || 0),
                       sales: acc.sales + 1,
@@ -2030,8 +2026,9 @@ Qualquer dúvida, estamos à disposição!`;
                     
                     const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                     const comms = calculateCommissions(reg, batchConfig);
+                    const paidAmountReais = (reg.paidAmount || 0) / 100;
                     const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                     reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                                     reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                     const commDueNow = Math.round(comms.vendorComm * paidRatio);
                     const due = commDueNow - (reg.vendorCommissionPaid || 0);
                     
@@ -2066,8 +2063,9 @@ Qualquer dúvida, estamos à disposição!`;
                     
                     const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                     const comms = calculateCommissions(reg, batchConfig);
+                    const paidAmountReais = (reg.paidAmount || 0) / 100;
                     const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                     reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                                     reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                     const hfDueNow = Math.round(comms.hfComm * paidRatio);
                     const due = hfDueNow - (reg.hamiltonPaid || 0);
                     
@@ -2484,8 +2482,8 @@ Qualquer dúvida, estamos à disposição!`;
                       {/* Partial Payment Info */}
                       {reg.paymentStatus === 'parcial' && (
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-green-400">Pago: R$ {reg.paidAmount?.toLocaleString('pt-BR')}</span>
-                          <span className="text-orange-400">Saldo: R$ {(batchConfig.pixPrice - (reg.paidAmount || 0)).toLocaleString('pt-BR')}</span>
+                          <span className="text-green-400">Pago: R$ {((reg.paidAmount || 0) / 100).toLocaleString('pt-BR')}</span>
+                          <span className="text-orange-400">Saldo: R$ {(batchConfig.pixPrice - ((reg.paidAmount || 0) / 100)).toLocaleString('pt-BR')}</span>
                           {reg.remainingPaymentDate && (
                             <span className="text-blue-400">
                               Prev: {new Date(reg.remainingPaymentDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}

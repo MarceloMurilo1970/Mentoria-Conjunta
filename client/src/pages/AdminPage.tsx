@@ -729,8 +729,6 @@ function MentorshipRegistrationsSection() {
   const [editingObsId, setEditingObsId] = useState<string | null>(null);
   const [obsValue, setObsValue] = useState('');
   const [commissionTableOpen, setCommissionTableOpen] = useState(false);
-  const [vendorDashboardOpen, setVendorDashboardOpen] = useState(false);
-  const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   const [batchValue, setBatchValue] = useState<number>(1);
   const [vendorPaymentModalOpen, setVendorPaymentModalOpen] = useState(false);
@@ -770,6 +768,10 @@ function MentorshipRegistrationsSection() {
   const currentUserEmail = localStorage.getItem('crm_vendor_email');
   const currentAuthToken = localStorage.getItem('crm_auth_token');
   const hasValidAuth = !!(currentUserEmail && currentAuthToken);
+  
+  // Admin check - only specific emails can delete payments
+  const ADMIN_EMAILS = ["contato@marcelomurilo.com.br", "marcelo@marcelomurilo.com.br"];
+  const isAdminUser = currentUserEmail ? ADMIN_EMAILS.includes(currentUserEmail.toLowerCase()) : false;
   
   // Manual registration states
   const [manualRegModalOpen, setManualRegModalOpen] = useState(false);
@@ -1511,226 +1513,6 @@ Qualquer dúvida, estamos à disposição!`;
         </Card>
       </div>
 
-      {/* Vendor Commission Dashboard - Collapsible */}
-      <Collapsible open={vendorDashboardOpen} onOpenChange={setVendorDashboardOpen}>
-        <Card className="bg-amber-50 border-amber-200 shadow-sm">
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-amber-100/50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-gray-900 flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-amber-600" />
-                  Dashboard de Comissões por Vendedor
-                </CardTitle>
-                {vendorDashboardOpen ? (
-                  <ChevronUp className="h-5 w-5 text-gray-500" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-500" />
-                )}
-              </div>
-              <CardDescription className="text-gray-600">
-                Controle de pagamentos e saldos de comissões dos vendedores
-              </CardDescription>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              {(() => {
-                // Get list of vendors with commission enabled
-                const vendorsWithCommission = vendors.filter(v => v.hasCommission !== false).map(v => v.name);
-                
-                const vendorStats = registrations?.filter(r => r.vendor && vendorsWithCommission.includes(r.vendor)).reduce((acc, reg) => {
-                  const vendor = reg.vendor!;
-                  if (!acc[vendor]) {
-                    acc[vendor] = { 
-                      sales: 0, 
-                      totalDue: 0, 
-                      totalPaid: 0, 
-                      registrations: [] as typeof registrations 
-                    };
-                  }
-                  const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
-                  const commissions = calculateCommissions(reg, batchConfig);
-                  acc[vendor].sales++;
-                  acc[vendor].totalDue += commissions.vendorComm;
-                  acc[vendor].totalPaid += reg.vendorCommissionPaid || 0;
-                  acc[vendor].registrations!.push(reg);
-                  return acc;
-                }, {} as Record<string, { sales: number; totalDue: number; totalPaid: number; registrations: typeof registrations }>);
-                
-                const vendorList = Object.entries(vendorStats || {});
-                
-                if (vendorList.length === 0) {
-                  return (
-                    <div className="text-center py-4 text-gray-500">
-                      Nenhum vendedor registrado ainda.
-                    </div>
-                  );
-                }
-                
-                return (
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-gray-200">
-                        <TableHead className="text-gray-600 w-8"></TableHead>
-                        <TableHead className="text-gray-600">Vendedor</TableHead>
-                        <TableHead className="text-gray-600">Vendas</TableHead>
-                        <TableHead className="text-gray-600">Total a Receber</TableHead>
-                        <TableHead className="text-gray-600">Já Recebeu</TableHead>
-                        <TableHead className="text-gray-600">Saldo</TableHead>
-                        <TableHead className="text-gray-600">Status</TableHead>
-                        <TableHead className="text-gray-600">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {vendorList.map(([vendor, stats]) => {
-                        const balance = stats.totalDue - stats.totalPaid;
-                        const isPaid = balance <= 0;
-                        const isExpanded = expandedVendor === vendor;
-                        return (
-                          <Fragment key={vendor}>
-                            <TableRow 
-                              className="border-gray-200 cursor-pointer hover:bg-amber-100/50"
-                              onClick={() => setExpandedVendor(isExpanded ? null : vendor)}
-                              data-testid={`row-vendor-${vendor.replace(/\s+/g, '-').toLowerCase()}`}
-                            >
-                              <TableCell className="w-8">
-                                {isExpanded ? (
-                                  <ChevronUp className="h-4 w-4 text-gray-500" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                                )}
-                              </TableCell>
-                              <TableCell className="text-amber-700 font-medium">{vendor}</TableCell>
-                              <TableCell className="text-gray-900">{stats.sales}</TableCell>
-                              <TableCell className="text-gray-700">R$ {stats.totalDue.toLocaleString('pt-BR')}</TableCell>
-                              <TableCell className="text-green-600">R$ {stats.totalPaid.toLocaleString('pt-BR')}</TableCell>
-                              <TableCell className={balance > 0 ? "text-orange-600" : "text-green-600"}>
-                                R$ {balance.toLocaleString('pt-BR')}
-                              </TableCell>
-                              <TableCell>
-                                <Badge className={isPaid ? "bg-green-600" : "bg-orange-500"}>
-                                  {isPaid ? "Pago" : "Pendente"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {balance > 0 && (
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openVendorPaymentModal(vendor, balance);
-                                    }}
-                                    className="h-7 text-xs border-amber-400 text-amber-700 hover:bg-amber-50"
-                                  >
-                                    <DollarSign className="w-3 h-3 mr-1" />
-                                    Pagar
-                                  </Button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                            {isExpanded && (
-                              <TableRow className="bg-amber-50/50">
-                                <TableCell colSpan={8} className="p-0">
-                                  <div className="p-4 border-l-4 border-amber-400">
-                                    <p className="text-sm font-medium text-gray-700 mb-3">Vendas de {vendor}:</p>
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow className="border-gray-200">
-                                          <TableHead className="text-gray-500 text-xs">Nome</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Lote</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Pagto Cliente</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Comissão</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Pago Vend.</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Ações</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {stats.registrations?.map((reg) => {
-                                          const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
-                                          const commissions = calculateCommissions(reg, batchConfig);
-                                          const vendorPaid = reg.vendorCommissionPaid || 0;
-                                          const commissionPaid = vendorPaid >= commissions.vendorComm;
-                                          return (
-                                            <TableRow key={reg.id} className="border-gray-100">
-                                              <TableCell className="text-gray-800 text-sm">{reg.name}</TableCell>
-                                              <TableCell>
-                                                <Badge variant="outline" className="text-xs">
-                                                  Lote {reg.batch || 1}
-                                                </Badge>
-                                              </TableCell>
-                                              <TableCell>
-                                                <Badge 
-                                                  className={
-                                                    reg.paymentStatus === 'pago' 
-                                                      ? 'bg-green-600 text-xs' 
-                                                      : reg.paymentStatus === 'parcial' 
-                                                        ? 'bg-yellow-500 text-xs' 
-                                                        : 'bg-red-500 text-xs'
-                                                  }
-                                                >
-                                                  {reg.paymentStatus === 'pago' ? 'Pago' : reg.paymentStatus === 'parcial' ? 'Parcial' : 'Pendente'}
-                                                </Badge>
-                                              </TableCell>
-                                              <TableCell className="text-amber-700 font-medium text-sm">
-                                                R$ {commissions.vendorComm.toLocaleString('pt-BR')}
-                                              </TableCell>
-                                              <TableCell>
-                                                <span className={commissionPaid ? "text-green-600 font-medium" : "text-orange-600"}>
-                                                  R$ {vendorPaid.toLocaleString('pt-BR')}
-                                                </span>
-                                              </TableCell>
-                                              <TableCell>
-                                                <div className="flex items-center gap-1">
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      openVendorCommissionEditModal(reg, commissions.vendorComm);
-                                                    }}
-                                                    className="h-6 text-xs border-amber-400 text-amber-700 hover:bg-amber-50"
-                                                    data-testid={`button-edit-vendor-commission-${reg.id}`}
-                                                  >
-                                                    <Edit2 className="w-3 h-3" />
-                                                  </Button>
-                                                  {(reg.vendorCommissionPaid || 0) > 0 && (
-                                                    <Button
-                                                      size="sm"
-                                                      variant="outline"
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteVendorPayment(reg);
-                                                      }}
-                                                      className="h-6 text-xs border-red-400 text-red-600 hover:bg-red-50"
-                                                      data-testid={`button-delete-vendor-payment-${reg.id}`}
-                                                    >
-                                                      <Trash2 className="w-3 h-3" />
-                                                    </Button>
-                                                  )}
-                                                </div>
-                                              </TableCell>
-                                            </TableRow>
-                                          );
-                                        })}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </Fragment>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              })()}
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
       {/* Transfer Control Dashboard - DRE + Vendors + Hamilton */}
       <Collapsible open={transferDashboardOpen} onOpenChange={setTransferDashboardOpen}>
         <Card className="bg-slate-50 border-slate-200 shadow-sm">
@@ -1958,11 +1740,24 @@ Qualquer dúvida, estamos à disposição!`;
                                     <p className="text-xs text-gray-500 mb-2">Histórico de pagamentos:</p>
                                     <div className="space-y-1 text-sm">
                                       {paidRegs.map(reg => (
-                                        <div key={reg.id} className="flex justify-between text-gray-700">
+                                        <div key={reg.id} className="flex items-center justify-between text-gray-700">
                                           <span>{reg.name} - R$ {(reg.vendorCommissionPaid || 0).toLocaleString('pt-BR')}</span>
-                                          <span className="text-gray-500">
-                                            {reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toLocaleDateString('pt-BR') : '-'}
-                                          </span>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-gray-500">
+                                              {reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toLocaleDateString('pt-BR') : '-'}
+                                            </span>
+                                            {isAdminUser && (
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleDeleteVendorPayment(reg)}
+                                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                data-testid={`button-delete-vendor-payment-${reg.id}`}
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </Button>
+                                            )}
+                                          </div>
                                         </div>
                                       ))}
                                     </div>

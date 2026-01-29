@@ -299,3 +299,10 @@ export const insertCommissionPaymentHistorySchema = createInsertSchema(commissio
 
 export type InsertCommissionPaymentHistory = z.infer<typeof insertCommissionPaymentHistorySchema>;
 export type CommissionPaymentHistory = typeof commissionPaymentHistory.$inferSelect;
+
+// Session table for connect-pg-simple (express-session store)
+export const session = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
+});

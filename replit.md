@@ -40,6 +40,12 @@ Preferred communication style: Simple, everyday language.
 - **Methodology Expansion:** Detailed content for "Due Diligence e Entrada Estratégica em Conselhos" and integration of personalized prompts.
 - **Email Error Handling:** Improved UX for SendGrid failures.
 - **CRM System:** Comprehensive lead management with Google Sheets sync, lead scoring with detailed breakdown (category, points, reason, question, answer), temperature classification, vendor assignment, activity tracking with admin-only deletion, follow-up scheduling, and AI-powered suggestions. Includes vendor edit/delete (admin-only), converted leads tracking with registration details, and proper TypeScript types for jsonb fields (surveyResponses, scoreBreakdown).
+- **Financial Control Dashboard ("Controle Financeiro e Repasses"):** Comprehensive financial management section featuring:
+  - DRE Simplificada (Simplified Income Statement): Gross Revenue → (-) Taxes (11.75%) → Net Revenue → (-) Card Fees → Final Result, plus received amount tracking
+  - Vendor Commissions Section: Detailed tracking per vendor showing sold value, accrued commission, received value, commission due now, payment history with dates, and balance to receive with payment buttons
+  - Hamilton Felix Transfer Section: Same structure as vendor commissions with dedicated `hamiltonPaid` and `hamiltonPaidAt` fields in registrations table
+  - Smart Payment Distribution: Automatically allocates payments across registrations proportionally based on amounts due from received funds
+  - API endpoint `/api/registrations/:id/hamilton-payment` for processing mentor transfers
 
 ## External Dependencies
 

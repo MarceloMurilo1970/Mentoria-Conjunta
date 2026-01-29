@@ -749,6 +749,16 @@ function MentorshipRegistrationsSection() {
     queryKey: ['/api/crm/vendors'],
   });
 
+  const { data: financialSummary } = useQuery<{
+    marceloTotal: number;
+    marceloReceived: number;
+    hamiltonTotal: number;
+    hamiltonReceived: number;
+  }>({
+    queryKey: ['/api/financial-summary'],
+    enabled: hasValidAuth,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/registrations/${id}`);
@@ -1359,6 +1369,18 @@ Qualquer dúvida, estamos à disposição!`;
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold text-blue-700">R$ {totalCommissions.mm.toLocaleString('pt-BR')}</div>
+            {financialSummary && (
+              <div className="mt-1 text-xs text-blue-600 space-y-0.5">
+                <div className="flex justify-between">
+                  <span>Recebido:</span>
+                  <span className="font-medium">R$ {(financialSummary.marceloReceived / 100).toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="flex justify-between text-blue-500">
+                  <span>Pendente:</span>
+                  <span className="font-medium">R$ {((financialSummary.marceloTotal - financialSummary.marceloReceived) / 100).toLocaleString('pt-BR')}</span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
         
@@ -1369,6 +1391,18 @@ Qualquer dúvida, estamos à disposição!`;
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold text-purple-700">R$ {totalCommissions.hf.toLocaleString('pt-BR')}</div>
+            {financialSummary && (
+              <div className="mt-1 text-xs text-purple-600 space-y-0.5">
+                <div className="flex justify-between">
+                  <span>Recebido:</span>
+                  <span className="font-medium">R$ {(financialSummary.hamiltonReceived / 100).toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="flex justify-between text-purple-500">
+                  <span>Pendente:</span>
+                  <span className="font-medium">R$ {((financialSummary.hamiltonTotal - financialSummary.hamiltonReceived) / 100).toLocaleString('pt-BR')}</span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
         

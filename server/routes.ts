@@ -852,7 +852,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update payment received status (legacy)
+  // Batch configuration for pricing
+  const BATCH_PRICING = [
+    { batch: 1, pixPrice: 8000, installmentTotal: 8875 },
+    { batch: 2, pixPrice: 8700, installmentTotal: 9650 },
+    { batch: 3, pixPrice: 9400, installmentTotal: 10425 },
+  ];
+
+  // Update payment received status (legacy - now also updates paidAmount correctly)
   app.patch("/api/registrations/:id/payment", async (req, res) => {
     try {
       const { id } = req.params;
@@ -862,11 +869,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Campo 'received' deve ser boolean" });
       }
       
-      const updated = await storage.updatePaymentReceived(id, received);
-      
-      if (!updated) {
+      // Get registration to calculate correct amounts
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
+      
+      // Calculate correct total based on batch and payment method
+      const batchConfig = BATCH_PRICING.find(b => b.batch === (registration.batch || 1)) || BATCH_PRICING[0];
+      const isPix = registration.paymentMethod === 'pix';
+      const totalAmount = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
+      
+      // When marking as paid, set paidAmount to totalAmount (in centavos)
+      // When marking as not paid, set paidAmount to 0
+      const paidAmount = received ? totalAmount * 100 : 0;
+      const paymentStatus = received ? 'pago' : 'pendente';
+      
+      const updated = await storage.updatePaymentStatus(id, {
+        paymentStatus,
+        paidAmount,
+        totalAmount,
+        remainingPaymentDate: null,
+      });
       
       res.json({ success: true, registration: updated });
     } catch (error) {

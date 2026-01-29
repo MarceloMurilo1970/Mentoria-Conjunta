@@ -609,7 +609,25 @@ function EventRegistrationsSection() {
 }
 
 // Commission table data based on batch pricing
-const BATCH_CONFIG = [
+// Default tax rate - can be overridden by user
+const DEFAULT_TAX_RATE = 0.1175;
+
+// Get saved tax rate from localStorage or use default
+function getSavedTaxRate(): number {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('taxRate');
+    if (saved) {
+      const parsed = parseFloat(saved);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) {
+        return parsed;
+      }
+    }
+  }
+  return DEFAULT_TAX_RATE;
+}
+
+// Base batch config without tax rate (tax rate applied dynamically)
+const BATCH_CONFIG_BASE = [
   { 
     batch: 1, 
     deadline: "07/12/2025", 
@@ -618,7 +636,6 @@ const BATCH_CONFIG = [
     installments: 5, 
     installmentTotal: 8875,
     cardFee: 781,
-    taxRate: 0.1175,
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
@@ -632,7 +649,6 @@ const BATCH_CONFIG = [
     installments: 5, 
     installmentTotal: 9650,
     cardFee: 849,
-    taxRate: 0.1175,
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
@@ -646,13 +662,23 @@ const BATCH_CONFIG = [
     installments: 5, 
     installmentTotal: 10425,
     cardFee: 917,
-    taxRate: 0.1175,
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
     paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00",
   },
 ];
+
+// Function to get BATCH_CONFIG with current tax rate
+function getBatchConfig(taxRate: number) {
+  return BATCH_CONFIG_BASE.map(batch => ({
+    ...batch,
+    taxRate,
+  }));
+}
+
+// For backwards compatibility - default BATCH_CONFIG
+const BATCH_CONFIG = getBatchConfig(getSavedTaxRate());
 
 // Calculate commissions for a registration
 function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFIG[0]) {
@@ -727,6 +753,14 @@ function MentorshipRegistrationsSection() {
   const [editingCommissionAmount, setEditingCommissionAmount] = useState('');
   const [editingCommissionMax, setEditingCommissionMax] = useState(0);
   
+  // Tax rate configuration
+  const [taxRate, setTaxRate] = useState(getSavedTaxRate());
+  const [editingTaxRate, setEditingTaxRate] = useState(false);
+  const [taxRateInput, setTaxRateInput] = useState((getSavedTaxRate() * 100).toFixed(2));
+  
+  // Dynamically computed BATCH_CONFIG based on current tax rate
+  const currentBatchConfig = getBatchConfig(taxRate);
+
   // Transfer control states
   const [transferDashboardOpen, setTransferDashboardOpen] = useState(false);
   const [transferPaymentModalOpen, setTransferPaymentModalOpen] = useState(false);
@@ -1110,7 +1144,7 @@ function MentorshipRegistrationsSection() {
   };
 
   const copyPaymentInstructions = (reg: Registration) => {
-    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
     const firstName = reg.name.split(' ')[0];
     
     let text = '';
@@ -1209,7 +1243,7 @@ Qualquer dúvida, estamos à disposição!`;
     vendorRegs.forEach(reg => {
       if (remainingPayment <= 0) return;
       
-      const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+      const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
       const comms = calculateCommissions(reg, batchConfig);
       const alreadyPaid = reg.vendorCommissionPaid || 0;
       const owedToVendor = comms.vendorComm - alreadyPaid;
@@ -1278,8 +1312,8 @@ Qualquer dúvida, estamos à disposição!`;
   };
 
   const getSelectedBatchConfig = () => {
-    if (!selectedRegistration) return BATCH_CONFIG[0];
-    return BATCH_CONFIG.find(b => b.batch === (selectedRegistration.batch || 1)) || BATCH_CONFIG[0];
+    if (!selectedRegistration) return currentBatchConfig[0];
+    return currentBatchConfig.find(b => b.batch === (selectedRegistration.batch || 1)) || currentBatchConfig[0];
   };
 
   const getRemainingAmount = () => {
@@ -1314,7 +1348,7 @@ Qualquer dúvida, estamos à disposição!`;
   
   // Calculate total commissions (only count vendor commissions for vendors with hasCommission=true)
   const totalCommissions = (registrations || []).reduce((acc, reg) => {
-    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
     const comms = calculateCommissions(reg, batchConfig);
     // Only add vendor commission if vendor has commission enabled
     const vendorHasCommission = reg.vendor && vendorsWithCommission.includes(reg.vendor);
@@ -1501,7 +1535,7 @@ Qualquer dúvida, estamos à disposição!`;
                       registrations: [] as typeof registrations 
                     };
                   }
-                  const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                  const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                   const commissions = calculateCommissions(reg, batchConfig);
                   acc[vendor].sales++;
                   acc[vendor].totalDue += commissions.vendorComm;
@@ -1600,7 +1634,7 @@ Qualquer dúvida, estamos à disposição!`;
                                       </TableHeader>
                                       <TableBody>
                                         {stats.registrations?.map((reg) => {
-                                          const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                                          const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                                           const commissions = calculateCommissions(reg, batchConfig);
                                           const vendorPaid = reg.vendorCommissionPaid || 0;
                                           const commissionPaid = vendorPaid >= commissions.vendorComm;
@@ -1696,7 +1730,7 @@ Qualquer dúvida, estamos à disposição!`;
               {/* DRE Cards - Grid Layout */}
               {(() => {
                 const dreData = registrations?.reduce((acc, reg) => {
-                  const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                  const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                   const comms = calculateCommissions(reg, batchConfig);
                   // When PAGO: use full net amount (after taxes and card fees)
                   // When PARCIAL: use proportional amount based on paidAmount (in cents)
@@ -1724,7 +1758,61 @@ Qualquer dúvida, estamos à disposição!`;
                       <div className="text-xl font-bold text-gray-900">R$ {dreData.grossRevenue.toLocaleString('pt-BR')}</div>
                     </div>
                     <div className="bg-red-50 rounded-lg border border-red-200 p-4 text-center">
-                      <div className="text-xs text-red-600 uppercase tracking-wide mb-1">(-) Impostos 11,75%</div>
+                      <div className="text-xs text-red-600 uppercase tracking-wide mb-1 flex items-center justify-center gap-1">
+                        (-) Impostos 
+                        {editingTaxRate ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              value={taxRateInput}
+                              onChange={(e) => setTaxRateInput(e.target.value)}
+                              className="w-16 h-5 text-xs text-center p-1"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              data-testid="input-tax-rate"
+                            />
+                            <span>%</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-5 w-5"
+                              onClick={() => {
+                                const newRate = parseFloat(taxRateInput) / 100;
+                                if (!isNaN(newRate) && newRate >= 0 && newRate <= 1) {
+                                  setTaxRate(newRate);
+                                  localStorage.setItem('taxRate', newRate.toString());
+                                  setEditingTaxRate(false);
+                                }
+                              }}
+                              data-testid="button-save-tax-rate"
+                            >
+                              <Check className="h-3 w-3 text-green-600" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-5 w-5"
+                              onClick={() => {
+                                setTaxRateInput((taxRate * 100).toFixed(2));
+                                setEditingTaxRate(false);
+                              }}
+                              data-testid="button-cancel-tax-rate"
+                            >
+                              <X className="h-3 w-3 text-red-600" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setEditingTaxRate(true)}
+                            className="hover:underline cursor-pointer flex items-center gap-1"
+                            data-testid="button-edit-tax-rate"
+                          >
+                            {(taxRate * 100).toFixed(2)}%
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
                       <div className="text-xl font-bold text-red-700">R$ {dreData.taxes.toLocaleString('pt-BR')}</div>
                     </div>
                     <div className="bg-white rounded-lg border border-slate-200 p-4 text-center">
@@ -1769,7 +1857,7 @@ Qualquer dúvida, estamos à disposição!`;
                       {vendorsWithCommission.map(vendor => {
                         const vendorRegs = registrations?.filter(r => r.vendor === vendor.name) || [];
                         const vendorStats = vendorRegs.reduce((acc, reg) => {
-                          const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                          const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                           const comms = calculateCommissions(reg, batchConfig);
                           const paidAmountReais = (reg.paidAmount || 0) / 100;
                           
@@ -1897,7 +1985,7 @@ Qualquer dúvida, estamos à disposição!`;
                 </h3>
                 {(() => {
                   const hamiltonStats = registrations?.reduce((acc, reg) => {
-                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                     const comms = calculateCommissions(reg, batchConfig);
                     const paidAmountReais = (reg.paidAmount || 0) / 100;
                     
@@ -1981,7 +2069,7 @@ Qualquer dúvida, estamos à disposição!`;
                                 </thead>
                                 <tbody className="divide-y divide-slate-200">
                                   {registrations?.map(reg => {
-                                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                                    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                                     const comms = calculateCommissions(reg, batchConfig);
                                     const paidAmountReais = (reg.paidAmount || 0) / 100;
                                     const normalizedStatus = (reg.paymentStatus || '').toLowerCase().trim();
@@ -2178,7 +2266,7 @@ Qualquer dúvida, estamos à disposição!`;
                   for (const reg of vendorRegs) {
                     if (remainingAmount <= 0) break;
                     
-                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                     const comms = calculateCommissions(reg, batchConfig);
                     const paidAmountReais = (reg.paidAmount || 0) / 100;
                     const statusNorm = (reg.paymentStatus || '').toLowerCase().trim();
@@ -2216,7 +2304,7 @@ Qualquer dúvida, estamos à disposição!`;
                   for (const reg of allRegs) {
                     if (remainingAmount <= 0) break;
                     
-                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                     const comms = calculateCommissions(reg, batchConfig);
                     const paidAmountReais = (reg.paidAmount || 0) / 100;
                     const statusNorm = (reg.paymentStatus || '').toLowerCase().trim();
@@ -2433,7 +2521,7 @@ Qualquer dúvida, estamos à disposição!`;
           {registrations && registrations.length > 0 ? (
             <div className="space-y-4">
               {registrations.map((reg, index) => {
-                const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                 const commissions = calculateCommissions(reg, batchConfig);
                 
                 return (
@@ -2799,7 +2887,7 @@ Qualquer dúvida, estamos à disposição!`;
                 )}
               </div>
               <CardDescription className="text-gray-400">
-                Taxa de cartão: parcelado apenas | Impostos: 11,75% | MM: 63,3% | HF: 31,7% | Comissão Vendedor: 5%
+                Taxa de cartão: parcelado apenas | Impostos: {(taxRate * 100).toFixed(2)}% | MM: 63,3% | HF: 31,7% | Comissão Vendedor: 5%
               </CardDescription>
             </CardHeader>
           </CollapsibleTrigger>
@@ -2817,7 +2905,7 @@ Qualquer dúvida, estamos à disposição!`;
                       <TableHead className="text-gray-400">Total</TableHead>
                       <TableHead className="text-gray-400">Taxa Cartão</TableHead>
                       <TableHead className="text-gray-400">Líquido s/ Impostos</TableHead>
-                      <TableHead className="text-gray-400">Impostos (11,75%)</TableHead>
+                      <TableHead className="text-gray-400">Impostos ({(taxRate * 100).toFixed(2)}%)</TableHead>
                       <TableHead className="text-gray-400">Líquido c/ Impostos</TableHead>
                       <TableHead className="text-blue-400">MM (63,3%)</TableHead>
                       <TableHead className="text-purple-400">HF (31,7%)</TableHead>
@@ -2825,7 +2913,7 @@ Qualquer dúvida, estamos à disposição!`;
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {BATCH_CONFIG.map((batch) => (
+                    {currentBatchConfig.map((batch) => (
                       <Fragment key={batch.batch}>
                         <TableRow className="border-gray-800">
                           <TableCell className="text-white font-medium">{batch.batch}</TableCell>

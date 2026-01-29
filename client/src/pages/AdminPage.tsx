@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy, Pencil, Download, Banknote } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy, Pencil, Download, Banknote, BarChart3 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -1959,6 +1959,94 @@ Qualquer dúvida, estamos à disposição!`;
                           </div>
                         </div>
                         
+                        {/* Detailed Analytics - All Registrations */}
+                        <div className="border-t border-slate-200 pt-4 mb-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <BarChart3 className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium text-gray-700">Analítico por Inscrição</span>
+                          </div>
+                          <div className="bg-slate-50 rounded-lg overflow-hidden">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="bg-slate-100 text-left">
+                                    <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Venda</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-center">Status</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Repasse Total</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Devido Agora</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Já Pago</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Saldo</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200">
+                                  {registrations?.map(reg => {
+                                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                                    const comms = calculateCommissions(reg, batchConfig);
+                                    const paidAmountReais = (reg.paidAmount || 0) / 100;
+                                    const normalizedStatus = (reg.paymentStatus || '').toLowerCase().trim();
+                                    const paidRatio = normalizedStatus === 'pago' ? 1 : 
+                                                     normalizedStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
+                                    const hfDueNow = Math.round(comms.hfComm * paidRatio);
+                                    const hfPaid = reg.hamiltonPaid || 0;
+                                    const hfBalance = hfDueNow - hfPaid;
+                                    
+                                    return (
+                                      <tr key={reg.id} className="hover:bg-slate-100">
+                                        <td className="px-3 py-2">
+                                          <div>
+                                            <p className="font-medium text-gray-900">{reg.name}</p>
+                                            <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : 'Parcelado'}</p>
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-2 text-right font-medium">R$ {comms.gross.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-center">
+                                          <Badge className={
+                                            normalizedStatus === 'pago' ? 'bg-green-600' : 
+                                            normalizedStatus === 'parcial' ? 'bg-amber-500' : 'bg-red-500'
+                                          }>
+                                            {normalizedStatus === 'pago' ? 'Pago' : normalizedStatus === 'parcial' ? 'Parcial' : 'Pendente'}
+                                          </Badge>
+                                        </td>
+                                        <td className="px-3 py-2 text-right text-purple-700 font-medium">R$ {comms.hfComm.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-blue-700 font-medium">R$ {hfDueNow.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right">
+                                          {hfPaid > 0 ? (
+                                            <div>
+                                              <span className="text-green-600 font-medium">R$ {hfPaid.toLocaleString('pt-BR')}</span>
+                                              {reg.hamiltonPaidAt && (
+                                                <p className="text-xs text-gray-400">{new Date(reg.hamiltonPaidAt).toLocaleDateString('pt-BR')}</p>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <span className="text-gray-400">-</span>
+                                          )}
+                                        </td>
+                                        <td className="px-3 py-2 text-right">
+                                          <span className={`font-bold ${hfBalance > 0 ? 'text-purple-600' : hfBalance < 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                                            R$ {hfBalance.toLocaleString('pt-BR')}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                                <tfoot>
+                                  <tr className="bg-purple-50 font-semibold">
+                                    <td className="px-3 py-2 text-gray-700">TOTAL</td>
+                                    <td className="px-3 py-2 text-right">R$ {hamiltonStats.soldValue.toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2"></td>
+                                    <td className="px-3 py-2 text-right text-purple-700">R$ {hamiltonStats.hfTotal.toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-blue-700">R$ {hamiltonStats.hfDueNow.toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-green-600">R$ {hamiltonStats.hfPaid.toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-purple-700">R$ {balance.toLocaleString('pt-BR')}</td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+
                         <div className="border-t border-slate-200 pt-4">
                           <div className="flex items-center justify-between mb-3">
                             <span className="text-sm font-medium text-gray-700">Repasses Efetuados:</span>

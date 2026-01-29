@@ -1219,6 +1219,23 @@ Qualquer dúvida, estamos à disposição!`;
     setEditingCommissionReg(null);
   };
 
+  const handleDeleteVendorPayment = (reg: Registration) => {
+    if (!window.confirm(`Tem certeza que deseja apagar o repasse de R$ ${(reg.vendorCommissionPaid || 0).toLocaleString('pt-BR')} para o vendedor ${reg.vendor}?`)) {
+      return;
+    }
+    
+    vendorCommissionMutation.mutate({
+      id: reg.id,
+      vendorCommissionPaid: 0,
+      vendorCommissionPaidAt: null
+    });
+    
+    toast({
+      title: "Repasse apagado",
+      description: `O repasse do vendedor ${reg.vendor} foi zerado com sucesso`,
+    });
+  };
+
   const handleVendorPayment = () => {
     if (!selectedVendor || !vendorPaymentAmount || !vendorPaymentDate) return;
     
@@ -1677,6 +1694,20 @@ Qualquer dúvida, estamos à disposição!`;
                                                   >
                                                     <Edit2 className="w-3 h-3" />
                                                   </Button>
+                                                  {(reg.vendorCommissionPaid || 0) > 0 && (
+                                                    <Button
+                                                      size="sm"
+                                                      variant="outline"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteVendorPayment(reg);
+                                                      }}
+                                                      className="h-6 text-xs border-red-400 text-red-600 hover:bg-red-50"
+                                                      data-testid={`button-delete-vendor-payment-${reg.id}`}
+                                                    >
+                                                      <Trash2 className="w-3 h-3" />
+                                                    </Button>
+                                                  )}
                                                 </div>
                                               </TableCell>
                                             </TableRow>

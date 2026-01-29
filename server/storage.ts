@@ -6,7 +6,9 @@ import {
   type LeadActivity, type InsertLeadActivity, leadActivities,
   type LeadFollowUp, type InsertLeadFollowUp, leadFollowUps,
   type User, type InsertUser, users,
-  type VendorActivityLog, type InsertVendorActivityLog, vendorActivityLog
+  type VendorActivityLog, type InsertVendorActivityLog, vendorActivityLog,
+  type CommissionPayment, type InsertCommissionPayment, commissionPayments,
+  type CommissionPaymentHistory, type InsertCommissionPaymentHistory, commissionPaymentHistory
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, gte, isNull, and, or, ilike } from "drizzle-orm";
@@ -638,6 +640,153 @@ export class DbStorage implements IStorage {
       actionsByType: byTypeResult.rows as { actionType: string; count: number }[],
       actionsByDay: byDayResult.rows as { date: string; count: number }[],
     };
+  }
+
+  // Commission Payment methods
+  async getCommissionPayments(): Promise<CommissionPayment[]> {
+    return await db.select().from(commissionPayments).orderBy(desc(commissionPayments.createdAt));
+  }
+
+  async getCommissionPaymentsByRegistration(registrationId: string): Promise<CommissionPayment[]> {
+    return await db.select().from(commissionPayments)
+      .where(eq(commissionPayments.registrationId, registrationId))
+      .orderBy(desc(commissionPayments.createdAt));
+  }
+
+  async getCommissionPaymentsByRecipient(recipientType: string, recipientId?: string): Promise<CommissionPayment[]> {
+    if (recipientId) {
+      return await db.select().from(commissionPayments)
+        .where(and(
+          eq(commissionPayments.recipientType, recipientType),
+          eq(commissionPayments.recipientId, recipientId)
+        ))
+        .orderBy(desc(commissionPayments.createdAt));
+    }
+    return await db.select().from(commissionPayments)
+      .where(eq(commissionPayments.recipientType, recipientType))
+      .orderBy(desc(commissionPayments.createdAt));
+  }
+
+  async createCommissionPayment(payment: InsertCommissionPayment): Promise<CommissionPayment> {
+    const result = await db.insert(commissionPayments).values(payment).returning();
+    return result[0];
+  }
+
+  async updateCommissionPaymentAmount(id: string, paidAmount: number): Promise<CommissionPayment | undefined> {
+    const payment = await db.select().from(commissionPayments).where(eq(commissionPayments.id, id)).limit(1);
+    if (!payment[0]) return undefined;
+
+    let status = 'pendente';
+    let paidAt = null;
+    if (paidAmount >= payment[0].totalAmount) {
+      status = 'pago';
+      paidAt = new Date();
+    } else if (paidAmount > 0) {
+      status = 'parcial';
+    }
+
+    const result = await db.update(commissionPayments)
+      .set({ 
+        paidAmount, 
+        status, 
+        paidAt,
+        updatedAt: new Date() 
+      })
+      .where(eq(commissionPayments.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async addCommissionPaymentEntry(paymentId: string, amount: number, paymentMethod?: string, notes?: string, paidBy?: string): Promise<CommissionPaymentHistory> {
+    // Add history entry
+    const historyResult = await db.insert(commissionPaymentHistory).values({
+      commissionPaymentId: paymentId,
+      amount,
+      paymentMethod,
+      notes,
+      paidBy
+    }).returning();
+
+    // Update the commission payment total
+    const payment = await db.select().from(commissionPayments).where(eq(commissionPayments.id, paymentId)).limit(1);
+    if (payment[0]) {
+      const newPaidAmount = payment[0].paidAmount + amount;
+      await this.updateCommissionPaymentAmount(paymentId, newPaidAmount);
+    }
+
+    return historyResult[0];
+  }
+
+  async getCommissionPaymentHistory(paymentId: string): Promise<CommissionPaymentHistory[]> {
+    return await db.select().from(commissionPaymentHistory)
+      .where(eq(commissionPaymentHistory.commissionPaymentId, paymentId))
+      .orderBy(desc(commissionPaymentHistory.createdAt));
+  }
+
+  async deleteCommissionPaymentEntry(historyId: string): Promise<boolean> {
+    // Get the entry first to know the amount
+    const entry = await db.select().from(commissionPaymentHistory)
+      .where(eq(commissionPaymentHistory.id, historyId)).limit(1);
+    
+    if (!entry[0]) return false;
+
+    // Delete the entry
+    await db.delete(commissionPaymentHistory).where(eq(commissionPaymentHistory.id, historyId));
+
+    // Update the payment total
+    const payment = await db.select().from(commissionPayments)
+      .where(eq(commissionPayments.id, entry[0].commissionPaymentId!)).limit(1);
+    
+    if (payment[0]) {
+      const newPaidAmount = Math.max(0, payment[0].paidAmount - entry[0].amount);
+      await this.updateCommissionPaymentAmount(payment[0].id, newPaidAmount);
+    }
+
+    return true;
+  }
+
+  // Get financial summary for Marcelo and Hamilton
+  async getFinancialSummary(): Promise<{
+    marceloTotal: number;
+    marceloReceived: number;
+    hamiltonTotal: number;
+    hamiltonReceived: number;
+  }> {
+    // Get all registrations
+    const allRegistrations = await this.getAllRegistrations();
+    
+    // Calculate totals based on batch pricing
+    const batchPrices: Record<number, { total: number; marcelo: number; hamilton: number }> = {
+      1: { total: 800000, marcelo: 500000, hamilton: 300000 },
+      2: { total: 900000, marcelo: 560000, hamilton: 340000 },
+      3: { total: 1000000, marcelo: 620000, hamilton: 380000 },
+    };
+
+    let marceloTotal = 0;
+    let marceloReceived = 0;
+    let hamiltonTotal = 0;
+    let hamiltonReceived = 0;
+
+    for (const reg of allRegistrations) {
+      const batch = reg.batch || 3;
+      const prices = batchPrices[batch] || batchPrices[3];
+      
+      // Total amounts (what they should get when fully paid)
+      marceloTotal += prices.marcelo;
+      hamiltonTotal += prices.hamilton;
+
+      // Received amounts (proportional to payment received)
+      if (reg.paymentStatus === 'pago') {
+        marceloReceived += prices.marcelo;
+        hamiltonReceived += prices.hamilton;
+      } else if (reg.paymentStatus === 'parcial' && reg.paidAmount && reg.totalAmount) {
+        const paidRatio = reg.paidAmount / reg.totalAmount;
+        marceloReceived += Math.round(prices.marcelo * paidRatio);
+        hamiltonReceived += Math.round(prices.hamilton * paidRatio);
+      }
+    }
+
+    return { marceloTotal, marceloReceived, hamiltonTotal, hamiltonReceived };
   }
 }
 

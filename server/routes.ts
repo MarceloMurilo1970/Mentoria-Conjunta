@@ -2151,6 +2151,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Commission Payments routes
+  app.get("/api/commission-payments", requireAdmin, async (req, res) => {
+    try {
+      const payments = await storage.getCommissionPayments();
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching commission payments:", error);
+      res.status(500).json({ error: "Erro ao buscar pagamentos de comissões" });
+    }
+  });
+
+  app.get("/api/commission-payments/by-registration/:registrationId", requireAdmin, async (req, res) => {
+    try {
+      const payments = await storage.getCommissionPaymentsByRegistration(req.params.registrationId);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching commission payments by registration:", error);
+      res.status(500).json({ error: "Erro ao buscar pagamentos" });
+    }
+  });
+
+  app.get("/api/commission-payments/by-recipient/:type", requireAdmin, async (req, res) => {
+    try {
+      const { recipientId } = req.query;
+      const payments = await storage.getCommissionPaymentsByRecipient(
+        req.params.type,
+        recipientId as string | undefined
+      );
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching commission payments by recipient:", error);
+      res.status(500).json({ error: "Erro ao buscar pagamentos" });
+    }
+  });
+
+  app.post("/api/commission-payments", requireAdmin, async (req, res) => {
+    try {
+      const payment = await storage.createCommissionPayment(req.body);
+      res.json(payment);
+    } catch (error) {
+      console.error("Error creating commission payment:", error);
+      res.status(500).json({ error: "Erro ao criar pagamento de comissão" });
+    }
+  });
+
+  app.post("/api/commission-payments/:id/pay", requireAdmin, async (req, res) => {
+    try {
+      const { amount, paymentMethod, notes, paidBy } = req.body;
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Valor inválido" });
+      }
+      const entry = await storage.addCommissionPaymentEntry(
+        req.params.id,
+        amount,
+        paymentMethod,
+        notes,
+        paidBy
+      );
+      res.json(entry);
+    } catch (error) {
+      console.error("Error adding commission payment entry:", error);
+      res.status(500).json({ error: "Erro ao registrar pagamento" });
+    }
+  });
+
+  app.get("/api/commission-payments/:id/history", requireAdmin, async (req, res) => {
+    try {
+      const history = await storage.getCommissionPaymentHistory(req.params.id);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching commission payment history:", error);
+      res.status(500).json({ error: "Erro ao buscar histórico de pagamentos" });
+    }
+  });
+
+  app.delete("/api/commission-payments/history/:historyId", requireAdmin, async (req, res) => {
+    try {
+      const success = await storage.deleteCommissionPaymentEntry(req.params.historyId);
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Registro não encontrado" });
+      }
+    } catch (error) {
+      console.error("Error deleting commission payment entry:", error);
+      res.status(500).json({ error: "Erro ao excluir registro de pagamento" });
+    }
+  });
+
+  app.get("/api/financial-summary", requireAdmin, async (req, res) => {
+    try {
+      const summary = await storage.getFinancialSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching financial summary:", error);
+      res.status(500).json({ error: "Erro ao buscar resumo financeiro" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

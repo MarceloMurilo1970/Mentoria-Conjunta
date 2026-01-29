@@ -1249,28 +1249,30 @@ Qualquer dúvida, estamos à disposição!`;
   const handleSavePaymentStatus = () => {
     if (!selectedRegistration) return;
 
+    const batchConfig = getSelectedBatchConfig();
+    // Use correct total based on payment method
+    const isPix = selectedRegistration.paymentMethod === 'pix';
+    const totalPrice = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
+
     // Validate partial payment fields
     if (paymentStatus === 'parcial') {
       const paidNum = Number(paidAmount);
-      const batchTotal = getSelectedBatchConfig().pixPrice;
-      if (isNaN(paidNum) || paidNum <= 0 || paidNum >= batchTotal) {
+      if (isNaN(paidNum) || paidNum <= 0 || paidNum >= totalPrice) {
         toast({
           title: "Valor inválido",
-          description: `O valor pago deve ser maior que 0 e menor que R$ ${getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR')}`,
+          description: `O valor pago deve ser maior que 0 e menor que R$ ${totalPrice.toLocaleString('pt-BR')}`,
           variant: "destructive",
         });
         return;
       }
     }
-
-    const batchPixPrice = getSelectedBatchConfig().pixPrice;
-    const paidAmountNum = paymentStatus === 'parcial' ? Number(paidAmount) : (paymentStatus === 'pago' ? batchPixPrice : 0);
+    const paidAmountNum = paymentStatus === 'parcial' ? Number(paidAmount) : (paymentStatus === 'pago' ? totalPrice : 0);
 
     paymentStatusMutation.mutate({
       id: selectedRegistration.id,
       paymentStatus,
       paidAmount: paidAmountNum,
-      totalAmount: batchPixPrice,
+      totalAmount: totalPrice,
       remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? remainingPaymentDate : null,
     });
   };

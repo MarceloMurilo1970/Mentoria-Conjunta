@@ -875,45 +875,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update payment status with full details (PIX only)
+  // Update payment status with full details (PIX and installments)
   app.patch("/api/registrations/:id/payment-status", async (req, res) => {
     try {
       const { id } = req.params;
-      const { paymentStatus, paidAmount, remainingPaymentDate } = req.body;
+      const { paymentStatus, paidAmount, totalAmount, remainingPaymentDate } = req.body;
       
       // Validate payment status
       if (!['pendente', 'pago', 'parcial'].includes(paymentStatus)) {
         return res.status(400).json({ error: "Status de pagamento inválido" });
       }
       
-      // Get current registration to verify it's PIX
       const registration = await storage.getRegistration(id);
       if (!registration) {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
       
-      if (registration.paymentMethod !== 'pix') {
-        return res.status(400).json({ error: "Esta funcionalidade é apenas para pagamentos PIX" });
-      }
-
-      const PIX_TOTAL = 8000;
+      // Use provided totalAmount or existing registration totalAmount
+      const effectiveTotal = totalAmount || registration.totalAmount || 8000;
       let validatedPaidAmount = 0;
 
       // Validate partial payment fields
       if (paymentStatus === 'parcial') {
         const paidNum = Number(paidAmount);
-        if (isNaN(paidNum) || paidNum <= 0 || paidNum >= PIX_TOTAL) {
+        if (isNaN(paidNum) || paidNum <= 0 || paidNum >= effectiveTotal) {
           return res.status(400).json({ error: "Valor pago deve ser maior que 0 e menor que o total" });
         }
         validatedPaidAmount = paidNum;
       } else if (paymentStatus === 'pago') {
-        validatedPaidAmount = PIX_TOTAL;
+        // When marked as 'pago', paidAmount should equal totalAmount (in centavos)
+        // effectiveTotal is in reais, convert to centavos for paidAmount
+        validatedPaidAmount = effectiveTotal * 100;
       }
       
       const updated = await storage.updatePaymentStatus(id, {
         paymentStatus,
         paidAmount: validatedPaidAmount,
-        totalAmount: PIX_TOTAL,
+        totalAmount: effectiveTotal,
         remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? new Date(remainingPaymentDate) : null,
       });
       

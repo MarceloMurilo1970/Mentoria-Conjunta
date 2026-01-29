@@ -2470,12 +2470,22 @@ Qualquer dúvida, estamos à disposição!`;
                         )}
                       </div>
                       
-                      {/* Commissions */}
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="text-blue-400">MM: R$ {commissions.mmComm.toLocaleString('pt-BR')}</span>
-                        <span className="text-purple-400">HF: R$ {commissions.hfComm.toLocaleString('pt-BR')}</span>
+                      {/* Financial Breakdown */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-gray-700 font-medium">Bruto: R$ {commissions.gross.toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-red-500">Imp: R$ {commissions.taxes.toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-orange-500">Taxa: R$ {commissions.cardFee.toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-blue-600">MM: R$ {commissions.mmComm.toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-purple-600">HF: R$ {commissions.hfComm.toLocaleString('pt-BR')}</span>
                         {commissions.vendorComm > 0 && (
-                          <span className="text-yellow-400">Vend: R$ {commissions.vendorComm.toLocaleString('pt-BR')}</span>
+                          <>
+                            <span className="text-gray-400">|</span>
+                            <span className="text-yellow-600">Vend: R$ {commissions.vendorComm.toLocaleString('pt-BR')}</span>
+                          </>
                         )}
                       </div>
                       

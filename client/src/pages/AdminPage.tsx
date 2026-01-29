@@ -1645,20 +1645,20 @@ Qualquer dúvida, estamos à disposição!`;
                 const dreData = registrations?.reduce((acc, reg) => {
                   const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                   const comms = calculateCommissions(reg, batchConfig);
-                  // paidAmount is stored in cents, convert to reais for ratio calculation
+                  // When PAGO: use full net amount (after taxes and card fees)
+                  // When PARCIAL: use proportional amount based on paidAmount (in cents)
                   const paidAmountReais = (reg.paidAmount || 0) / 100;
-                  const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
-                                   reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
+                  const receivedForThisReg = reg.paymentStatus === 'pago' ? comms.netAfterTax : 
+                                            reg.paymentStatus === 'parcial' ? paidAmountReais : 0;
                   
                   return {
                     grossRevenue: acc.grossRevenue + comms.gross,
                     taxes: acc.taxes + comms.taxes,
                     cardFees: acc.cardFees + comms.cardFee,
                     netRevenue: acc.netRevenue + comms.netAfterTax,
-                    receivedGross: acc.receivedGross + paidAmountReais,
-                    receivedNet: acc.receivedNet + Math.round(comms.netAfterTax * paidRatio),
+                    receivedNet: acc.receivedNet + receivedForThisReg,
                   };
-                }, { grossRevenue: 0, taxes: 0, cardFees: 0, netRevenue: 0, receivedGross: 0, receivedNet: 0 }) || { grossRevenue: 0, taxes: 0, cardFees: 0, netRevenue: 0, receivedGross: 0, receivedNet: 0 };
+                }, { grossRevenue: 0, taxes: 0, cardFees: 0, netRevenue: 0, receivedNet: 0 }) || { grossRevenue: 0, taxes: 0, cardFees: 0, netRevenue: 0, receivedNet: 0 };
 
                 const receitaLiquida = dreData.grossRevenue - dreData.taxes;
                 const resultadoFinal = receitaLiquida - dreData.cardFees;
@@ -1686,8 +1686,8 @@ Qualquer dúvida, estamos à disposição!`;
                       <div className="text-xl font-bold text-green-700">R$ {resultadoFinal.toLocaleString('pt-BR')}</div>
                     </div>
                     <div className="bg-blue-50 rounded-lg border border-blue-300 p-4 text-center">
-                      <div className="text-xs text-blue-600 uppercase tracking-wide mb-1">Recebido</div>
-                      <div className="text-xl font-bold text-blue-700">R$ {dreData.receivedGross.toLocaleString('pt-BR')}</div>
+                      <div className="text-xs text-blue-600 uppercase tracking-wide mb-1">Recebido (Líq.)</div>
+                      <div className="text-xl font-bold text-blue-700">R$ {dreData.receivedNet.toLocaleString('pt-BR')}</div>
                     </div>
                   </div>
                 );

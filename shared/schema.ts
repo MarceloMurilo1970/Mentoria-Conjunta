@@ -253,3 +253,47 @@ export const insertVendorActivityLogSchema = createInsertSchema(vendorActivityLo
 
 export type InsertVendorActivityLog = z.infer<typeof insertVendorActivityLogSchema>;
 export type VendorActivityLog = typeof vendorActivityLog.$inferSelect;
+
+// Commission Payments table for tracking vendor commissions and mentor transfers
+export const commissionPayments = pgTable("commission_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  registrationId: varchar("registration_id").references(() => registrations.id),
+  recipientType: text("recipient_type").notNull(), // 'vendor', 'mentor' (Hamilton Felix)
+  recipientId: varchar("recipient_id"), // vendor_id for vendors, null for mentor
+  recipientName: text("recipient_name").notNull(),
+  totalAmount: integer("total_amount").notNull(), // Total commission/transfer amount in cents
+  paidAmount: integer("paid_amount").default(0).notNull(), // Amount already paid in cents
+  status: text("status").default("pendente").notNull(), // pendente, parcial, pago
+  notes: text("notes"),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCommissionPaymentSchema = createInsertSchema(commissionPayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCommissionPayment = z.infer<typeof insertCommissionPaymentSchema>;
+export type CommissionPayment = typeof commissionPayments.$inferSelect;
+
+// Commission Payment History for tracking individual payments
+export const commissionPaymentHistory = pgTable("commission_payment_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  commissionPaymentId: varchar("commission_payment_id").references(() => commissionPayments.id),
+  amount: integer("amount").notNull(), // Amount paid in this transaction in cents
+  paymentMethod: text("payment_method"), // pix, transferencia, etc
+  notes: text("notes"),
+  paidBy: text("paid_by"), // Who made the payment
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCommissionPaymentHistorySchema = createInsertSchema(commissionPaymentHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCommissionPaymentHistory = z.infer<typeof insertCommissionPaymentHistorySchema>;
+export type CommissionPaymentHistory = typeof commissionPaymentHistory.$inferSelect;

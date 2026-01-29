@@ -721,6 +721,12 @@ function MentorshipRegistrationsSection() {
   const [invoiceAmount, setInvoiceAmount] = useState('');
   const [invoiceDate, setInvoiceDate] = useState('');
   
+  // Individual vendor commission edit states
+  const [vendorCommissionEditModalOpen, setVendorCommissionEditModalOpen] = useState(false);
+  const [editingCommissionReg, setEditingCommissionReg] = useState<Registration | null>(null);
+  const [editingCommissionAmount, setEditingCommissionAmount] = useState('');
+  const [editingCommissionMax, setEditingCommissionMax] = useState(0);
+  
   // Transfer control states
   const [transferDashboardOpen, setTransferDashboardOpen] = useState(false);
   const [transferPaymentModalOpen, setTransferPaymentModalOpen] = useState(false);
@@ -1152,6 +1158,36 @@ Qualquer dúvida, estamos à disposição!`;
     setVendorPaymentDate(today);
     setVendorPaymentModalOpen(true);
   };
+  
+  const openVendorCommissionEditModal = (reg: Registration, maxCommission: number) => {
+    setEditingCommissionReg(reg);
+    setEditingCommissionMax(maxCommission);
+    setEditingCommissionAmount((reg.vendorCommissionPaid || 0).toString());
+    setVendorCommissionEditModalOpen(true);
+  };
+  
+  const handleSaveVendorCommissionEdit = () => {
+    if (!editingCommissionReg) return;
+    
+    const amount = Number(editingCommissionAmount);
+    if (isNaN(amount) || amount < 0) {
+      toast({
+        title: "Erro",
+        description: "O valor deve ser um número válido maior ou igual a zero",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    vendorCommissionMutation.mutate({
+      id: editingCommissionReg.id,
+      vendorCommissionPaid: amount,
+      vendorCommissionPaidAt: new Date().toISOString().split('T')[0]
+    });
+    
+    setVendorCommissionEditModalOpen(false);
+    setEditingCommissionReg(null);
+  };
 
   const handleVendorPayment = () => {
     if (!selectedVendor || !vendorPaymentAmount || !vendorPaymentDate) return;
@@ -1553,29 +1589,26 @@ Qualquer dúvida, estamos à disposição!`;
                                       <TableHeader>
                                         <TableRow className="border-gray-200">
                                           <TableHead className="text-gray-500 text-xs">Nome</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Email</TableHead>
                                           <TableHead className="text-gray-500 text-xs">Lote</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Pagamento</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Status</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Pagto Cliente</TableHead>
                                           <TableHead className="text-gray-500 text-xs">Comissão</TableHead>
-                                          <TableHead className="text-gray-500 text-xs">Data</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Pago Vend.</TableHead>
+                                          <TableHead className="text-gray-500 text-xs">Ações</TableHead>
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
                                         {stats.registrations?.map((reg) => {
                                           const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                                           const commissions = calculateCommissions(reg, batchConfig);
+                                          const vendorPaid = reg.vendorCommissionPaid || 0;
+                                          const commissionPaid = vendorPaid >= commissions.vendorComm;
                                           return (
                                             <TableRow key={reg.id} className="border-gray-100">
                                               <TableCell className="text-gray-800 text-sm">{reg.name}</TableCell>
-                                              <TableCell className="text-gray-600 text-xs">{reg.email}</TableCell>
                                               <TableCell>
                                                 <Badge variant="outline" className="text-xs">
                                                   Lote {reg.batch || 1}
                                                 </Badge>
-                                              </TableCell>
-                                              <TableCell className="text-gray-600 text-xs">
-                                                {reg.paymentMethod === 'pix' ? 'PIX' : 'Cartão'}
                                               </TableCell>
                                               <TableCell>
                                                 <Badge 
@@ -1593,8 +1626,26 @@ Qualquer dúvida, estamos à disposição!`;
                                               <TableCell className="text-amber-700 font-medium text-sm">
                                                 R$ {commissions.vendorComm.toLocaleString('pt-BR')}
                                               </TableCell>
-                                              <TableCell className="text-gray-500 text-xs">
-                                                {reg.createdAt ? new Date(reg.createdAt).toLocaleDateString('pt-BR') : '-'}
+                                              <TableCell>
+                                                <span className={commissionPaid ? "text-green-600 font-medium" : "text-orange-600"}>
+                                                  R$ {vendorPaid.toLocaleString('pt-BR')}
+                                                </span>
+                                              </TableCell>
+                                              <TableCell>
+                                                <div className="flex items-center gap-1">
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      openVendorCommissionEditModal(reg, commissions.vendorComm);
+                                                    }}
+                                                    className="h-6 text-xs border-amber-400 text-amber-700 hover:bg-amber-50"
+                                                    data-testid={`button-edit-vendor-commission-${reg.id}`}
+                                                  >
+                                                    <Edit2 className="w-3 h-3" />
+                                                  </Button>
+                                                </div>
                                               </TableCell>
                                             </TableRow>
                                           );
@@ -2818,6 +2869,54 @@ Qualquer dúvida, estamos à disposição!`;
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
               Registrar Pagamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Individual Vendor Commission Edit Modal */}
+      <Dialog open={vendorCommissionEditModalOpen} onOpenChange={setVendorCommissionEditModalOpen}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900">
+          <DialogHeader>
+            <DialogTitle>Editar Comissão Paga</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              {editingCommissionReg?.name} - Comissão total: R$ {editingCommissionMax.toLocaleString('pt-BR')}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="editCommissionAmount">Valor Pago ao Vendedor (R$)</Label>
+              <Input
+                id="editCommissionAmount"
+                type="number"
+                value={editingCommissionAmount}
+                onChange={(e) => setEditingCommissionAmount(e.target.value)}
+                placeholder="Ex: 400"
+                className="bg-white border-gray-300"
+                min="0"
+                data-testid="input-edit-commission-amount"
+              />
+              <p className="text-xs text-gray-500">
+                Digite 0 para remover o pagamento ou ajuste o valor conforme necessário.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVendorCommissionEditModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSaveVendorCommissionEdit}
+              disabled={vendorCommissionMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700"
+              data-testid="button-save-commission-edit"
+            >
+              {vendorCommissionMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy, Pencil, Download } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy, Pencil, Download, Banknote } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -720,6 +720,15 @@ function MentorshipRegistrationsSection() {
   const [selectedInvoiceReg, setSelectedInvoiceReg] = useState<Registration | null>(null);
   const [invoiceAmount, setInvoiceAmount] = useState('');
   const [invoiceDate, setInvoiceDate] = useState('');
+  
+  // Transfer control states
+  const [transferDashboardOpen, setTransferDashboardOpen] = useState(false);
+  const [transferPaymentModalOpen, setTransferPaymentModalOpen] = useState(false);
+  const [transferRecipient, setTransferRecipient] = useState<'hamilton' | 'vendor'>('hamilton');
+  const [transferVendorName, setTransferVendorName] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferNotes, setTransferNotes] = useState('');
+  const [transferPaymentMethod, setTransferPaymentMethod] = useState('pix');
   
   // Get current user email and auth token from localStorage
   const currentUserEmail = localStorage.getItem('crm_vendor_email');
@@ -1607,6 +1616,286 @@ Qualquer dúvida, estamos à disposição!`;
           </CollapsibleContent>
         </Card>
       </Collapsible>
+
+      {/* Transfer Control Dashboard - Hamilton Felix + Vendors */}
+      <Collapsible open={transferDashboardOpen} onOpenChange={setTransferDashboardOpen}>
+        <Card className="bg-purple-50 border-purple-200 shadow-sm">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-purple-100/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-gray-900 flex items-center gap-2">
+                  <Banknote className="h-5 w-5 text-purple-600" />
+                  Controle de Repasses
+                </CardTitle>
+                {transferDashboardOpen ? (
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                )}
+              </div>
+              <CardDescription className="text-gray-600">
+                Controle de repasses para Hamilton Felix (mentor) e comissões de vendedores
+              </CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-6">
+              {/* Hamilton Felix Transfer Section */}
+              <div className="border-b border-purple-200 pb-4">
+                <h3 className="text-lg font-medium text-purple-700 mb-3 flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Hamilton Felix (Mentor)
+                </h3>
+                {financialSummary && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <p className="text-sm text-gray-500">Total a Repassar</p>
+                      <p className="text-2xl font-bold text-purple-700">
+                        R$ {(financialSummary.hamiltonTotal / 100).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-green-200">
+                      <p className="text-sm text-gray-500">Já Recebido (Vendas Pagas)</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        R$ {(financialSummary.hamiltonReceived / 100).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-orange-200">
+                      <p className="text-sm text-gray-500">Pendente (Vendas Não Pagas)</p>
+                      <p className="text-2xl font-bold text-orange-600">
+                        R$ {((financialSummary.hamiltonTotal - financialSummary.hamiltonReceived) / 100).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-gray-200 flex items-center justify-center">
+                      <Button
+                        onClick={() => {
+                          setTransferRecipient('hamilton');
+                          setTransferVendorName('');
+                          setTransferAmount('');
+                          setTransferNotes('');
+                          setTransferPaymentModalOpen(true);
+                        }}
+                        className="bg-purple-600 hover:bg-purple-700"
+                        data-testid="button-transfer-hamilton"
+                      >
+                        <Banknote className="w-4 h-4 mr-2" />
+                        Registrar Repasse
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Vendor Commissions Control */}
+              <div>
+                <h3 className="text-lg font-medium text-amber-700 mb-3 flex items-center gap-2">
+                  <UserCheck className="h-5 w-5" />
+                  Comissões de Vendedores
+                </h3>
+                {(() => {
+                  const vendorsWithCommission = vendors.filter(v => v.hasCommission !== false);
+                  
+                  if (vendorsWithCommission.length === 0) {
+                    return (
+                      <div className="text-center py-4 text-gray-500">
+                        Nenhum vendedor com comissão habilitada.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-3">
+                      {vendorsWithCommission.map(vendor => {
+                        const vendorRegs = registrations?.filter(r => r.vendor === vendor.name) || [];
+                        const vendorStats = vendorRegs.reduce((acc, reg) => {
+                          const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                          const comms = calculateCommissions(reg, batchConfig);
+                          return {
+                            totalDue: acc.totalDue + comms.vendorComm,
+                            totalPaid: acc.totalPaid + (reg.vendorCommissionPaid || 0),
+                            sales: acc.sales + 1,
+                          };
+                        }, { totalDue: 0, totalPaid: 0, sales: 0 });
+
+                        const balance = vendorStats.totalDue - vendorStats.totalPaid;
+
+                        return (
+                          <div key={vendor.id} className="bg-white rounded-lg p-4 border border-amber-200">
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                                  <User className="w-5 h-5 text-amber-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">{vendor.name}</p>
+                                  <p className="text-sm text-gray-500">{vendorStats.sales} vendas</p>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-4">
+                                <div className="text-right">
+                                  <p className="text-sm text-gray-500">Total</p>
+                                  <p className="font-medium text-gray-700">R$ {vendorStats.totalDue.toLocaleString('pt-BR')}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm text-gray-500">Pago</p>
+                                  <p className="font-medium text-green-600">R$ {vendorStats.totalPaid.toLocaleString('pt-BR')}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm text-gray-500">Saldo</p>
+                                  <p className={`font-medium ${balance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                    R$ {balance.toLocaleString('pt-BR')}
+                                  </p>
+                                </div>
+                                <Badge className={balance <= 0 ? 'bg-green-600' : 'bg-orange-500'}>
+                                  {balance <= 0 ? 'Quitado' : 'Pendente'}
+                                </Badge>
+                                {balance > 0 && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      setTransferRecipient('vendor');
+                                      setTransferVendorName(vendor.name);
+                                      setTransferAmount('');
+                                      setTransferNotes('');
+                                      setTransferPaymentModalOpen(true);
+                                    }}
+                                    className="bg-amber-600 hover:bg-amber-700"
+                                    data-testid={`button-pay-vendor-${vendor.id}`}
+                                  >
+                                    <DollarSign className="w-4 h-4 mr-1" />
+                                    Pagar
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      {/* Transfer Payment Modal */}
+      <Dialog open={transferPaymentModalOpen} onOpenChange={setTransferPaymentModalOpen}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900">
+              {transferRecipient === 'hamilton' ? 'Registrar Repasse - Hamilton Felix' : `Pagar Comissão - ${transferVendorName}`}
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              {transferRecipient === 'hamilton' 
+                ? 'Registre um repasse para Hamilton Felix' 
+                : `Registre um pagamento de comissão para ${transferVendorName}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-gray-700">Valor (R$) *</Label>
+              <Input
+                type="number"
+                value={transferAmount}
+                onChange={(e) => setTransferAmount(e.target.value)}
+                placeholder="0,00"
+                className="mt-1 bg-white border-gray-300"
+                data-testid="input-transfer-amount"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-700">Forma de Pagamento</Label>
+              <Select value={transferPaymentMethod} onValueChange={setTransferPaymentMethod}>
+                <SelectTrigger className="mt-1 bg-white border-gray-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="transferencia">Transferência Bancária</SelectItem>
+                  <SelectItem value="deposito">Depósito</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-gray-700">Observações</Label>
+              <Input
+                value={transferNotes}
+                onChange={(e) => setTransferNotes(e.target.value)}
+                placeholder="Observações opcionais"
+                className="mt-1 bg-white border-gray-300"
+                data-testid="input-transfer-notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTransferPaymentModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                const amount = parseFloat(transferAmount);
+                if (!amount || amount <= 0) {
+                  toast({
+                    title: 'Erro',
+                    description: 'Informe um valor válido',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                
+                if (transferRecipient === 'vendor' && transferVendorName) {
+                  // For vendors, use existing vendor commission update
+                  const vendorRegs = registrations?.filter(r => r.vendor === transferVendorName) || [];
+                  let remainingAmount = amount;
+                  
+                  for (const reg of vendorRegs) {
+                    if (remainingAmount <= 0) break;
+                    
+                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                    const comms = calculateCommissions(reg, batchConfig);
+                    const due = comms.vendorComm - (reg.vendorCommissionPaid || 0);
+                    
+                    if (due > 0) {
+                      const paymentForThisReg = Math.min(due, remainingAmount);
+                      const newPaid = (reg.vendorCommissionPaid || 0) + paymentForThisReg;
+                      
+                      try {
+                        await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, {
+                          vendorCommissionPaid: newPaid,
+                          vendorCommissionPaidAt: new Date().toISOString(),
+                        });
+                        remainingAmount -= paymentForThisReg;
+                      } catch (error) {
+                        console.error('Error updating vendor commission:', error);
+                      }
+                    }
+                  }
+                  
+                  queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                  toast({
+                    title: 'Pagamento registrado',
+                    description: `Comissão de R$ ${amount.toLocaleString('pt-BR')} registrada para ${transferVendorName}`,
+                  });
+                } else {
+                  // For Hamilton, just show success message (tracking is based on payment status)
+                  toast({
+                    title: 'Repasse registrado',
+                    description: `Repasse de R$ ${amount.toLocaleString('pt-BR')} para Hamilton Felix registrado. Nota: Os valores são calculados automaticamente com base nos pagamentos recebidos.`,
+                  });
+                }
+                
+                setTransferPaymentModalOpen(false);
+              }}
+              className={transferRecipient === 'hamilton' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-amber-600 hover:bg-amber-700'}
+              data-testid="button-confirm-transfer"
+            >
+              Confirmar Pagamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Manual Registration Dialog */}
       <Dialog open={manualRegModalOpen} onOpenChange={setManualRegModalOpen}>

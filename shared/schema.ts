@@ -169,6 +169,8 @@ export const registrations = pgTable("registrations", {
   vendorCommissionPaid: integer("vendor_commission_paid").default(0),
   vendorCommissionPaidAt: timestamp("vendor_commission_paid_at"),
   vendorPayments: text("vendor_payments"),
+  hamiltonPaid: integer("hamilton_paid").default(0),
+  hamiltonPaidAt: timestamp("hamilton_paid_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

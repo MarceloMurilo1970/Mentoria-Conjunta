@@ -39,6 +39,11 @@ export interface VendorCommissionUpdate {
   vendorCommissionPaidAt: Date | null;
 }
 
+export interface HamiltonPaymentUpdate {
+  hamiltonPaid: number;
+  hamiltonPaidAt: Date | null;
+}
+
 export interface BatchUpdate {
   batch: number;
 }
@@ -71,6 +76,7 @@ export interface IStorage {
   updateObservations(id: string, update: ObservationsUpdate): Promise<Registration | undefined>;
   updateInvoice(id: string, update: InvoiceUpdate): Promise<Registration | undefined>;
   updateVendorCommission(id: string, update: VendorCommissionUpdate): Promise<Registration | undefined>;
+  updateHamiltonPayment(id: string, update: HamiltonPaymentUpdate): Promise<Registration | undefined>;
   updateBatch(id: string, update: BatchUpdate): Promise<Registration | undefined>;
 }
 
@@ -178,6 +184,17 @@ export class DbStorage implements IStorage {
       .set({ 
         vendorCommissionPaid: update.vendorCommissionPaid,
         vendorCommissionPaidAt: update.vendorCommissionPaidAt
+      })
+      .where(eq(registrations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateHamiltonPayment(id: string, update: HamiltonPaymentUpdate): Promise<Registration | undefined> {
+    const result = await db.update(registrations)
+      .set({ 
+        hamiltonPaid: update.hamiltonPaid,
+        hamiltonPaidAt: update.hamiltonPaidAt
       })
       .where(eq(registrations.id, id))
       .returning();

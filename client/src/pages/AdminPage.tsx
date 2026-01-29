@@ -1617,15 +1617,15 @@ Qualquer dúvida, estamos à disposição!`;
         </Card>
       </Collapsible>
 
-      {/* Transfer Control Dashboard - Hamilton Felix + Vendors */}
+      {/* Transfer Control Dashboard - DRE + Vendors + Hamilton */}
       <Collapsible open={transferDashboardOpen} onOpenChange={setTransferDashboardOpen}>
-        <Card className="bg-purple-50 border-purple-200 shadow-sm">
+        <Card className="bg-slate-50 border-slate-200 shadow-sm">
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-purple-100/50 transition-colors">
+            <CardHeader className="cursor-pointer hover:bg-slate-100/50 transition-colors">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-gray-900 flex items-center gap-2">
-                  <Banknote className="h-5 w-5 text-purple-600" />
-                  Controle de Repasses
+                  <Receipt className="h-5 w-5 text-slate-600" />
+                  Controle Financeiro e Repasses
                 </CardTitle>
                 {transferDashboardOpen ? (
                   <ChevronUp className="h-5 w-5 text-gray-500" />
@@ -1634,61 +1634,74 @@ Qualquer dúvida, estamos à disposição!`;
                 )}
               </div>
               <CardDescription className="text-gray-600">
-                Controle de repasses para Hamilton Felix (mentor) e comissões de vendedores
+                DRE simplificada, comissões de vendedores e repasses para Hamilton Felix
               </CardDescription>
             </CardHeader>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="space-y-6">
-              {/* Hamilton Felix Transfer Section */}
-              <div className="border-b border-purple-200 pb-4">
-                <h3 className="text-lg font-medium text-purple-700 mb-3 flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Hamilton Felix (Mentor)
-                </h3>
-                {financialSummary && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-lg p-4 border border-purple-200">
-                      <p className="text-sm text-gray-500">Total a Repassar</p>
-                      <p className="text-2xl font-bold text-purple-700">
-                        R$ {(financialSummary.hamiltonTotal / 100).toLocaleString('pt-BR')}
-                      </p>
+              {/* DRE Card */}
+              {(() => {
+                const dreData = registrations?.reduce((acc, reg) => {
+                  const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                  const comms = calculateCommissions(reg, batchConfig);
+                  const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
+                                   reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                  
+                  return {
+                    grossRevenue: acc.grossRevenue + comms.gross,
+                    taxes: acc.taxes + comms.taxes,
+                    cardFees: acc.cardFees + comms.cardFee,
+                    netRevenue: acc.netRevenue + comms.netAfterTax,
+                    receivedGross: acc.receivedGross + (reg.paidAmount || 0),
+                    receivedNet: acc.receivedNet + Math.round(comms.netAfterTax * paidRatio),
+                  };
+                }, { grossRevenue: 0, taxes: 0, cardFees: 0, netRevenue: 0, receivedGross: 0, receivedNet: 0 }) || { grossRevenue: 0, taxes: 0, cardFees: 0, netRevenue: 0, receivedGross: 0, receivedNet: 0 };
+
+                const receitaLiquida = dreData.grossRevenue - dreData.taxes;
+                const resultadoFinal = receitaLiquida - dreData.cardFees;
+
+                return (
+                  <div className="bg-white rounded-lg border border-slate-300 overflow-hidden">
+                    <div className="bg-slate-700 text-white px-4 py-3">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        DRE Simplificada
+                      </h3>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-green-200">
-                      <p className="text-sm text-gray-500">Já Recebido (Vendas Pagas)</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        R$ {(financialSummary.hamiltonReceived / 100).toLocaleString('pt-BR')}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 border border-orange-200">
-                      <p className="text-sm text-gray-500">Pendente (Vendas Não Pagas)</p>
-                      <p className="text-2xl font-bold text-orange-600">
-                        R$ {((financialSummary.hamiltonTotal - financialSummary.hamiltonReceived) / 100).toLocaleString('pt-BR')}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 border border-gray-200 flex items-center justify-center">
-                      <Button
-                        onClick={() => {
-                          setTransferRecipient('hamilton');
-                          setTransferVendorName('');
-                          setTransferAmount('');
-                          setTransferNotes('');
-                          setTransferPaymentModalOpen(true);
-                        }}
-                        className="bg-purple-600 hover:bg-purple-700"
-                        data-testid="button-transfer-hamilton"
-                      >
-                        <Banknote className="w-4 h-4 mr-2" />
-                        Registrar Repasse
-                      </Button>
+                    <div className="p-4 space-y-2 font-mono text-sm">
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-700">Faturamento Bruto:</span>
+                        <span className="font-semibold text-gray-900">R$ {dreData.grossRevenue.toLocaleString('pt-BR')}</span>
+                      </div>
+                      <div className="flex justify-between py-1 text-red-600">
+                        <span>(-) Impostos (11,75%):</span>
+                        <span>R$ {dreData.taxes.toLocaleString('pt-BR')}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-t border-slate-200 pt-2">
+                        <span className="text-gray-700">Receita Líquida:</span>
+                        <span className="font-semibold text-gray-900">R$ {receitaLiquida.toLocaleString('pt-BR')}</span>
+                      </div>
+                      <div className="flex justify-between py-1 text-red-600">
+                        <span>(-) Taxas de Cartão:</span>
+                        <span>R$ {dreData.cardFees.toLocaleString('pt-BR')}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-t-2 border-slate-300 bg-slate-50 -mx-4 px-4">
+                        <span className="font-bold text-gray-900">Resultado Final:</span>
+                        <span className="font-bold text-green-700">R$ {resultadoFinal.toLocaleString('pt-BR')}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-t border-slate-200 mt-2">
+                        <span className="text-blue-700 font-medium">Recebido até o momento:</span>
+                        <span className="font-bold text-blue-700">R$ {dreData.receivedGross.toLocaleString('pt-BR')}</span>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+                );
+              })()}
 
-              {/* Vendor Commissions Control */}
-              <div>
-                <h3 className="text-lg font-medium text-amber-700 mb-3 flex items-center gap-2">
+              {/* Vendor Commissions Section */}
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="text-lg font-semibold text-amber-700 mb-4 flex items-center gap-2">
                   <UserCheck className="h-5 w-5" />
                   Comissões de Vendedores
                 </h3>
@@ -1697,80 +1710,242 @@ Qualquer dúvida, estamos à disposição!`;
                   
                   if (vendorsWithCommission.length === 0) {
                     return (
-                      <div className="text-center py-4 text-gray-500">
+                      <div className="text-center py-4 text-gray-500 bg-white rounded-lg border border-slate-200">
                         Nenhum vendedor com comissão habilitada.
                       </div>
                     );
                   }
 
                   return (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {vendorsWithCommission.map(vendor => {
                         const vendorRegs = registrations?.filter(r => r.vendor === vendor.name) || [];
                         const vendorStats = vendorRegs.reduce((acc, reg) => {
                           const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                           const comms = calculateCommissions(reg, batchConfig);
+                          const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
+                                           reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                          const commDueNow = Math.round(comms.vendorComm * paidRatio);
+                          
                           return {
-                            totalDue: acc.totalDue + comms.vendorComm,
-                            totalPaid: acc.totalPaid + (reg.vendorCommissionPaid || 0),
+                            soldValue: acc.soldValue + comms.gross,
+                            commissionTotal: acc.commissionTotal + comms.vendorComm,
+                            receivedValue: acc.receivedValue + (reg.paidAmount || 0),
+                            commissionDueNow: acc.commissionDueNow + commDueNow,
+                            commissionPaid: acc.commissionPaid + (reg.vendorCommissionPaid || 0),
                             sales: acc.sales + 1,
+                            paidRegs: vendorRegs.filter(r => (r.vendorCommissionPaid || 0) > 0),
                           };
-                        }, { totalDue: 0, totalPaid: 0, sales: 0 });
+                        }, { soldValue: 0, commissionTotal: 0, receivedValue: 0, commissionDueNow: 0, commissionPaid: 0, sales: 0, paidRegs: [] as Registration[] });
 
-                        const balance = vendorStats.totalDue - vendorStats.totalPaid;
+                        const balance = vendorStats.commissionDueNow - vendorStats.commissionPaid;
+                        const paidRegs = vendorRegs.filter(r => (r.vendorCommissionPaid || 0) > 0);
 
                         return (
-                          <div key={vendor.id} className="bg-white rounded-lg p-4 border border-amber-200">
-                            <div className="flex flex-wrap items-center justify-between gap-4">
+                          <div key={vendor.id} className="bg-white rounded-lg border border-amber-200 overflow-hidden">
+                            <div className="bg-amber-50 px-4 py-3 flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                                  <User className="w-5 h-5 text-amber-600" />
+                                <div className="w-10 h-10 bg-amber-200 rounded-full flex items-center justify-center">
+                                  <User className="w-5 h-5 text-amber-700" />
                                 </div>
                                 <div>
-                                  <p className="font-medium text-gray-900">{vendor.name}</p>
-                                  <p className="text-sm text-gray-500">{vendorStats.sales} vendas</p>
+                                  <p className="font-semibold text-gray-900">{vendor.name}</p>
+                                  <p className="text-sm text-gray-600">{vendorStats.sales} vendas</p>
                                 </div>
                               </div>
-                              <div className="flex flex-wrap items-center gap-4">
-                                <div className="text-right">
-                                  <p className="text-sm text-gray-500">Total</p>
-                                  <p className="font-medium text-gray-700">R$ {vendorStats.totalDue.toLocaleString('pt-BR')}</p>
+                              <Badge className={balance <= 0 ? 'bg-green-600' : 'bg-orange-500'}>
+                                {balance <= 0 ? 'Quitado' : 'Pendente'}
+                              </Badge>
+                            </div>
+                            <div className="p-4">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                <div className="text-center p-3 bg-slate-50 rounded">
+                                  <p className="text-xs text-gray-500 uppercase">Valor Vendido</p>
+                                  <p className="font-bold text-gray-900">R$ {vendorStats.soldValue.toLocaleString('pt-BR')}</p>
                                 </div>
-                                <div className="text-right">
-                                  <p className="text-sm text-gray-500">Pago</p>
-                                  <p className="font-medium text-green-600">R$ {vendorStats.totalPaid.toLocaleString('pt-BR')}</p>
+                                <div className="text-center p-3 bg-slate-50 rounded">
+                                  <p className="text-xs text-gray-500 uppercase">Comissão Apurada</p>
+                                  <p className="font-bold text-amber-700">R$ {vendorStats.commissionTotal.toLocaleString('pt-BR')}</p>
                                 </div>
-                                <div className="text-right">
-                                  <p className="text-sm text-gray-500">Saldo</p>
-                                  <p className={`font-medium ${balance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                                    R$ {balance.toLocaleString('pt-BR')}
-                                  </p>
+                                <div className="text-center p-3 bg-blue-50 rounded">
+                                  <p className="text-xs text-gray-500 uppercase">Recebido (Vendas)</p>
+                                  <p className="font-bold text-blue-700">R$ {vendorStats.receivedValue.toLocaleString('pt-BR')}</p>
                                 </div>
-                                <Badge className={balance <= 0 ? 'bg-green-600' : 'bg-orange-500'}>
-                                  {balance <= 0 ? 'Quitado' : 'Pendente'}
-                                </Badge>
-                                {balance > 0 && (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => {
-                                      setTransferRecipient('vendor');
-                                      setTransferVendorName(vendor.name);
-                                      setTransferAmount('');
-                                      setTransferNotes('');
-                                      setTransferPaymentModalOpen(true);
-                                    }}
-                                    className="bg-amber-600 hover:bg-amber-700"
-                                    data-testid={`button-pay-vendor-${vendor.id}`}
-                                  >
-                                    <DollarSign className="w-4 h-4 mr-1" />
-                                    Pagar
-                                  </Button>
+                                <div className="text-center p-3 bg-blue-50 rounded">
+                                  <p className="text-xs text-gray-500 uppercase">Comissão Devida</p>
+                                  <p className="font-bold text-blue-700">R$ {vendorStats.commissionDueNow.toLocaleString('pt-BR')}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="border-t border-slate-200 pt-4">
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-sm font-medium text-gray-700">Pagamentos Efetuados:</span>
+                                  <span className="font-bold text-green-600">R$ {vendorStats.commissionPaid.toLocaleString('pt-BR')}</span>
+                                </div>
+                                
+                                {paidRegs.length > 0 && (
+                                  <div className="bg-green-50 rounded p-3 mb-3">
+                                    <p className="text-xs text-gray-500 mb-2">Histórico de pagamentos:</p>
+                                    <div className="space-y-1 text-sm">
+                                      {paidRegs.map(reg => (
+                                        <div key={reg.id} className="flex justify-between text-gray-700">
+                                          <span>{reg.name} - R$ {(reg.vendorCommissionPaid || 0).toLocaleString('pt-BR')}</span>
+                                          <span className="text-gray-500">
+                                            {reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toLocaleDateString('pt-BR') : '-'}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
                                 )}
+                                
+                                <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700">Saldo a Receber: </span>
+                                    <span className={`font-bold ${balance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                      R$ {balance.toLocaleString('pt-BR')}
+                                    </span>
+                                  </div>
+                                  {balance > 0 && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setTransferRecipient('vendor');
+                                        setTransferVendorName(vendor.name);
+                                        setTransferAmount(balance.toString());
+                                        setTransferNotes('');
+                                        setTransferPaymentModalOpen(true);
+                                      }}
+                                      className="bg-amber-600 hover:bg-amber-700"
+                                      data-testid={`button-pay-vendor-${vendor.id}`}
+                                    >
+                                      <DollarSign className="w-4 h-4 mr-1" />
+                                      Pagar Comissão
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
                         );
                       })}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Hamilton Felix Transfer Section */}
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="text-lg font-semibold text-purple-700 mb-4 flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Repasses para Hamilton Felix (Mentor)
+                </h3>
+                {(() => {
+                  const hamiltonStats = registrations?.reduce((acc, reg) => {
+                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                    const comms = calculateCommissions(reg, batchConfig);
+                    const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
+                                     reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                    const hfDueNow = Math.round(comms.hfComm * paidRatio);
+                    
+                    return {
+                      soldValue: acc.soldValue + comms.gross,
+                      hfTotal: acc.hfTotal + comms.hfComm,
+                      receivedValue: acc.receivedValue + (reg.paidAmount || 0),
+                      hfDueNow: acc.hfDueNow + hfDueNow,
+                      hfPaid: acc.hfPaid + (reg.hamiltonPaid || 0),
+                      sales: acc.sales + 1,
+                    };
+                  }, { soldValue: 0, hfTotal: 0, receivedValue: 0, hfDueNow: 0, hfPaid: 0, sales: 0 }) || { soldValue: 0, hfTotal: 0, receivedValue: 0, hfDueNow: 0, hfPaid: 0, sales: 0 };
+
+                  const balance = hamiltonStats.hfDueNow - hamiltonStats.hfPaid;
+                  const paidRegs = registrations?.filter(r => (r.hamiltonPaid || 0) > 0) || [];
+
+                  return (
+                    <div className="bg-white rounded-lg border border-purple-200 overflow-hidden">
+                      <div className="bg-purple-50 px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-purple-700" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">Hamilton Felix</p>
+                            <p className="text-sm text-gray-600">Mentor - {hamiltonStats.sales} vendas</p>
+                          </div>
+                        </div>
+                        <Badge className={balance <= 0 ? 'bg-green-600' : 'bg-purple-500'}>
+                          {balance <= 0 ? 'Quitado' : 'Pendente'}
+                        </Badge>
+                      </div>
+                      <div className="p-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                          <div className="text-center p-3 bg-slate-50 rounded">
+                            <p className="text-xs text-gray-500 uppercase">Valor Vendido</p>
+                            <p className="font-bold text-gray-900">R$ {hamiltonStats.soldValue.toLocaleString('pt-BR')}</p>
+                          </div>
+                          <div className="text-center p-3 bg-slate-50 rounded">
+                            <p className="text-xs text-gray-500 uppercase">Repasse Apurado</p>
+                            <p className="font-bold text-purple-700">R$ {hamiltonStats.hfTotal.toLocaleString('pt-BR')}</p>
+                          </div>
+                          <div className="text-center p-3 bg-blue-50 rounded">
+                            <p className="text-xs text-gray-500 uppercase">Recebido (Vendas)</p>
+                            <p className="font-bold text-blue-700">R$ {hamiltonStats.receivedValue.toLocaleString('pt-BR')}</p>
+                          </div>
+                          <div className="text-center p-3 bg-blue-50 rounded">
+                            <p className="text-xs text-gray-500 uppercase">Repasse Devido</p>
+                            <p className="font-bold text-blue-700">R$ {hamiltonStats.hfDueNow.toLocaleString('pt-BR')}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="border-t border-slate-200 pt-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-gray-700">Repasses Efetuados:</span>
+                            <span className="font-bold text-green-600">R$ {hamiltonStats.hfPaid.toLocaleString('pt-BR')}</span>
+                          </div>
+                          
+                          {paidRegs.length > 0 && (
+                            <div className="bg-green-50 rounded p-3 mb-3">
+                              <p className="text-xs text-gray-500 mb-2">Histórico de repasses:</p>
+                              <div className="space-y-1 text-sm">
+                                {paidRegs.map(reg => (
+                                  <div key={reg.id} className="flex justify-between text-gray-700">
+                                    <span>{reg.name} - R$ {(reg.hamiltonPaid || 0).toLocaleString('pt-BR')}</span>
+                                    <span className="text-gray-500">
+                                      {reg.hamiltonPaidAt ? new Date(reg.hamiltonPaidAt).toLocaleDateString('pt-BR') : '-'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                            <div>
+                              <span className="text-sm font-medium text-gray-700">Saldo a Repassar: </span>
+                              <span className={`font-bold ${balance > 0 ? 'text-purple-600' : 'text-green-600'}`}>
+                                R$ {balance.toLocaleString('pt-BR')}
+                              </span>
+                            </div>
+                            {balance > 0 && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setTransferRecipient('hamilton');
+                                  setTransferVendorName('');
+                                  setTransferAmount(balance.toString());
+                                  setTransferNotes('');
+                                  setTransferPaymentModalOpen(true);
+                                }}
+                                className="bg-purple-600 hover:bg-purple-700"
+                                data-testid="button-transfer-hamilton"
+                              >
+                                <Banknote className="w-4 h-4 mr-1" />
+                                Registrar Repasse
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   );
                 })()}
@@ -1846,7 +2021,7 @@ Qualquer dúvida, estamos à disposição!`;
                 }
                 
                 if (transferRecipient === 'vendor' && transferVendorName) {
-                  // For vendors, use existing vendor commission update
+                  // For vendors, distribute payment across registrations with unpaid commission
                   const vendorRegs = registrations?.filter(r => r.vendor === transferVendorName) || [];
                   let remainingAmount = amount;
                   
@@ -1855,7 +2030,10 @@ Qualquer dúvida, estamos à disposição!`;
                     
                     const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                     const comms = calculateCommissions(reg, batchConfig);
-                    const due = comms.vendorComm - (reg.vendorCommissionPaid || 0);
+                    const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
+                                     reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                    const commDueNow = Math.round(comms.vendorComm * paidRatio);
+                    const due = commDueNow - (reg.vendorCommissionPaid || 0);
                     
                     if (due > 0) {
                       const paymentForThisReg = Math.min(due, remainingAmount);
@@ -1878,11 +2056,41 @@ Qualquer dúvida, estamos à disposição!`;
                     title: 'Pagamento registrado',
                     description: `Comissão de R$ ${amount.toLocaleString('pt-BR')} registrada para ${transferVendorName}`,
                   });
-                } else {
-                  // For Hamilton, just show success message (tracking is based on payment status)
+                } else if (transferRecipient === 'hamilton') {
+                  // For Hamilton, distribute payment across registrations with unpaid mentor commission
+                  const allRegs = registrations || [];
+                  let remainingAmount = amount;
+                  
+                  for (const reg of allRegs) {
+                    if (remainingAmount <= 0) break;
+                    
+                    const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
+                    const comms = calculateCommissions(reg, batchConfig);
+                    const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
+                                     reg.paymentStatus === 'parcial' ? (reg.paidAmount || 0) / comms.gross : 0;
+                    const hfDueNow = Math.round(comms.hfComm * paidRatio);
+                    const due = hfDueNow - (reg.hamiltonPaid || 0);
+                    
+                    if (due > 0) {
+                      const paymentForThisReg = Math.min(due, remainingAmount);
+                      const newPaid = (reg.hamiltonPaid || 0) + paymentForThisReg;
+                      
+                      try {
+                        await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, {
+                          hamiltonPaid: newPaid,
+                          hamiltonPaidAt: new Date().toISOString(),
+                        });
+                        remainingAmount -= paymentForThisReg;
+                      } catch (error) {
+                        console.error('Error updating Hamilton payment:', error);
+                      }
+                    }
+                  }
+                  
+                  queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
                   toast({
                     title: 'Repasse registrado',
-                    description: `Repasse de R$ ${amount.toLocaleString('pt-BR')} para Hamilton Felix registrado. Nota: Os valores são calculados automaticamente com base nos pagamentos recebidos.`,
+                    description: `Repasse de R$ ${amount.toLocaleString('pt-BR')} para Hamilton Felix registrado.`,
                   });
                 }
                 

@@ -1015,6 +1015,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update Hamilton payment (mentor transfer)
+  app.patch("/api/registrations/:id/hamilton-payment", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { hamiltonPaid, hamiltonPaidAt } = req.body;
+      
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      
+      const updated = await storage.updateHamiltonPayment(id, {
+        hamiltonPaid: Number(hamiltonPaid) || 0,
+        hamiltonPaidAt: hamiltonPaid > 0 && hamiltonPaidAt ? new Date(hamiltonPaidAt) : null,
+      });
+      
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error updating Hamilton payment:", error);
+      res.status(500).json({ error: "Erro ao atualizar repasse de Hamilton" });
+    }
+  });
+
   // Update batch (manual override)
   app.patch("/api/registrations/:id/batch", async (req, res) => {
     try {

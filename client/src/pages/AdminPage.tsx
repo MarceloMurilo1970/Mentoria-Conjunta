@@ -1769,6 +1769,11 @@ Qualquer dúvida, estamos à disposição!`;
                           const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                           const comms = calculateCommissions(reg, batchConfig);
                           const paidAmountReais = (reg.paidAmount || 0) / 100;
+                          
+                          // Calculate received based on payment status
+                          const receivedFromSale = reg.paymentStatus === 'pago' ? comms.netAfterTax : 
+                                                  reg.paymentStatus === 'parcial' ? paidAmountReais : 0;
+                          
                           const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
                                            reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                           const commDueNow = Math.round(comms.vendorComm * paidRatio);
@@ -1776,7 +1781,7 @@ Qualquer dúvida, estamos à disposição!`;
                           return {
                             soldValue: acc.soldValue + comms.gross,
                             commissionTotal: acc.commissionTotal + comms.vendorComm,
-                            receivedValue: acc.receivedValue + paidAmountReais,
+                            receivedValue: acc.receivedValue + receivedFromSale,
                             commissionDueNow: acc.commissionDueNow + commDueNow,
                             commissionPaid: acc.commissionPaid + (reg.vendorCommissionPaid || 0),
                             sales: acc.sales + 1,
@@ -1891,6 +1896,11 @@ Qualquer dúvida, estamos à disposição!`;
                     const batchConfig = BATCH_CONFIG.find(b => b.batch === (reg.batch || 1)) || BATCH_CONFIG[0];
                     const comms = calculateCommissions(reg, batchConfig);
                     const paidAmountReais = (reg.paidAmount || 0) / 100;
+                    
+                    // Calculate received based on payment status
+                    const receivedFromSale = reg.paymentStatus === 'pago' ? comms.netAfterTax : 
+                                            reg.paymentStatus === 'parcial' ? paidAmountReais : 0;
+                    
                     const paidRatio = reg.paymentStatus === 'pago' ? 1 : 
                                      reg.paymentStatus === 'parcial' ? paidAmountReais / comms.gross : 0;
                     const hfDueNow = Math.round(comms.hfComm * paidRatio);
@@ -1898,7 +1908,7 @@ Qualquer dúvida, estamos à disposição!`;
                     return {
                       soldValue: acc.soldValue + comms.gross,
                       hfTotal: acc.hfTotal + comms.hfComm,
-                      receivedValue: acc.receivedValue + paidAmountReais,
+                      receivedValue: acc.receivedValue + receivedFromSale,
                       hfDueNow: acc.hfDueNow + hfDueNow,
                       hfPaid: acc.hfPaid + (reg.hamiltonPaid || 0),
                       sales: acc.sales + 1,

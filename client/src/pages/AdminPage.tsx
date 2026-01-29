@@ -2699,9 +2699,13 @@ function CRMSection() {
   const [showMyLeadsOnly, setShowMyLeadsOnly] = useState<boolean>(false);
   const [contactFilter, setContactFilter] = useState<string>('all');
   const [loginEmail, setLoginEmail] = useState<string>('');
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [currentVendorEmail, setCurrentVendorEmail] = useState<string | null>(() => {
     return localStorage.getItem('crm_vendor_email');
+  });
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    const email = localStorage.getItem('crm_vendor_email');
+    const token = localStorage.getItem('crm_auth_token');
+    return !!(email && token);
   });
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery<Lead[]>({

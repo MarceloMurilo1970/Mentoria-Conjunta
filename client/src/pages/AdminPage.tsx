@@ -681,38 +681,34 @@ function getBatchConfig(taxRate: number) {
 const BATCH_CONFIG = getBatchConfig(getSavedTaxRate());
 
 // Calculate commissions for a registration
+// Order: 1) Tax on gross, 2) Subtract tax + card fee, 3) Vendor 5% if exists, 4) Split MM 2/3, HF 1/3
 function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFIG[0]) {
   const isPix = reg.paymentMethod === 'pix';
   const total = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
   const cardFee = isPix ? 0 : batchConfig.cardFee;
-  const netBeforeTax = total - cardFee;
-  const taxes = Math.round(netBeforeTax * batchConfig.taxRate);
-  const netAfterTax = netBeforeTax - taxes;
+  
+  // Tax is calculated on GROSS amount (total)
+  const taxes = Math.round(total * batchConfig.taxRate);
+  
+  // Net after deducting tax and card fee
+  const netAfterTax = total - taxes - cardFee;
   
   const hasVendor = !!reg.vendor?.trim();
-  const vendorComm = hasVendor ? Math.round(total * batchConfig.vendorRate) : 0;
+  // Vendor commission is 5% of net after tax (not gross)
+  const vendorComm = hasVendor ? Math.round(netAfterTax * batchConfig.vendorRate) : 0;
   
-  // When no vendor: split 2/3 MM and 1/3 HF from net after tax
-  // When vendor: use configured rates from net after tax minus vendor commission
+  // Distributable amount after vendor commission
   const distributableAmount = netAfterTax - vendorComm;
   
-  let mmComm: number;
-  let hfComm: number;
-  
-  if (hasVendor) {
-    mmComm = Math.round(distributableAmount * batchConfig.mmRate);
-    hfComm = Math.round(distributableAmount * batchConfig.hfRate);
-  } else {
-    // 2/3 for MM, 1/3 for HF
-    mmComm = Math.round(distributableAmount * (2/3));
-    hfComm = Math.round(distributableAmount * (1/3));
-  }
+  // Split: MM gets 2/3, HF gets 1/3
+  const mmComm = Math.round(distributableAmount * (2/3));
+  const hfComm = Math.round(distributableAmount * (1/3));
   
   return {
     gross: total,
     total,
     cardFee,
-    netBeforeTax,
+    netBeforeTax: total - cardFee,
     taxes,
     netAfterTax,
     vendorComm,

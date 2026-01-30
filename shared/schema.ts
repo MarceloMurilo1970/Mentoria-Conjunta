@@ -161,7 +161,7 @@ export const registrations = pgTable("registrations", {
   totalAmount: integer("total_amount").default(0),
   remainingPaymentDate: timestamp("remaining_payment_date"),
   vendor: text("vendor"),
-  batch: integer("batch").default(1),
+  batch: integer("batch").default(3),
   observations: text("observations"),
   invoiceIssued: boolean("invoice_issued").default(false),
   invoiceIssuedAt: timestamp("invoice_issued_at"),

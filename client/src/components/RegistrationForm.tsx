@@ -26,11 +26,11 @@ interface RegistrationFormProps {
 }
 
 const DEFAULT_PRICES: PriceInfo = {
-  pixPrice: 8000,
-  installmentPrice: 1775,
-  installmentTotal: 8875,
-  batchName: "Lote 1",
-  paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGnMgu7Ax-8875,00",
+  pixPrice: 9400,
+  installmentPrice: 2085,
+  installmentTotal: 10425,
+  batchName: "Lote 3",
+  paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00",
 };
 
 function formatPrice(price: number): string {

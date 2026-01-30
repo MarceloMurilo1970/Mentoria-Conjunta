@@ -730,7 +730,7 @@ function MentorshipRegistrationsSection() {
   const [obsValue, setObsValue] = useState('');
   const [commissionTableOpen, setCommissionTableOpen] = useState(false);
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
-  const [batchValue, setBatchValue] = useState<number>(1);
+  const [batchValue, setBatchValue] = useState<number>(3);
   const [vendorPaymentModalOpen, setVendorPaymentModalOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<string>('');
   const [vendorPaymentAmount, setVendorPaymentAmount] = useState('');

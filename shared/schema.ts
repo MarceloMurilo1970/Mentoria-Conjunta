@@ -188,7 +188,7 @@ export const insertRegistrationSchema = createInsertSchema(registrations).omit({
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
   cpfCnpj: z.string().min(11, "CPF/CNPJ deve ter pelo menos 11 dígitos").max(18, "CPF/CNPJ inválido"),
   razaoSocial: z.string().optional(),
-  paymentMethod: z.enum(["pix", "installments"], {
+  paymentMethod: z.enum(["pix", "installments", "installments10"], {
     required_error: "Selecione uma forma de pagamento",
   }),
 });
@@ -206,7 +206,7 @@ export const insertManualRegistrationSchema = createInsertSchema(registrations).
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
   cpfCnpj: z.string().min(11, "CPF/CNPJ deve ter pelo menos 11 dígitos").max(18, "CPF/CNPJ inválido"),
   razaoSocial: z.string().optional().nullable(),
-  paymentMethod: z.enum(["pix", "installments"]),
+  paymentMethod: z.enum(["pix", "installments", "installments10"]),
   paymentStatus: z.enum(["pendente", "parcial", "pago"]),
   totalAmount: z.number().min(0, "Valor total deve ser positivo"),
   paidAmount: z.number().min(0, "Valor pago deve ser positivo"),

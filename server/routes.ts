@@ -602,7 +602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await sendRegistrationEmail(
           registration.email,
           registration.name,
-          registration.paymentMethod as "pix" | "installments"
+          registration.paymentMethod as "pix" | "installments" | "installments10"
         );
       } catch (emailError) {
         console.error("Error sending email:", emailError);
@@ -671,7 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
     cpfCnpj: z.string().min(11, "CPF/CNPJ deve ter pelo menos 11 dígitos"),
     razaoSocial: z.string().optional().nullable(),
-    paymentMethod: z.enum(["pix", "installments"]),
+    paymentMethod: z.enum(["pix", "installments", "installments10"]),
     paymentStatus: z.enum(["pendente", "parcial", "pago"]),
     totalAmount: z.number().min(100, "Valor total deve ser pelo menos R$ 100"),
     paidAmount: z.number().min(0),
@@ -854,9 +854,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Batch configuration for pricing
   const BATCH_PRICING = [
-    { batch: 1, pixPrice: 8000, installmentTotal: 8875 },
-    { batch: 2, pixPrice: 8700, installmentTotal: 9650 },
-    { batch: 3, pixPrice: 9400, installmentTotal: 10425 },
+    { batch: 1, pixPrice: 8000, installmentTotal: 8875, installment10Total: 8875 },
+    { batch: 2, pixPrice: 8700, installmentTotal: 9650, installment10Total: 9650 },
+    { batch: 3, pixPrice: 9400, installmentTotal: 10425, installment10Total: 11000 },
   ];
 
   // Update payment received status (legacy - now also updates paidAmount correctly)
@@ -878,7 +878,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate correct total based on batch and payment method
       const batchConfig = BATCH_PRICING.find(b => b.batch === (registration.batch || 1)) || BATCH_PRICING[0];
       const isPix = registration.paymentMethod === 'pix';
-      const totalAmount = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
+      const is10x = registration.paymentMethod === 'installments10';
+      const totalAmount = isPix ? batchConfig.pixPrice : (is10x ? batchConfig.installment10Total : batchConfig.installmentTotal);
       
       // When marking as paid, set paidAmount to totalAmount (in centavos)
       // When marking as not paid, set paidAmount to 0
@@ -1088,9 +1089,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Batch pricing configuration
   const BATCH_CONFIG = [
-    { batch: 1, pixPrice: 8000, installmentPrice: 1775, installments: 5, installmentTotal: 8875, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00" },
-    { batch: 2, pixPrice: 8700, installmentPrice: 1930, installments: 5, installmentTotal: 9650, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00" },
-    { batch: 3, pixPrice: 9400, installmentPrice: 2085, installments: 5, installmentTotal: 10425, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00" },
+    { batch: 1, pixPrice: 8000, installmentPrice: 1775, installments: 5, installmentTotal: 8875, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00", installment10Price: 1775, installment10Total: 8875, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00" },
+    { batch: 2, pixPrice: 8700, installmentPrice: 1930, installments: 5, installmentTotal: 9650, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00", installment10Price: 1930, installment10Total: 9650, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00" },
+    { batch: 3, pixPrice: 9400, installmentPrice: 2085, installments: 5, installmentTotal: 10425, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00", installment10Price: 1100, installment10Total: 11000, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00" },
   ];
 
   // Generate contract PDF for a registration (authenticated users - admin or vendor)

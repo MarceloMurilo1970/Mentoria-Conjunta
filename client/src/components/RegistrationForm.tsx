@@ -16,8 +16,11 @@ interface PriceInfo {
   pixPrice: number;
   installmentPrice: number;
   installmentTotal: number;
+  installment10Price: number;
+  installment10Total: number;
   batchName: string;
   paymentLink: string;
+  paymentLink10: string;
 }
 
 interface RegistrationFormProps {
@@ -29,8 +32,11 @@ const DEFAULT_PRICES: PriceInfo = {
   pixPrice: 9400,
   installmentPrice: 2085,
   installmentTotal: 10425,
+  installment10Price: 1100,
+  installment10Total: 11000,
   batchName: "Lote 3",
   paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00",
+  paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
 };
 
 function formatPrice(price: number): string {
@@ -39,11 +45,11 @@ function formatPrice(price: number): string {
 
 export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES }: RegistrationFormProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"pix" | "installments" | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"pix" | "installments" | "installments10" | null>(null);
   const [emailError, setEmailError] = useState(false);
   const { toast } = useToast();
   
-  const { pixPrice, installmentPrice, installmentTotal, batchName, paymentLink } = priceInfo;
+  const { pixPrice, installmentPrice, installmentTotal, installment10Price, installment10Total, batchName, paymentLink, paymentLink10 } = priceInfo;
 
   const {
     register,
@@ -67,7 +73,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
       return result.json();
     },
     onSuccess: (data, variables) => {
-      setPaymentMethod(variables.paymentMethod as "pix" | "installments");
+      setPaymentMethod(variables.paymentMethod as "pix" | "installments" | "installments10");
       setIsSubmitted(true);
       onSuccess?.();
     },
@@ -76,7 +82,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
       
       if (errorMessage.startsWith("502:")) {
         setEmailError(true);
-        setPaymentMethod(variables.paymentMethod as "pix" | "installments");
+        setPaymentMethod(variables.paymentMethod as "pix" | "installments" | "installments10");
         setIsSubmitted(true);
       } else {
         toast({
@@ -127,7 +133,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
                 A nota fiscal será enviada em até 5 dias após a confirmação do pagamento.
               </p>
             </div>
-          ) : (
+          ) : paymentMethod === "installments" ? (
             <div className="space-y-4 max-w-md mx-auto text-center">
               <Button
                 onClick={() => window.open(paymentLink, "_blank", "noopener,noreferrer")}
@@ -138,6 +144,21 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
               </Button>
               <p className="text-sm text-muted-foreground">
                 Total: R$ {formatPrice(installmentTotal)},00<br />
+                Sua inscrição será confirmada após a aprovação do pagamento.<br />
+                A nota fiscal será enviada em até 5 dias após a confirmação.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-md mx-auto text-center">
+              <Button
+                onClick={() => window.open(paymentLink10, "_blank", "noopener,noreferrer")}
+                size="lg"
+                data-testid="button-payment-10x"
+              >
+                Pagar 10x R$ {formatPrice(installment10Price)},00
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Total: R$ {formatPrice(installment10Total)},00<br />
                 Sua inscrição será confirmada após a aprovação do pagamento.<br />
                 A nota fiscal será enviada em até 5 dias após a confirmação.
               </p>
@@ -183,7 +204,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
                 A nota fiscal será enviada em até 5 dias após a confirmação do pagamento.
               </p>
             </div>
-          ) : (
+          ) : paymentMethod === "installments" ? (
             <div className="space-y-4 max-w-md mx-auto">
               <p className="text-muted-foreground mb-6">
                 Enviamos um email com o link de pagamento. Clique no botão abaixo para pagar parcelado no cartão.
@@ -197,6 +218,24 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
               </Button>
               <p className="text-sm text-muted-foreground">
                 Total: R$ {formatPrice(installmentTotal)},00<br />
+                Sua inscrição será confirmada após a aprovação do pagamento.<br />
+                A nota fiscal será enviada em até 5 dias após a confirmação.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-md mx-auto">
+              <p className="text-muted-foreground mb-6">
+                Enviamos um email com o link de pagamento. Clique no botão abaixo para pagar parcelado no cartão.
+              </p>
+              <Button
+                onClick={() => window.open(paymentLink10, "_blank", "noopener,noreferrer")}
+                size="lg"
+                data-testid="button-payment-10x"
+              >
+                Pagar 10x R$ {formatPrice(installment10Price)},00
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Total: R$ {formatPrice(installment10Total)},00<br />
                 Sua inscrição será confirmada após a aprovação do pagamento.<br />
                 A nota fiscal será enviada em até 5 dias após a confirmação.
               </p>
@@ -294,7 +333,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
             <Label>Forma de Pagamento * <span className="text-primary font-semibold">({batchName})</span></Label>
             
             <RadioGroup
-              onValueChange={(value) => setValue("paymentMethod", value as "pix" | "installments")}
+              onValueChange={(value) => setValue("paymentMethod", value as "pix" | "installments" | "installments10")}
               className="space-y-3"
             >
               <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${selectedPayment === "pix" ? "border-primary bg-primary/5" : "border-border hover-elevate"}`}>
@@ -319,10 +358,26 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
                   <div className="flex items-start gap-3">
                     <CreditCard className="w-5 h-5 mt-0.5 text-primary" />
                     <div>
-                      <div className="font-semibold text-foreground">Cartão de Crédito</div>
+                      <div className="font-semibold text-foreground">Cartão 5x</div>
                       <div className="text-2xl font-bold text-primary mt-1">5x R$ {formatPrice(installmentPrice)},00</div>
                       <div className="text-sm text-muted-foreground mt-1">
                         Total: R$ {formatPrice(installmentTotal)},00 (sem juros)
+                      </div>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+
+              <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${selectedPayment === "installments10" ? "border-primary bg-primary/5" : "border-border hover-elevate"}`}>
+                <RadioGroupItem value="installments10" id="installments10" data-testid="radio-installments10" />
+                <Label htmlFor="installments10" className="flex-1 cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <CreditCard className="w-5 h-5 mt-0.5 text-primary" />
+                    <div>
+                      <div className="font-semibold text-foreground">Cartão 10x</div>
+                      <div className="text-2xl font-bold text-primary mt-1">10x R$ {formatPrice(installment10Price)},00</div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        Total: R$ {formatPrice(installment10Total)},00 (sem juros)
                       </div>
                     </div>
                   </div>

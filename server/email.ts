@@ -5,8 +5,11 @@ interface BatchPriceInfo {
   pixPrice: number;
   installmentPrice: number;
   installmentTotal: number;
+  installment10Price: number;
+  installment10Total: number;
   batchName: string;
   paymentLink: string;
+  paymentLink10: string;
 }
 
 const BATCHES = [
@@ -18,7 +21,10 @@ const BATCHES = [
     pixPrice: 8000,
     installmentPrice: 1775,
     installmentTotal: 8875,
+    installment10Price: 1775,
+    installment10Total: 8875,
     paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGnMgu7Ax-8875,00",
+    paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGnMgu7Ax-8875,00",
   },
   {
     id: 2,
@@ -28,7 +34,10 @@ const BATCHES = [
     pixPrice: 8750,
     installmentPrice: 1930,
     installmentTotal: 9650,
+    installment10Price: 1930,
+    installment10Total: 9650,
     paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-kuyi8p4sl-9650,00",
+    paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-kuyi8p4sl-9650,00",
   },
   {
     id: 3,
@@ -38,7 +47,10 @@ const BATCHES = [
     pixPrice: 9400,
     installmentPrice: 2085,
     installmentTotal: 10425,
+    installment10Price: 1100,
+    installment10Total: 11000,
     paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGomxwm8d-10425,00",
+    paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
   },
 ];
 
@@ -50,8 +62,11 @@ function getCurrentBatchInfo(): BatchPriceInfo {
         pixPrice: batch.pixPrice,
         installmentPrice: batch.installmentPrice,
         installmentTotal: batch.installmentTotal,
+        installment10Price: batch.installment10Price,
+        installment10Total: batch.installment10Total,
         batchName: batch.name,
         paymentLink: batch.paymentLink,
+        paymentLink10: batch.paymentLink10,
       };
     }
   }
@@ -60,8 +75,11 @@ function getCurrentBatchInfo(): BatchPriceInfo {
     pixPrice: lastBatch.pixPrice,
     installmentPrice: lastBatch.installmentPrice,
     installmentTotal: lastBatch.installmentTotal,
+    installment10Price: lastBatch.installment10Price,
+    installment10Total: lastBatch.installment10Total,
     batchName: lastBatch.name,
     paymentLink: lastBatch.paymentLink,
+    paymentLink10: lastBatch.paymentLink10,
   };
 }
 
@@ -109,7 +127,7 @@ export async function sendTestEmail(toEmail: string) {
 export async function sendRegistrationEmail(
   to: string,
   name: string,
-  paymentMethod: "pix" | "installments"
+  paymentMethod: "pix" | "installments" | "installments10"
 ) {
   const mailerSend = getMailerSendClient();
   const batchInfo = getCurrentBatchInfo();
@@ -142,6 +160,23 @@ export async function sendRegistrationEmail(
     <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
   `;
 
+  const installments10Instructions = `
+    <h3>Instruções para Pagamento Parcelado em 10x (${batchInfo.batchName})</h3>
+    <p>Para confirmar sua inscrição, realize o pagamento em 10x de R$ ${formatPrice(batchInfo.installment10Price)},00 (total R$ ${formatPrice(batchInfo.installment10Total)},00) através do link abaixo:</p>
+    <p style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin: 16px 0;">
+      <strong>Link de pagamento:</strong><br/>
+      <a href="${batchInfo.paymentLink10}" style="color: #0070f3; word-break: break-all;">${batchInfo.paymentLink10}</a>
+    </p>
+    <p>Clique no link acima ou copie e cole no seu navegador para realizar o pagamento.</p>
+    <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
+  `;
+
+  const getPaymentInstructions = () => {
+    if (paymentMethod === "pix") return pixInstructions;
+    if (paymentMethod === "installments10") return installments10Instructions;
+    return installmentsInstructions;
+  };
+
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 30px;">
@@ -151,7 +186,7 @@ export async function sendRegistrationEmail(
       <p>Olá ${name},</p>
       <p>Sua inscrição para a Mentoria Conjunta de <strong>Marcelo Murilo e Hamilton Felix</strong> foi recebida com sucesso!</p>
       
-      ${paymentMethod === "pix" ? pixInstructions : installmentsInstructions}
+      ${getPaymentInstructions()}
       
       <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
       
@@ -515,7 +550,7 @@ export async function sendPartialPaymentEmail(
 export async function sendPendingPaymentEmail(
   to: string,
   name: string,
-  paymentMethod: "pix" | "installments"
+  paymentMethod: "pix" | "installments" | "installments10"
 ) {
   const mailerSend = getMailerSendClient();
   const batchInfo = getCurrentBatchInfo();
@@ -548,6 +583,23 @@ export async function sendPendingPaymentEmail(
     <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
   `;
 
+  const installments10Instructions = `
+    <h3>Instruções para Pagamento Parcelado em 10x (${batchInfo.batchName})</h3>
+    <p>Para confirmar sua inscrição, realize o pagamento em 10x de R$ ${formatPrice(batchInfo.installment10Price)},00 (total R$ ${formatPrice(batchInfo.installment10Total)},00) através do link abaixo:</p>
+    <p style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin: 16px 0;">
+      <strong>Link de pagamento:</strong><br/>
+      <a href="${batchInfo.paymentLink10}" style="color: #0070f3; word-break: break-all;">${batchInfo.paymentLink10}</a>
+    </p>
+    <p>Clique no link acima ou copie e cole no seu navegador para realizar o pagamento.</p>
+    <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
+  `;
+
+  const getPaymentInstructions = () => {
+    if (paymentMethod === "pix") return pixInstructions;
+    if (paymentMethod === "installments10") return installments10Instructions;
+    return installmentsInstructions;
+  };
+
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 30px;">
@@ -557,7 +609,7 @@ export async function sendPendingPaymentEmail(
       <p>Olá ${name},</p>
       <p>Sua inscrição para a Mentoria Conjunta de <strong>Marcelo Murilo e Hamilton Felix</strong> foi recebida!</p>
       
-      ${paymentMethod === "pix" ? pixInstructions : installmentsInstructions}
+      ${getPaymentInstructions()}
       
       <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
       

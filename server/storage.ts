@@ -54,7 +54,7 @@ export interface ManualRegistrationData {
   phone: string;
   cpfCnpj: string;
   razaoSocial?: string | null;
-  paymentMethod: 'pix' | 'installments';
+  paymentMethod: 'pix' | 'installments' | 'installments10';
   paymentStatus: 'pendente' | 'parcial' | 'pago';
   totalAmount: number;
   paidAmount: number;

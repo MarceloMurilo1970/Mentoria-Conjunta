@@ -666,6 +666,11 @@ const BATCH_CONFIG_BASE = [
     hfRate: 0.317,
     vendorRate: 0.05,
     paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00",
+    // CJ7 - 10x option
+    installment10Price: 1100,
+    installment10Total: 11000,
+    cardFee10: 1657,
+    paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
   },
 ];
 
@@ -684,8 +689,22 @@ const BATCH_CONFIG = getBatchConfig(getSavedTaxRate());
 // Order: 1) Tax on gross, 2) Subtract tax + card fee, 3) Vendor 5% if exists, 4) Split MM 2/3, HF 1/3
 function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFIG[0]) {
   const isPix = reg.paymentMethod === 'pix';
-  const total = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
-  const cardFee = isPix ? 0 : batchConfig.cardFee;
+  const is10x = reg.paymentMethod === 'installments10';
+  
+  // Get correct total and card fee based on payment method
+  let total: number;
+  let cardFee: number;
+  
+  if (isPix) {
+    total = batchConfig.pixPrice;
+    cardFee = 0;
+  } else if (is10x && batchConfig.installment10Total) {
+    total = batchConfig.installment10Total;
+    cardFee = batchConfig.cardFee10 || 1657; // Default for batch 3
+  } else {
+    total = batchConfig.installmentTotal;
+    cardFee = batchConfig.cardFee;
+  }
   
   // Tax is calculated on GROSS amount (total)
   const taxes = Math.round(total * batchConfig.taxRate);
@@ -780,7 +799,7 @@ function MentorshipRegistrationsSection() {
   const [manualRegPhone, setManualRegPhone] = useState('');
   const [manualRegCpfCnpj, setManualRegCpfCnpj] = useState('');
   const [manualRegRazaoSocial, setManualRegRazaoSocial] = useState('');
-  const [manualRegPaymentMethod, setManualRegPaymentMethod] = useState<'pix' | 'installments'>('pix');
+  const [manualRegPaymentMethod, setManualRegPaymentMethod] = useState<'pix' | 'installments' | 'installments10'>('pix');
   const [manualRegPaymentStatus, setManualRegPaymentStatus] = useState<'pendente' | 'parcial' | 'pago'>('pendente');
   const [manualRegTotalAmount, setManualRegTotalAmount] = useState('9400');
   const [manualRegPaidAmount, setManualRegPaidAmount] = useState('0');
@@ -977,7 +996,7 @@ function MentorshipRegistrationsSection() {
       phone: string;
       cpfCnpj: string;
       razaoSocial?: string;
-      paymentMethod: 'pix' | 'installments';
+      paymentMethod: 'pix' | 'installments' | 'installments10';
       paymentStatus: 'pendente' | 'parcial' | 'pago';
       totalAmount: number;
       paidAmount: number;
@@ -1906,7 +1925,7 @@ Qualquer dúvida, estamos à disposição!`;
                                         <td className="px-3 py-2">
                                           <div>
                                             <p className="font-medium text-gray-900">{reg.name}</p>
-                                            <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : 'Parcelado'}</p>
+                                            <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
                                           </div>
                                         </td>
                                         <td className="px-3 py-2 text-right font-medium">R$ {comms.gross.toLocaleString('pt-BR')}</td>
@@ -2249,13 +2268,14 @@ Qualquer dúvida, estamos à disposição!`;
               </div>
               <div>
                 <Label className="text-gray-700">Forma de Pagamento</Label>
-                <Select value={manualRegPaymentMethod} onValueChange={(v: 'pix' | 'installments') => setManualRegPaymentMethod(v)}>
+                <Select value={manualRegPaymentMethod} onValueChange={(v: 'pix' | 'installments' | 'installments10') => setManualRegPaymentMethod(v)}>
                   <SelectTrigger className="mt-1 bg-white border-gray-300" data-testid="select-manual-payment-method">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     <SelectItem value="pix">PIX</SelectItem>
                     <SelectItem value="installments">Parcelado (5x)</SelectItem>
+                    <SelectItem value="installments10">Parcelado (10x)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -7,7 +7,10 @@ interface PriceInfo {
   pixPrice: number;
   installmentPrice: number;
   installmentTotal: number;
+  installment10Price: number;
+  installment10Total: number;
   paymentLink: string;
+  paymentLink10: string;
 }
 
 interface TimeLeft {
@@ -21,7 +24,10 @@ const CURRENT_PRICE: PriceInfo = {
   pixPrice: 9400,
   installmentPrice: 2085,
   installmentTotal: 10425,
+  installment10Price: 1100,
+  installment10Total: 11000,
   paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGomxwm8d-10425,00",
+  paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
 };
 
 const MENTORIA_START = new Date("2026-02-23T19:00:00-03:00");
@@ -36,8 +42,11 @@ export function getBatchPrices(currentDate: Date = new Date()) {
     pixPrice: CURRENT_PRICE.pixPrice,
     installmentPrice: CURRENT_PRICE.installmentPrice,
     installmentTotal: CURRENT_PRICE.installmentTotal,
+    installment10Price: CURRENT_PRICE.installment10Price,
+    installment10Total: CURRENT_PRICE.installment10Total,
     batchName: "Inscrição",
     paymentLink: CURRENT_PRICE.paymentLink,
+    paymentLink10: CURRENT_PRICE.paymentLink10,
   };
 }
 

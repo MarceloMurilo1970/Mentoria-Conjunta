@@ -256,10 +256,14 @@ export async function sendRegistrationNotificationEmail(
 
   const paymentInfo = registration.paymentMethod === 'pix' 
     ? `PIX à vista - R$ ${formatPrice(batchInfo.pixPrice)},00`
+    : registration.paymentMethod === 'installments10'
+    ? `Cartão 10x R$ ${formatPrice(batchInfo.installment10Price)},00 (Total: R$ ${formatPrice(batchInfo.installment10Total)},00)`
     : `Cartão 5x R$ ${formatPrice(batchInfo.installmentPrice)},00 (Total: R$ ${formatPrice(batchInfo.installmentTotal)},00)`;
 
   const paymentLinkInfo = registration.paymentMethod === 'installments'
     ? `<p><strong>Link de Pagamento:</strong> <a href="${batchInfo.paymentLink}">${batchInfo.paymentLink}</a></p>`
+    : registration.paymentMethod === 'installments10'
+    ? `<p><strong>Link de Pagamento:</strong> <a href="${batchInfo.paymentLink10}">${batchInfo.paymentLink10}</a></p>`
     : `<p><strong>PIX (CNPJ):</strong> 17.840.516/0001-47 - Opes Informática Ltda</p>`;
 
   const htmlContent = `
@@ -322,6 +326,8 @@ export async function sendRegistrationListEmail(
   const registrationRows = registrations.map((reg, index) => {
     const paymentDisplay = reg.paymentMethod === 'pix' 
       ? `PIX (R$ ${formatPrice(batchInfo.pixPrice)})` 
+      : reg.paymentMethod === 'installments10'
+      ? `10x R$ ${formatPrice(batchInfo.installment10Price)}`
       : `5x R$ ${formatPrice(batchInfo.installmentPrice)}`;
     
     return `

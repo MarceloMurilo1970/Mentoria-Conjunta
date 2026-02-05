@@ -2401,11 +2401,13 @@ Qualquer dúvida, estamos à disposição!`;
                         </Badge>
                       )}
                       <Badge 
-                        className={reg.paymentMethod === 'pix' ? 'bg-blue-600' : 'bg-gray-600'}
+                        className={reg.paymentMethod === 'pix' ? 'bg-blue-600' : reg.paymentMethod === 'installments10' ? 'bg-purple-600' : 'bg-gray-600'}
                         data-testid={`badge-payment-${index}`}
                       >
                         {reg.paymentMethod === 'pix' 
                           ? `PIX R$ ${batchConfig.pixPrice.toLocaleString('pt-BR')}` 
+                          : reg.paymentMethod === 'installments10'
+                          ? `10x R$ ${(batchConfig.installment10Price || 1100).toLocaleString('pt-BR')}`
                           : `5x R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR')}`}
                       </Badge>
                       <Button

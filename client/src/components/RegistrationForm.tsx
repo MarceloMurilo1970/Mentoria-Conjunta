@@ -95,7 +95,8 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
   });
 
   const onSubmit = async (data: InsertRegistration) => {
-    registrationMutation.mutate(data);
+    // Always set batch to 3 (current batch)
+    registrationMutation.mutate({ ...data, batch: 3 });
   };
 
   if (isSubmitted && emailError && paymentMethod) {

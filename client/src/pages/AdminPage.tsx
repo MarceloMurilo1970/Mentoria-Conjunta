@@ -672,6 +672,23 @@ const BATCH_CONFIG_BASE = [
     cardFee10: 1657,
     paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
   },
+  { 
+    batch: 4, 
+    deadline: "Condição Especial", 
+    pixPrice: 10000, 
+    installmentPrice: 1000, 
+    installments: 10, 
+    installmentTotal: 10000,
+    cardFee: 1506,
+    mmRate: 0.633,
+    hfRate: 0.317,
+    vendorRate: 0.05,
+    paymentLink: "",
+    installment10Price: 1000,
+    installment10Total: 10000,
+    cardFee10: 1506,
+    paymentLink10: "",
+  },
 ];
 
 // Function to get BATCH_CONFIG with current tax rate
@@ -1179,6 +1196,22 @@ Beneficiário: Opes Informática Ltda
 Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turma 2 (Fevereiro a Abril 2026).
 
 Qualquer dúvida, estamos à disposição!`;
+    } else if (reg.paymentMethod === 'installments10') {
+      const price10 = batchConfig.installment10Price || 1100;
+      const total10 = batchConfig.installment10Total || 11000;
+      const link10 = batchConfig.paymentLink10 || '';
+      text = `Olá ${firstName}!
+
+Seguem as instruções para pagamento no cartão de crédito:
+
+Valor: 10x de R$ ${price10.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (sem juros)
+Total: R$ ${total10.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}${link10 ? `
+
+Link de pagamento: ${link10}` : ''}
+
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turma 2 (Fevereiro a Abril 2026).
+
+Qualquer dúvida, estamos à disposição!`;
     } else {
       text = `Olá ${firstName}!
 
@@ -1197,7 +1230,7 @@ Qualquer dúvida, estamos à disposição!`;
     navigator.clipboard.writeText(text);
     toast({
       title: "Instruções copiadas!",
-      description: `Instruções de pagamento via ${reg.paymentMethod === 'pix' ? 'PIX' : 'Cartão'} copiadas para a área de transferência.`,
+      description: `Instruções de pagamento via ${reg.paymentMethod === 'pix' ? 'PIX' : 'Cartão ' + (reg.paymentMethod === 'installments10' ? '10x' : '5x')} copiadas para a área de transferência.`,
     });
   };
 
@@ -2382,6 +2415,7 @@ Qualquer dúvida, estamos à disposição!`;
                               <SelectItem value="1">1</SelectItem>
                               <SelectItem value="2">2</SelectItem>
                               <SelectItem value="3">3</SelectItem>
+                              <SelectItem value="4">4 (Especial)</SelectItem>
                             </SelectContent>
                           </Select>
                           <Button size="icon" variant="ghost" onClick={() => handleSaveBatch(reg.id)} disabled={batchMutation.isPending} className="h-7 w-7">
@@ -2393,11 +2427,11 @@ Qualquer dúvida, estamos à disposição!`;
                         </div>
                       ) : (
                         <Badge 
-                          className="bg-primary cursor-pointer hover:bg-primary/80" 
+                          className={`cursor-pointer ${(reg.batch || 1) === 4 ? 'bg-amber-600 hover:bg-amber-700' : 'bg-primary hover:bg-primary/80'}`}
                           title="Clique para alterar o lote"
                           onClick={() => startEditingBatch(reg)}
                         >
-                          Lote {reg.batch || 1}
+                          Lote {reg.batch || 1}{(reg.batch || 1) === 4 ? ' (Esp)' : ''}
                         </Badge>
                       )}
                       <Badge 

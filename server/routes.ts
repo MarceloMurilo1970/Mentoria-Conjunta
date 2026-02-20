@@ -1067,8 +1067,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { batch } = req.body;
       
-      if (![1, 2, 3].includes(Number(batch))) {
-        return res.status(400).json({ error: "Lote deve ser 1, 2 ou 3" });
+      if (![1, 2, 3, 4].includes(Number(batch))) {
+        return res.status(400).json({ error: "Lote deve ser 1, 2, 3 ou 4" });
       }
       
       const registration = await storage.getRegistration(id);
@@ -1092,6 +1092,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     { batch: 1, pixPrice: 8000, installmentPrice: 1775, installments: 5, installmentTotal: 8875, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00", installment10Price: 1775, installment10Total: 8875, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00" },
     { batch: 2, pixPrice: 8700, installmentPrice: 1930, installments: 5, installmentTotal: 9650, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00", installment10Price: 1930, installment10Total: 9650, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00" },
     { batch: 3, pixPrice: 9400, installmentPrice: 2085, installments: 5, installmentTotal: 10425, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00", installment10Price: 1100, installment10Total: 11000, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00" },
+    { batch: 4, pixPrice: 10000, installmentPrice: 1000, installments: 10, installmentTotal: 10000, paymentLink: "", installment10Price: 1000, installment10Total: 10000, paymentLink10: "" },
   ];
 
   // Generate contract PDF for a registration (authenticated users - admin or vendor)

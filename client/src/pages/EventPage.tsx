@@ -17,7 +17,8 @@ import {
   MessageSquare,
   Award,
   Lightbulb,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Clock
 } from "lucide-react";
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
 import BatchPricing, { getBatchPrices, isBatchesOpen } from "@/components/BatchPricing";
@@ -446,27 +447,57 @@ export default function EventPage() {
           showStickyBanner ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
-        <div className="bg-gradient-to-r from-primary via-primary to-yellow-500 py-3 px-4 shadow-lg shadow-black/50">
-          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-white">
-              <Sparkles className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm sm:text-base font-medium text-center sm:text-left">
-                <span className="hidden sm:inline">Inscrições abertas! </span>
-                Garanta sua vaga na Turma 2!
-              </span>
+        {(() => {
+          const d = new Date();
+          const isLastDay = d.getFullYear() === 2026 && d.getMonth() === 1 && d.getDate() === 23;
+          if (isLastDay) {
+            return (
+              <div className="bg-red-600 py-3 px-4 shadow-lg shadow-black/50">
+                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 text-white animate-pulse">
+                    <Clock className="w-5 h-5 flex-shrink-0" />
+                    <span className="text-sm sm:text-base font-bold text-center sm:text-left uppercase">
+                      Último dia de inscrições! Apenas 1 vaga restante
+                    </span>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="whitespace-nowrap group bg-white text-red-600 hover:bg-gray-100"
+                    onClick={scrollToRegistration}
+                    data-testid="button-sticky-inscricao"
+                  >
+                    Inscrever-se
+                    <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
+              </div>
+            );
+          }
+          return (
+            <div className="bg-gradient-to-r from-primary via-primary to-yellow-500 py-3 px-4 shadow-lg shadow-black/50">
+              <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-3 text-white">
+                  <Sparkles className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base font-medium text-center sm:text-left">
+                    <span className="hidden sm:inline">Inscrições abertas! </span>
+                    Garanta sua vaga na Turma 2!
+                  </span>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="whitespace-nowrap group bg-white text-primary hover:bg-gray-100"
+                  onClick={scrollToRegistration}
+                  data-testid="button-sticky-inscricao"
+                >
+                  Inscrever-se
+                  <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
             </div>
-            <Button 
-              size="sm" 
-              variant="secondary" 
-              className="whitespace-nowrap group bg-white text-primary hover:bg-gray-100"
-              onClick={scrollToRegistration}
-              data-testid="button-sticky-inscricao"
-            >
-              Inscrever-se
-              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </div>
-        </div>
+          );
+        })()}
       </div>
     </div>
   );

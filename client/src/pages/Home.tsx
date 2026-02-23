@@ -102,8 +102,29 @@ export default function Home() {
   const batchesOpen = isBatchesOpen(new Date());
   const priceInfo = getBatchPrices(new Date());
 
+  const now = new Date();
+  const isLastDay = now.getFullYear() === 2026 && now.getMonth() === 1 && now.getDate() === 23;
+
   return (
     <div className="min-h-screen">
+      {/* Urgency Banner - Last Day Only */}
+      {isLastDay && (
+        <div className="sticky top-0 z-50 bg-red-600 text-white py-3 cursor-pointer" onClick={scrollToRegistration}>
+          <div className="max-w-7xl mx-auto px-6 md:px-8 flex items-center justify-center gap-3 flex-wrap">
+            <span className="inline-flex items-center gap-2 animate-pulse">
+              <Clock className="w-5 h-5" />
+              <span className="text-base md:text-lg font-bold tracking-wide uppercase">
+                Último dia de inscrições!
+              </span>
+              <Clock className="w-5 h-5" />
+            </span>
+            <span className="text-amber-300 font-semibold text-base md:text-lg">
+              — Apenas 1 vaga restante
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Back Button */}
       <div className="bg-background border-b border-border">
         <div className="max-w-7xl mx-auto px-6 md:px-8 py-4">
@@ -785,27 +806,6 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           {showRegistrationForm ? (
             <div className="space-y-12">
-              {(() => {
-                const now = new Date();
-                const isLastDay = now.getFullYear() === 2026 && now.getMonth() === 1 && now.getDate() === 23;
-                if (isLastDay) {
-                  return (
-                    <div className="max-w-3xl mx-auto text-center space-y-4">
-                      <div className="inline-flex items-center gap-3 bg-red-600 text-white px-8 py-4 rounded-lg animate-pulse shadow-lg shadow-red-600/30">
-                        <Clock className="w-6 h-6" />
-                        <span className="text-xl md:text-2xl font-bold tracking-wide uppercase">
-                          Hoje - Último Dia de Inscrições
-                        </span>
-                        <Clock className="w-6 h-6" />
-                      </div>
-                      <p className="text-lg md:text-xl font-semibold text-amber-400">
-                        Apenas 1 vaga restante!
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
               <BatchPricing currentDate={new Date()} />
               {batchesOpen ? (
                 <RegistrationForm priceInfo={priceInfo} />

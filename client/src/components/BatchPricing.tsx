@@ -31,7 +31,7 @@ const CURRENT_PRICE: PriceInfo = {
 };
 
 const MENTORIA_START = new Date("2026-02-23T19:00:00-03:00");
-const REGISTRATION_END = new Date("2026-02-22T23:59:59-03:00");
+const REGISTRATION_END = new Date("2026-02-28T23:59:59-03:00");
 
 export function isBatchesOpen(currentDate: Date = new Date()): boolean {
   return currentDate <= REGISTRATION_END;

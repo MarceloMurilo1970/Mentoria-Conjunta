@@ -785,6 +785,27 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           {showRegistrationForm ? (
             <div className="space-y-12">
+              {(() => {
+                const now = new Date();
+                const isLastDay = now.getFullYear() === 2026 && now.getMonth() === 1 && now.getDate() === 23;
+                if (isLastDay) {
+                  return (
+                    <div className="max-w-3xl mx-auto text-center space-y-4">
+                      <div className="inline-flex items-center gap-3 bg-red-600 text-white px-8 py-4 rounded-lg animate-pulse shadow-lg shadow-red-600/30">
+                        <Clock className="w-6 h-6" />
+                        <span className="text-xl md:text-2xl font-bold tracking-wide uppercase">
+                          Hoje - Último Dia de Inscrições
+                        </span>
+                        <Clock className="w-6 h-6" />
+                      </div>
+                      <p className="text-lg md:text-xl font-semibold text-amber-400">
+                        Apenas 1 vaga restante!
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               <BatchPricing currentDate={new Date()} />
               {batchesOpen ? (
                 <RegistrationForm priceInfo={priceInfo} />

@@ -1780,6 +1780,89 @@ Qualquer dúvida, estamos à disposição!`;
                                   <p className="font-bold text-blue-700">R$ {vendorStats.commissionDueNow.toLocaleString('pt-BR')}</p>
                                 </div>
                               </div>
+
+                              {/* Analytical table per sale */}
+                              <div className="border-t border-slate-200 pt-4 mb-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <BarChart3 className="h-4 w-4 text-amber-600" />
+                                  <span className="text-sm font-medium text-gray-700">Analítico por Venda</span>
+                                </div>
+                                <div className="bg-slate-50 rounded-lg overflow-hidden">
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                      <thead>
+                                        <tr className="bg-slate-100 text-left">
+                                          <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
+                                          <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Venda</th>
+                                          <th className="px-3 py-2 font-medium text-gray-600 text-center">Status</th>
+                                          <th className="px-3 py-2 font-medium text-gray-600 text-right">Comissão Total</th>
+                                          <th className="px-3 py-2 font-medium text-gray-600 text-right">Devido Agora</th>
+                                          <th className="px-3 py-2 font-medium text-gray-600 text-right">Já Pago</th>
+                                          <th className="px-3 py-2 font-medium text-gray-600 text-right">Saldo</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-200">
+                                        {vendorRegs.map(reg => {
+                                          const bc = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+                                          const comms = calculateCommissions(reg, bc);
+                                          const paidAmountReais = (reg.paidAmount || 0) / 100;
+                                          const ns = (reg.paymentStatus || '').toLowerCase().trim();
+                                          const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' ? paidAmountReais / comms.gross : 0;
+                                          const commDueNow = Math.round(comms.vendorComm * paidRatio);
+                                          const commPaid = reg.vendorCommissionPaid || 0;
+                                          const commBalance = commDueNow - commPaid;
+                                          return (
+                                            <tr key={reg.id} className="hover:bg-slate-100">
+                                              <td className="px-3 py-2">
+                                                <div>
+                                                  <p className="font-medium text-gray-900">{reg.name}</p>
+                                                  <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
+                                                </div>
+                                              </td>
+                                              <td className="px-3 py-2 text-right font-medium">R$ {comms.gross.toLocaleString('pt-BR')}</td>
+                                              <td className="px-3 py-2 text-center">
+                                                <Badge className={ns === 'pago' ? 'bg-green-600' : ns === 'parcial' ? 'bg-amber-500' : 'bg-red-500'}>
+                                                  {ns === 'pago' ? 'Pago' : ns === 'parcial' ? 'Parcial' : 'Pendente'}
+                                                </Badge>
+                                              </td>
+                                              <td className="px-3 py-2 text-right text-amber-700 font-medium">R$ {comms.vendorComm.toLocaleString('pt-BR')}</td>
+                                              <td className="px-3 py-2 text-right text-blue-700 font-medium">R$ {commDueNow.toLocaleString('pt-BR')}</td>
+                                              <td className="px-3 py-2 text-right">
+                                                {commPaid > 0 ? (
+                                                  <div>
+                                                    <span className="text-green-600 font-medium">R$ {commPaid.toLocaleString('pt-BR')}</span>
+                                                    {reg.vendorCommissionPaidAt && (
+                                                      <p className="text-xs text-gray-400">{new Date(reg.vendorCommissionPaidAt).toLocaleDateString('pt-BR')}</p>
+                                                    )}
+                                                  </div>
+                                                ) : (
+                                                  <span className="text-gray-400">-</span>
+                                                )}
+                                              </td>
+                                              <td className="px-3 py-2 text-right">
+                                                <span className={`font-bold ${commBalance > 0 ? 'text-amber-600' : commBalance < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                                  R$ {commBalance.toLocaleString('pt-BR')}
+                                                </span>
+                                              </td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                      <tfoot>
+                                        <tr className="bg-amber-50 font-semibold">
+                                          <td className="px-3 py-2 text-gray-700">TOTAL</td>
+                                          <td className="px-3 py-2 text-right">R$ {vendorStats.soldValue.toLocaleString('pt-BR')}</td>
+                                          <td className="px-3 py-2"></td>
+                                          <td className="px-3 py-2 text-right text-amber-700">R$ {vendorStats.commissionTotal.toLocaleString('pt-BR')}</td>
+                                          <td className="px-3 py-2 text-right text-blue-700">R$ {vendorStats.commissionDueNow.toLocaleString('pt-BR')}</td>
+                                          <td className="px-3 py-2 text-right text-green-600">R$ {vendorStats.commissionPaid.toLocaleString('pt-BR')}</td>
+                                          <td className="px-3 py-2 text-right text-amber-700">R$ {balance.toLocaleString('pt-BR')}</td>
+                                        </tr>
+                                      </tfoot>
+                                    </table>
+                                  </div>
+                                </div>
+                              </div>
                               
                               <div className="border-t border-slate-200 pt-4">
                                 <div className="flex items-center justify-between mb-3">
@@ -1934,6 +2017,9 @@ Qualquer dúvida, estamos à disposição!`;
                                   <tr className="bg-slate-100 text-left">
                                     <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Venda</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Impostos</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Tarifa Cartão</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Líquido</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-center">Status</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Repasse Total</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Devido Agora</th>
@@ -1962,6 +2048,9 @@ Qualquer dúvida, estamos à disposição!`;
                                           </div>
                                         </td>
                                         <td className="px-3 py-2 text-right font-medium">R$ {comms.gross.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-red-600">R$ {comms.taxes.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-orange-600">R$ {comms.cardFee.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-emerald-700 font-medium">R$ {comms.netAfterTax.toLocaleString('pt-BR')}</td>
                                         <td className="px-3 py-2 text-center">
                                           <Badge className={
                                             normalizedStatus === 'pago' ? 'bg-green-600' : 
@@ -1997,6 +2086,9 @@ Qualquer dúvida, estamos à disposição!`;
                                   <tr className="bg-purple-50 font-semibold">
                                     <td className="px-3 py-2 text-gray-700">TOTAL</td>
                                     <td className="px-3 py-2 text-right">R$ {hamiltonStats.soldValue.toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-red-600">R$ {(registrations?.reduce((s, r) => { const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0]; return s + calculateCommissions(r, bc).taxes; }, 0) || 0).toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-orange-600">R$ {(registrations?.reduce((s, r) => { const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0]; return s + calculateCommissions(r, bc).cardFee; }, 0) || 0).toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-emerald-700">R$ {(registrations?.reduce((s, r) => { const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0]; return s + calculateCommissions(r, bc).netAfterTax; }, 0) || 0).toLocaleString('pt-BR')}</td>
                                     <td className="px-3 py-2"></td>
                                     <td className="px-3 py-2 text-right text-purple-700">R$ {hamiltonStats.hfTotal.toLocaleString('pt-BR')}</td>
                                     <td className="px-3 py-2 text-right text-blue-700">R$ {hamiltonStats.hfDueNow.toLocaleString('pt-BR')}</td>

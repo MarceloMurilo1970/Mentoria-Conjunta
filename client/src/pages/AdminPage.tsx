@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy, Pencil, Download, Banknote, BarChart3 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
@@ -799,6 +800,8 @@ function MentorshipRegistrationsSection() {
   const [transferAmount, setTransferAmount] = useState('');
   const [transferNotes, setTransferNotes] = useState('');
   const [transferPaymentMethod, setTransferPaymentMethod] = useState('pix');
+  const [transferSelectedRegIds, setTransferSelectedRegIds] = useState<Set<number>>(new Set());
+  const [transferPaymentDate, setTransferPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   
   // Get current user email and auth token from localStorage
   const currentUserEmail = localStorage.getItem('crm_vendor_email');
@@ -1912,8 +1915,19 @@ Qualquer dúvida, estamos à disposição!`;
                                       onClick={() => {
                                         setTransferRecipient('vendor');
                                         setTransferVendorName(vendor.name);
-                                        setTransferAmount(balance.toString());
                                         setTransferNotes('');
+                                        setTransferPaymentDate(new Date().toISOString().split('T')[0]);
+                                        const pendingIds = new Set<number>();
+                                        (registrations || []).filter(r => r.vendor === vendor.name).forEach(r => {
+                                          const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0];
+                                          const comms = calculateCommissions(r, bc);
+                                          const paidAmountReais = (r.paidAmount || 0) / 100;
+                                          const ns = (r.paymentStatus || '').toLowerCase().trim();
+                                          const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' ? paidAmountReais / comms.gross : 0;
+                                          const due = Math.round(comms.vendorComm * paidRatio) - (r.vendorCommissionPaid || 0);
+                                          if (due > 0) pendingIds.add(r.id);
+                                        });
+                                        setTransferSelectedRegIds(pendingIds);
                                         setTransferPaymentModalOpen(true);
                                       }}
                                       className="bg-amber-600 hover:bg-amber-700"
@@ -2136,8 +2150,19 @@ Qualquer dúvida, estamos à disposição!`;
                                 onClick={() => {
                                   setTransferRecipient('hamilton');
                                   setTransferVendorName('');
-                                  setTransferAmount(balance.toString());
                                   setTransferNotes('');
+                                  setTransferPaymentDate(new Date().toISOString().split('T')[0]);
+                                  const pendingIds = new Set<number>();
+                                  (registrations || []).forEach(r => {
+                                    const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0];
+                                    const comms = calculateCommissions(r, bc);
+                                    const paidAmountReais = (r.paidAmount || 0) / 100;
+                                    const ns = (r.paymentStatus || '').toLowerCase().trim();
+                                    const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' ? paidAmountReais / comms.gross : 0;
+                                    const due = Math.round(comms.hfComm * paidRatio) - (r.hamiltonPaid || 0);
+                                    if (due > 0) pendingIds.add(r.id);
+                                  });
+                                  setTransferSelectedRegIds(pendingIds);
                                   setTransferPaymentModalOpen(true);
                                 }}
                                 className="bg-purple-600 hover:bg-purple-700"
@@ -2161,155 +2186,236 @@ Qualquer dúvida, estamos à disposição!`;
 
       {/* Transfer Payment Modal */}
       <Dialog open={transferPaymentModalOpen} onOpenChange={setTransferPaymentModalOpen}>
-        <DialogContent className="bg-white">
+        <DialogContent className="bg-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-gray-900">
               {transferRecipient === 'hamilton' ? 'Registrar Repasse - Hamilton Felix' : `Pagar Comissão - ${transferVendorName}`}
             </DialogTitle>
             <DialogDescription className="text-gray-600">
-              {transferRecipient === 'hamilton' 
-                ? 'Registre um repasse para Hamilton Felix' 
-                : `Registre um pagamento de comissão para ${transferVendorName}`}
+              Selecione as inscrições que deseja quitar e confirme a data do pagamento.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label className="text-gray-700">Valor (R$) *</Label>
-              <Input
-                type="number"
-                value={transferAmount}
-                onChange={(e) => setTransferAmount(e.target.value)}
-                placeholder="0,00"
-                className="mt-1 bg-white border-gray-300"
-                data-testid="input-transfer-amount"
-              />
-            </div>
-            <div>
-              <Label className="text-gray-700">Forma de Pagamento</Label>
-              <Select value={transferPaymentMethod} onValueChange={setTransferPaymentMethod}>
-                <SelectTrigger className="mt-1 bg-white border-gray-300">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="transferencia">Transferência Bancária</SelectItem>
-                  <SelectItem value="deposito">Depósito</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-gray-700">Observações</Label>
-              <Input
-                value={transferNotes}
-                onChange={(e) => setTransferNotes(e.target.value)}
-                placeholder="Observações opcionais"
-                className="mt-1 bg-white border-gray-300"
-                data-testid="input-transfer-notes"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setTransferPaymentModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={async () => {
-                const amount = parseFloat(transferAmount);
-                if (!amount || amount <= 0) {
-                  toast({
-                    title: 'Erro',
-                    description: 'Informe um valor válido',
-                    variant: 'destructive',
-                  });
-                  return;
-                }
-                
-                if (transferRecipient === 'vendor' && transferVendorName) {
-                  // For vendors, distribute payment across registrations with unpaid commission
-                  const vendorRegs = registrations?.filter(r => r.vendor === transferVendorName) || [];
-                  let remainingAmount = amount;
-                  
-                  for (const reg of vendorRegs) {
-                    if (remainingAmount <= 0) break;
-                    
-                    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
-                    const comms = calculateCommissions(reg, batchConfig);
-                    const paidAmountReais = (reg.paidAmount || 0) / 100;
-                    const statusNorm = (reg.paymentStatus || '').toLowerCase().trim();
-                    const paidRatio = statusNorm === 'pago' ? 1 : 
-                                     statusNorm === 'parcial' ? paidAmountReais / comms.gross : 0;
-                    const commDueNow = Math.round(comms.vendorComm * paidRatio);
-                    const due = commDueNow - (reg.vendorCommissionPaid || 0);
-                    
-                    if (due > 0) {
-                      const paymentForThisReg = Math.min(due, remainingAmount);
-                      const newPaid = (reg.vendorCommissionPaid || 0) + paymentForThisReg;
-                      
-                      try {
-                        await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, {
-                          vendorCommissionPaid: newPaid,
-                          vendorCommissionPaidAt: new Date().toISOString(),
-                        });
-                        remainingAmount -= paymentForThisReg;
-                      } catch (error) {
-                        console.error('Error updating vendor commission:', error);
+
+          {(() => {
+            // Compute pending regs for this transfer
+            const sourceRegs = transferRecipient === 'vendor'
+              ? (registrations || []).filter(r => r.vendor === transferVendorName)
+              : (registrations || []);
+
+            const pendingRegs = sourceRegs.map(reg => {
+              const bc = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+              const comms = calculateCommissions(reg, bc);
+              const paidAmountReais = (reg.paidAmount || 0) / 100;
+              const ns = (reg.paymentStatus || '').toLowerCase().trim();
+              const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' ? paidAmountReais / comms.gross : 0;
+              const dueNow = transferRecipient === 'vendor'
+                ? Math.round(comms.vendorComm * paidRatio)
+                : Math.round(comms.hfComm * paidRatio);
+              const alreadyPaid = transferRecipient === 'vendor'
+                ? (reg.vendorCommissionPaid || 0)
+                : (reg.hamiltonPaid || 0);
+              const balance = dueNow - alreadyPaid;
+              return { reg, comms, dueNow, alreadyPaid, balance };
+            }).filter(item => item.balance > 0);
+
+            const selectedTotal = pendingRegs
+              .filter(item => transferSelectedRegIds.has(item.reg.id))
+              .reduce((sum, item) => sum + item.balance, 0);
+
+            const allSelected = pendingRegs.length > 0 && pendingRegs.every(item => transferSelectedRegIds.has(item.reg.id));
+            const noneSelected = pendingRegs.every(item => !transferSelectedRegIds.has(item.reg.id));
+
+            const toggleAll = () => {
+              if (allSelected) {
+                setTransferSelectedRegIds(new Set());
+              } else {
+                setTransferSelectedRegIds(new Set(pendingRegs.map(item => item.reg.id)));
+              }
+            };
+
+            const toggleReg = (id: number) => {
+              const next = new Set(transferSelectedRegIds);
+              if (next.has(id)) next.delete(id); else next.add(id);
+              setTransferSelectedRegIds(next);
+            };
+
+            const isHamilton = transferRecipient === 'hamilton';
+            const accentClass = isHamilton ? 'text-purple-700' : 'text-amber-700';
+            const bgAccent = isHamilton ? 'bg-purple-50' : 'bg-amber-50';
+
+            return (
+              <div className="space-y-4 py-2">
+                {/* Pending registrations selector */}
+                {pendingRegs.length === 0 ? (
+                  <div className="text-center py-6 text-gray-500 bg-slate-50 rounded-lg">
+                    Nenhuma inscrição com saldo pendente.
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-gray-700 font-medium">Inscrições com saldo pendente</Label>
+                      <button
+                        type="button"
+                        onClick={toggleAll}
+                        className={`text-xs font-medium ${accentClass} hover:underline`}
+                      >
+                        {allSelected ? 'Desmarcar todas' : 'Selecionar todas'}
+                      </button>
+                    </div>
+                    <div className="border border-slate-200 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-slate-100 text-left">
+                            <th className="px-3 py-2 w-8">
+                              <Checkbox
+                                checked={allSelected}
+                                onCheckedChange={toggleAll}
+                                data-testid="checkbox-select-all-regs"
+                              />
+                            </th>
+                            <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
+                            <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Venda</th>
+                            <th className="px-3 py-2 font-medium text-gray-600 text-right">Saldo a Pagar</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {pendingRegs.map(({ reg, balance }) => (
+                            <tr
+                              key={reg.id}
+                              className={`cursor-pointer transition-colors ${transferSelectedRegIds.has(reg.id) ? bgAccent : 'hover:bg-slate-50'}`}
+                              onClick={() => toggleReg(reg.id)}
+                            >
+                              <td className="px-3 py-2" onClick={e => e.stopPropagation()}>
+                                <Checkbox
+                                  checked={transferSelectedRegIds.has(reg.id)}
+                                  onCheckedChange={() => toggleReg(reg.id)}
+                                  data-testid={`checkbox-reg-${reg.id}`}
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <p className="font-medium text-gray-900">{reg.name}</p>
+                                <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
+                              </td>
+                              <td className="px-3 py-2 text-right text-gray-700">
+                                R$ {(reg.paymentMethod === 'pix' ? (currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0]).pixPrice : reg.paymentMethod === 'installments10' ? (currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0]).installment10Total || 0 : (currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0]).installmentTotal).toLocaleString('pt-BR')}
+                              </td>
+                              <td className={`px-3 py-2 text-right font-semibold ${accentClass}`}>
+                                R$ {balance.toLocaleString('pt-BR')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className={`${bgAccent} font-semibold`}>
+                            <td className="px-3 py-2" colSpan={3}>
+                              Total selecionado ({transferSelectedRegIds.size} de {pendingRegs.length})
+                            </td>
+                            <td className={`px-3 py-2 text-right ${accentClass}`}>
+                              R$ {selectedTotal.toLocaleString('pt-BR')}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Date field */}
+                <div>
+                  <Label className="text-gray-700">Data do Pagamento</Label>
+                  <Input
+                    type="date"
+                    value={transferPaymentDate}
+                    onChange={(e) => setTransferPaymentDate(e.target.value)}
+                    className="mt-1 bg-white border-gray-300"
+                    data-testid="input-transfer-date"
+                  />
+                </div>
+
+                {/* Payment method */}
+                <div>
+                  <Label className="text-gray-700">Forma de Pagamento</Label>
+                  <Select value={transferPaymentMethod} onValueChange={setTransferPaymentMethod}>
+                    <SelectTrigger className="mt-1 bg-white border-gray-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="transferencia">Transferência Bancária</SelectItem>
+                      <SelectItem value="deposito">Depósito</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <Label className="text-gray-700">Observações</Label>
+                  <Input
+                    value={transferNotes}
+                    onChange={(e) => setTransferNotes(e.target.value)}
+                    placeholder="Observações opcionais"
+                    className="mt-1 bg-white border-gray-300"
+                    data-testid="input-transfer-notes"
+                  />
+                </div>
+
+                <DialogFooter className="pt-2">
+                  <Button variant="outline" onClick={() => setTransferPaymentModalOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    disabled={noneSelected || pendingRegs.length === 0}
+                    onClick={async () => {
+                      if (transferSelectedRegIds.size === 0) return;
+                      const paymentDateISO = transferPaymentDate
+                        ? new Date(transferPaymentDate + 'T12:00:00').toISOString()
+                        : new Date().toISOString();
+
+                      const selectedItems = pendingRegs.filter(item => transferSelectedRegIds.has(item.reg.id));
+                      let totalPaid = 0;
+
+                      for (const { reg, balance } of selectedItems) {
+                        try {
+                          if (transferRecipient === 'vendor') {
+                            const newPaid = (reg.vendorCommissionPaid || 0) + balance;
+                            await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, {
+                              vendorCommissionPaid: newPaid,
+                              vendorCommissionPaidAt: paymentDateISO,
+                            });
+                          } else {
+                            const newPaid = (reg.hamiltonPaid || 0) + balance;
+                            await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, {
+                              hamiltonPaid: newPaid,
+                              hamiltonPaidAt: paymentDateISO,
+                            });
+                          }
+                          totalPaid += balance;
+                        } catch (error) {
+                          console.error('Error updating payment:', error);
+                        }
                       }
-                    }
-                  }
-                  
-                  queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
-                  toast({
-                    title: 'Pagamento registrado',
-                    description: `Comissão de R$ ${amount.toLocaleString('pt-BR')} registrada para ${transferVendorName}`,
-                  });
-                } else if (transferRecipient === 'hamilton') {
-                  // For Hamilton, distribute payment across registrations with unpaid mentor commission
-                  const allRegs = registrations || [];
-                  let remainingAmount = amount;
-                  
-                  for (const reg of allRegs) {
-                    if (remainingAmount <= 0) break;
-                    
-                    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
-                    const comms = calculateCommissions(reg, batchConfig);
-                    const paidAmountReais = (reg.paidAmount || 0) / 100;
-                    const statusNorm = (reg.paymentStatus || '').toLowerCase().trim();
-                    const paidRatio = statusNorm === 'pago' ? 1 : 
-                                     statusNorm === 'parcial' ? paidAmountReais / comms.gross : 0;
-                    const hfDueNow = Math.round(comms.hfComm * paidRatio);
-                    const due = hfDueNow - (reg.hamiltonPaid || 0);
-                    
-                    if (due > 0) {
-                      const paymentForThisReg = Math.min(due, remainingAmount);
-                      const newPaid = (reg.hamiltonPaid || 0) + paymentForThisReg;
-                      
-                      try {
-                        await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, {
-                          hamiltonPaid: newPaid,
-                          hamiltonPaidAt: new Date().toISOString(),
-                        });
-                        remainingAmount -= paymentForThisReg;
-                      } catch (error) {
-                        console.error('Error updating Hamilton payment:', error);
-                      }
-                    }
-                  }
-                  
-                  queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
-                  toast({
-                    title: 'Repasse registrado',
-                    description: `Repasse de R$ ${amount.toLocaleString('pt-BR')} para Hamilton Felix registrado.`,
-                  });
-                }
-                
-                setTransferPaymentModalOpen(false);
-              }}
-              className={transferRecipient === 'hamilton' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-amber-600 hover:bg-amber-700'}
-              data-testid="button-confirm-transfer"
-            >
-              Confirmar Pagamento
-            </Button>
-          </DialogFooter>
+
+                      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                      toast({
+                        title: transferRecipient === 'hamilton' ? 'Repasse registrado' : 'Pagamento registrado',
+                        description: `R$ ${totalPaid.toLocaleString('pt-BR')} registrado para ${selectedItems.length} inscrição(ões) em ${new Date(paymentDateISO).toLocaleDateString('pt-BR')}.`,
+                      });
+                      setTransferPaymentModalOpen(false);
+                    }}
+                    className={isHamilton ? 'bg-purple-600 hover:bg-purple-700' : 'bg-amber-600 hover:bg-amber-700'}
+                    data-testid="button-confirm-transfer"
+                  >
+                    Confirmar Pagamento
+                    {transferSelectedRegIds.size > 0 && (
+                      <span className="ml-1 opacity-75">
+                        (R$ {selectedTotal.toLocaleString('pt-BR')})
+                      </span>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

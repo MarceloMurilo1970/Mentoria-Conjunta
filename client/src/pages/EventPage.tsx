@@ -21,7 +21,7 @@ import {
   Clock
 } from "lucide-react";
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
-import BatchPricing, { getBatchPrices, isBatchesOpen } from "@/components/BatchPricing";
+import BatchPricing, { getBatchPrices, isBatchesOpen, isBatchesComingSoon } from "@/components/BatchPricing";
 import RegistrationForm from "@/components/RegistrationForm";
 import TestimonialTile from "@/components/TestimonialTile";
 import ProgramSection from "@/components/ProgramSection";
@@ -105,6 +105,7 @@ export default function EventPage() {
   const registrationRef = useRef<HTMLDivElement>(null);
   const priceInfo = getBatchPrices(new Date());
   const batchesOpen = isBatchesOpen(new Date());
+  const comingSoon = isBatchesComingSoon(new Date());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -138,9 +139,9 @@ export default function EventPage() {
         {/* Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
           {/* Badge - Live Already Happened */}
-          <div className="inline-flex items-center gap-2 bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-semibold mb-6 border border-green-500/30">
-            <CheckCircle className="w-4 h-4" />
-            Live Realizada em 04/12/2025
+          <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-6 border border-yellow-400/30">
+            <Sparkles className="w-4 h-4" />
+            Turma 3 — Início em 25/05/2026
           </div>
 
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
@@ -396,22 +397,20 @@ export default function EventPage() {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
               <Sparkles className="w-4 h-4" />
-              Inscrições Abertas
+              {batchesOpen ? 'Inscrições Abertas' : comingSoon ? 'Inscrições em Breve' : 'Inscrições Encerradas'}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Inscreva-se na Mentoria
+              Mentoria Turma 3
             </h2>
             <p className="text-xl text-gray-400">
-              Janeiro a Março de 2026 - 12 sessões ao vivo com Marcelo Murilo e Hamilton Felix
+              Maio a Julho de 2026 — 12 sessões ao vivo com Marcelo Murilo e Hamilton Felix
             </p>
           </div>
 
-          {/* Batch Pricing */}
-          {batchesOpen && (
-            <div className="mb-12">
-              <BatchPricing currentDate={new Date()} />
-            </div>
-          )}
+          {/* Batch Pricing / Coming Soon */}
+          <div className="mb-12">
+            <BatchPricing currentDate={new Date()} />
+          </div>
 
           {/* Registration Form */}
           {batchesOpen ? (
@@ -421,10 +420,12 @@ export default function EventPage() {
               <CardContent className="py-12 text-center">
                 <Calendar className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">
-                  Inscrições Encerradas
+                  {comingSoon ? 'Inscrições em breve!' : 'Inscrições Encerradas'}
                 </h3>
                 <p className="text-gray-400">
-                  O período de inscrições foi encerrado.
+                  {comingSoon
+                    ? 'A Turma 3 começa em 25 de Maio de 2026. Fique atento — as inscrições abrem em breve!'
+                    : 'O período de inscrições foi encerrado.'}
                 </p>
               </CardContent>
             </Card>
@@ -447,57 +448,50 @@ export default function EventPage() {
           showStickyBanner ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
-        {(() => {
-          const d = new Date();
-          const isLastDay = d.getFullYear() === 2026 && d.getMonth() === 1 && d.getDate() === 23;
-          if (isLastDay) {
-            return (
-              <div className="bg-red-600 py-3 px-4 shadow-lg shadow-black/50">
-                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 text-white animate-pulse">
-                    <Clock className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-sm sm:text-base font-bold text-center sm:text-left uppercase">
-                      Último dia de inscrições! Apenas 1 vaga restante
-                    </span>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="secondary" 
-                    className="whitespace-nowrap group bg-white text-red-600 hover:bg-gray-100"
-                    onClick={scrollToRegistration}
-                    data-testid="button-sticky-inscricao"
-                  >
-                    Inscrever-se
-                    <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </div>
+        {batchesOpen ? (
+          <div className="bg-gradient-to-r from-primary via-primary to-yellow-500 py-3 px-4 shadow-lg shadow-black/50">
+            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3 text-white">
+                <Sparkles className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm sm:text-base font-medium text-center sm:text-left">
+                  <span className="hidden sm:inline">Inscrições abertas! </span>
+                  Garanta sua vaga na Turma 3!
+                </span>
               </div>
-            );
-          }
-          return (
-            <div className="bg-gradient-to-r from-primary via-primary to-yellow-500 py-3 px-4 shadow-lg shadow-black/50">
-              <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-3 text-white">
-                  <Sparkles className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base font-medium text-center sm:text-left">
-                    <span className="hidden sm:inline">Inscrições abertas! </span>
-                    Garanta sua vaga na Turma 2!
-                  </span>
-                </div>
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
-                  className="whitespace-nowrap group bg-white text-primary hover:bg-gray-100"
-                  onClick={scrollToRegistration}
-                  data-testid="button-sticky-inscricao"
-                >
-                  Inscrever-se
-                  <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </div>
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="whitespace-nowrap group bg-white text-primary hover:bg-gray-100"
+                onClick={scrollToRegistration}
+                data-testid="button-sticky-inscricao"
+              >
+                Inscrever-se
+                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              </Button>
             </div>
-          );
-        })()}
+          </div>
+        ) : (
+          <div className="bg-gradient-to-r from-slate-800 to-slate-700 py-3 px-4 shadow-lg shadow-black/50">
+            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3 text-white">
+                <Clock className="w-5 h-5 flex-shrink-0 text-yellow-400" />
+                <span className="text-sm sm:text-base font-medium text-center sm:text-left">
+                  {comingSoon ? 'Turma 3 em breve — início 25/05/2026' : 'Inscrições encerradas — aguarde a Turma 4!'}
+                </span>
+              </div>
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="whitespace-nowrap bg-white/10 text-white border border-white/20 hover:bg-white/20"
+                onClick={scrollToRegistration}
+                data-testid="button-sticky-inscricao"
+              >
+                Saiba mais
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

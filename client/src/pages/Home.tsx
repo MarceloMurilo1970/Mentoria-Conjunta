@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Calendar, Clock, RotateCcw } from "lucide-react";
+import { ArrowLeft, Calendar, RotateCcw } from "lucide-react";
 import Hero from "@/components/Hero";
 import ProgramSection from "@/components/ProgramSection";
 import RegistrationForm from "@/components/RegistrationForm";
 import MentoriaCountdown from "@/components/MentoriaCountdown";
-import BatchPricing, { isBatchesOpen, getBatchPrices } from "@/components/BatchPricing";
+import BatchPricing, { isBatchesOpen, isBatchesComingSoon, getBatchPrices } from "@/components/BatchPricing";
 import TestimonialTile from "@/components/TestimonialTile";
 import rodrigoPadovezPhoto from "@assets/IMG_7578_1763994202676.jpeg";
 import marceloMartinPhoto from "@assets/image_1764036231605.png";
@@ -100,30 +100,11 @@ export default function Home() {
   };
 
   const batchesOpen = isBatchesOpen(new Date());
+  const comingSoon = isBatchesComingSoon(new Date());
   const priceInfo = getBatchPrices(new Date());
-
-  const now = new Date();
-  const isLastDay = now.getFullYear() === 2026 && now.getMonth() === 1 && now.getDate() === 23;
 
   return (
     <div className="min-h-screen">
-      {/* Urgency Banner - Last Day Only */}
-      {isLastDay && (
-        <div className="sticky top-0 z-50 bg-red-600 text-white py-3 cursor-pointer" onClick={scrollToRegistration}>
-          <div className="max-w-7xl mx-auto px-6 md:px-8 flex items-center justify-center gap-3 flex-wrap">
-            <span className="inline-flex items-center gap-2 animate-pulse">
-              <Clock className="w-5 h-5" />
-              <span className="text-base md:text-lg font-bold tracking-wide uppercase">
-                Último dia de inscrições!
-              </span>
-              <Clock className="w-5 h-5" />
-            </span>
-            <span className="text-amber-300 font-semibold text-base md:text-lg">
-              — Apenas 1 vaga restante
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Back Button */}
       <div className="bg-background border-b border-border">
@@ -814,10 +795,10 @@ export default function Home() {
                   <CardContent className="py-12 text-center">
                     <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-foreground mb-2">
-                      Inscrições Encerradas
+                      {comingSoon ? 'Inscrições em breve!' : 'Inscrições Encerradas'}
                     </h3>
                     <p className="text-muted-foreground">
-                      O período de inscrições para a Turma 2 foi encerrado.
+                      {comingSoon ? 'A Turma 3 começa em 25 de Maio de 2026. As inscrições abrem em breve!' : 'O período de inscrições para a Turma 3 foi encerrado.'}
                     </p>
                   </CardContent>
                 </Card>
@@ -831,7 +812,7 @@ export default function Home() {
 
       <footer className="bg-background border-t border-border py-8">
         <div className="max-w-7xl mx-auto px-6 md:px-8 text-center text-sm text-muted-foreground">
-          <p>© 2025 Mentoria Marcelo Murilo & Hamilton Felix. Todos os direitos reservados.</p>
+          <p>© 2026 Mentoria Marcelo Murilo & Hamilton Felix. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

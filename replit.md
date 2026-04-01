@@ -6,9 +6,9 @@ This project is a platform for Marcelo Murilo and Hamilton Felix's mentorship pr
 
 Key capabilities include:
 - **Event Landing Page (`/`):** Facilitates pre-registration for a promotional live event with Google Sheets integration and WhatsApp group invites.
-- **Mentorship Registration (`/mentoria`):** Serves as the main registration page for the Turma 2 mentorship program, featuring program details, testimonials, payment processing, and SendGrid confirmations.
+- **Mentorship Registration (`/mentoria`):** Serves as the main registration page for the Turma 3 mentorship program, featuring program details, testimonials, payment processing, and SendGrid confirmations.
 
-The Turma 2 program runs from January to March 2026, focusing on authority building, opportunity creation, and securing board positions.
+The Turma 3 program starts May 25, 2026, running through July 2026, focusing on authority building, opportunity creation, and securing board positions. Registration opens April 14, 2026.
 
 ## User Preferences
 

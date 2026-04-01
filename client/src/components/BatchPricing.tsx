@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Zap, CheckCircle, Sparkles } from "lucide-react";
+import { Clock, Zap, CheckCircle, Sparkles, CalendarClock } from "lucide-react";
 
 interface PriceInfo {
   pixPrice: number;
@@ -30,11 +30,16 @@ const CURRENT_PRICE: PriceInfo = {
   paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
 };
 
-const MENTORIA_START = new Date("2026-02-23T19:00:00-03:00");
-const REGISTRATION_END = new Date("2026-02-28T23:59:59-03:00");
+const REGISTRATION_START = new Date("2026-04-14T00:00:00-03:00");
+const REGISTRATION_END = new Date("2026-05-22T23:59:59-03:00");
+const MENTORIA_START = new Date("2026-05-25T19:00:00-03:00");
 
 export function isBatchesOpen(currentDate: Date = new Date()): boolean {
-  return currentDate <= REGISTRATION_END;
+  return currentDate >= REGISTRATION_START && currentDate <= REGISTRATION_END;
+}
+
+export function isBatchesComingSoon(currentDate: Date = new Date()): boolean {
+  return currentDate < REGISTRATION_START;
 }
 
 export function getBatchPrices(currentDate: Date = new Date()) {
@@ -117,6 +122,22 @@ interface BatchPricingProps {
 
 export default function BatchPricing({ currentDate = new Date() }: BatchPricingProps) {
   const isOpen = isBatchesOpen(currentDate);
+  const comingSoon = isBatchesComingSoon(currentDate);
+
+  if (comingSoon) {
+    return (
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="py-10 text-center">
+          <CalendarClock className="w-10 h-10 text-primary mx-auto mb-4" />
+          <p className="text-lg font-semibold text-foreground mb-1">Inscrições em breve!</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            A Turma 3 começa em 25 de Maio de 2026. As inscrições abrem em breve.
+          </p>
+          <CountdownDisplay targetDate={REGISTRATION_START} label="Inscrições abrem em:" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!isOpen) {
     return (
@@ -125,7 +146,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
           <CheckCircle className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
           <p className="text-lg font-semibold text-foreground">Inscrições encerradas</p>
           <p className="text-sm text-muted-foreground mt-2">
-            As inscrições para a Turma 2 foram encerradas.
+            As inscrições para a Turma 3 foram encerradas.
           </p>
         </CardContent>
       </Card>
@@ -137,7 +158,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
           <Sparkles className="w-4 h-4" />
-          Turma 2 - Fevereiro a Abril 2026
+          Turma 3 - Maio a Julho 2026
         </div>
         <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
           Investimento na Sua Carreira
@@ -208,7 +229,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
               <Clock className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-semibold text-foreground">Início da Mentoria</p>
-                <p className="text-sm text-muted-foreground">23 de Fevereiro de 2026 às 19h</p>
+                <p className="text-sm text-muted-foreground">25 de Maio de 2026 às 19h</p>
               </div>
             </div>
             <CountdownDisplay targetDate={MENTORIA_START} label="Começa em:" />

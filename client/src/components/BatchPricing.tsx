@@ -32,7 +32,7 @@ const CURRENT_PRICE: PriceInfo = {
 
 const REGISTRATION_START = new Date("2026-04-14T00:00:00-03:00");
 const REGISTRATION_END = new Date("2026-05-22T23:59:59-03:00");
-const MENTORIA_START = new Date("2026-05-25T19:00:00-03:00");
+const MENTORIA_START = new Date("2026-05-18T19:00:00-03:00");
 
 export function isBatchesOpen(currentDate: Date = new Date()): boolean {
   return currentDate >= REGISTRATION_START && currentDate <= REGISTRATION_END;
@@ -131,7 +131,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
           <CalendarClock className="w-10 h-10 text-primary mx-auto mb-4" />
           <p className="text-lg font-semibold text-foreground mb-1">Inscrições em breve!</p>
           <p className="text-sm text-muted-foreground mb-6">
-            A Turma 3 começa em 25 de Maio de 2026. As inscrições abrem em breve.
+            A Turma 3 começa em 18 de Maio de 2026. As inscrições abrem em breve.
           </p>
           <CountdownDisplay targetDate={REGISTRATION_START} label="Inscrições abrem em:" />
         </CardContent>
@@ -229,7 +229,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
               <Clock className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-semibold text-foreground">Início da Mentoria</p>
-                <p className="text-sm text-muted-foreground">25 de Maio de 2026 às 19h</p>
+                <p className="text-sm text-muted-foreground">18 de Maio de 2026 às 19h</p>
               </div>
             </div>
             <CountdownDisplay targetDate={MENTORIA_START} label="Começa em:" />

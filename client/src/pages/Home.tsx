@@ -798,7 +798,7 @@ export default function Home() {
                       {comingSoon ? 'Inscrições em breve!' : 'Inscrições Encerradas'}
                     </h3>
                     <p className="text-muted-foreground">
-                      {comingSoon ? 'A Turma 3 começa em 25 de Maio de 2026. As inscrições abrem em breve!' : 'O período de inscrições para a Turma 3 foi encerrado.'}
+                      {comingSoon ? 'A Turma 3 começa em 18 de Maio de 2026. As inscrições abrem em breve!' : 'O período de inscrições para a Turma 3 foi encerrado.'}
                     </p>
                   </CardContent>
                 </Card>

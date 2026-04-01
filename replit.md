@@ -8,7 +8,7 @@ Key capabilities include:
 - **Event Landing Page (`/`):** Facilitates pre-registration for a promotional live event with Google Sheets integration and WhatsApp group invites.
 - **Mentorship Registration (`/mentoria`):** Serves as the main registration page for the Turma 3 mentorship program, featuring program details, testimonials, payment processing, and SendGrid confirmations.
 
-The Turma 3 program starts May 25, 2026, running through July 2026, focusing on authority building, opportunity creation, and securing board positions. Registration opens April 14, 2026.
+The Turma 3 program starts May 18, 2026, running through July 2026, focusing on authority building, opportunity creation, and securing board positions. Registration opens April 14, 2026.
 
 ## User Preferences
 

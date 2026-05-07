@@ -1,0 +1,32 @@
+node_modules
+dist
+.git
+.env*
+*.md
+!README.md
+*.log
+.DS_Store
+.vscode
+.idea
+*.local
+.replit
+replit.md
+
+# Exports de banco (desnecessários no build)
+db-export-*.json
+
+# Screenshots/imagens avulsas na raiz (não usadas pelo app)
+*.png
+
+# ─── attached_assets: excluir TUDO, depois re-incluir só o necessário ───
+attached_assets/*
+
+# Re-incluir arquivos usados pelo frontend (@assets alias)
+!attached_assets/IMG_7577_1763994066837.jpeg
+!attached_assets/IMG_7578_1763994202676.jpeg
+!attached_assets/image_1759890107941.png
+!attached_assets/image_1764036231605.png
+!attached_assets/image_1764036258435.png
+!attached_assets/image_1764117861153.png
+!attached_assets/image_1764192966736.png
+!attached_assets/image_1764434298472.png

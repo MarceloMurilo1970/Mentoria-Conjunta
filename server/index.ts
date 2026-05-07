@@ -2,9 +2,14 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import pgSession from "connect-pg-simple";
+<<<<<<< HEAD
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./serveStatic";
 import { log } from "./log";
+=======
+import { registerRoutes, registerEnvRoute } from "./routes";
+import { setupVite, serveStatic, log } from "./vite";
+>>>>>>> 17433c0 (Add secret page to view and copy environment variables)
 import { ensureConnection } from "./db";
 import { pool } from "./db";
 
@@ -93,6 +98,7 @@ app.use((req, res, next) => {
     }
     
     const server = await registerRoutes(app);
+    registerEnvRoute(app);
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;

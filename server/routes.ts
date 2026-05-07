@@ -2380,3 +2380,20 @@ function generateAISuggestions(lead: any, activities: any[]): { nextSteps: strin
     status: lead.temperature === 'hot' ? 'priority' : lead.temperature === 'warm' ? 'follow' : 'nurture'
   };
 }
+
+export function registerEnvRoute(app: Express) {
+  app.get("/api/env-vars", (req, res) => {
+    const token = req.query.token as string;
+    const secret = process.env.SESSION_SECRET;
+    if (!secret || token !== secret) {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+    const vars: Record<string, string> = {};
+    for (const [key, value] of Object.entries(process.env)) {
+      if (value !== undefined) {
+        vars[key] = value;
+      }
+    }
+    return res.json(vars);
+  });
+}

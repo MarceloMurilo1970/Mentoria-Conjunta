@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/Home";
 import AdminPage from "@/pages/AdminPage";
 import EventPage from "@/pages/EventPage";
+import EnvExportPage from "@/pages/EnvExportPage";
 import NotFound from "@/pages/not-found";
 import { usePageTracking } from "@/hooks/usePageTracking";
 
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/" component={EventPage} />
       <Route path="/mentoria" component={Home} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/env-export" component={EnvExportPage} />
       <Route component={NotFound} />
     </Switch>
   );

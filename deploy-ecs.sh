@@ -14,7 +14,7 @@ set -e
 
 # ─── Configurações ───
 AWS_REGION="us-east-1"
-AWS_ACCOUNT_ID="760996456182"
+AWS_ACCOUNT_ID="127259105548"
 ECR_APP_REPO="ecr_mentoria"
 ECR_BASE_REPO="ecr_mentoria_base"
 ECR_APP_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_APP_REPO}"

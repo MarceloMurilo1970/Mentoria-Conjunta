@@ -1,5 +1,5 @@
 # Usa imagem base que já tem: node + libs nativas + node_modules
-ARG BASE_IMAGE=760996456182.dkr.ecr.us-east-1.amazonaws.com/ecr_mentoria_base:latest
+ARG BASE_IMAGE=127259105548.dkr.ecr.us-east-1.amazonaws.com/ecr_mentoria_base:latest
 FROM ${BASE_IMAGE}
 
 WORKDIR /app

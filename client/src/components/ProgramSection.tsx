@@ -31,36 +31,68 @@ interface Module {
   sessions: Session[];
 }
 
-const modules: Module[] = [
-  {
-    number: 1,
-    title: "Transição para conselhos",
-    instructor: "Marcelo Murilo",
-    duration: "8H",
-    sessions: [
-      { number: 1, date: "18/mai", startTime: "19:00", endTime: "20:00", topic: "Definindo seu nicho e propósito" },
-      { number: 2, date: "25/mai", startTime: "19:00", endTime: "20:00", topic: "Perfil de conselheiro que vende" },
-      { number: 3, date: "01/jun", startTime: "19:00", endTime: "20:00", topic: "Posts que geram oportunidades" },
-      { number: 4, date: "08/jun", startTime: "19:00", endTime: "20:00", topic: "Interações que multiplicam alcance" },
-      { number: 5, date: "15/jun", startTime: "19:00", endTime: "20:00", topic: "Conectando com quem importa" },
-      { number: 6, date: "22/jun", startTime: "19:00", endTime: "20:00", topic: "Vendas e eventos estratégicos" },
-      { number: 7, date: "29/jun", startTime: "19:00", endTime: "20:00", topic: "Aspectos práticos dos conselhos" },
-      { number: 8, date: "06/jul", startTime: "19:00", endTime: "20:00", topic: "Integração e planejamento futuros" },
-    ]
-  },
-  {
-    number: 2,
-    title: "Criando novos conselhos",
-    instructor: "Hamilton Felix",
-    duration: "4H",
-    sessions: [
-      { number: 1, date: "13/jul", startTime: "19:00", endTime: "20:00", topic: "Prospecção de empresas" },
-      { number: 2, date: "13/jul", startTime: "20:00", endTime: "21:00", topic: "Fechamento de Projetos" },
-      { number: 3, date: "20/jul", startTime: "19:00", endTime: "20:00", topic: "Implementando o Conselho" },
-      { number: 4, date: "20/jul", startTime: "20:00", endTime: "21:00", topic: "Evoluindo o Conselho" },
-    ]
-  }
-];
+const modulesByTurma: Record<"segundas" | "quartas", Module[]> = {
+  segundas: [
+    {
+      number: 1,
+      title: "Transição para conselhos",
+      instructor: "Marcelo Murilo",
+      duration: "8H",
+      sessions: [
+        { number: 1, date: "10/ago", startTime: "19:00", endTime: "20:00", topic: "Definindo seu nicho e propósito" },
+        { number: 2, date: "17/ago", startTime: "19:00", endTime: "20:00", topic: "Perfil de conselheiro que vende" },
+        { number: 3, date: "24/ago", startTime: "19:00", endTime: "20:00", topic: "Posts que geram oportunidades" },
+        { number: 4, date: "31/ago", startTime: "19:00", endTime: "20:00", topic: "Interações que multiplicam alcance" },
+        { number: 5, date: "07/set", startTime: "19:00", endTime: "20:00", topic: "Conectando com quem importa" },
+        { number: 6, date: "14/set", startTime: "19:00", endTime: "20:00", topic: "Vendas e eventos estratégicos" },
+        { number: 7, date: "21/set", startTime: "19:00", endTime: "20:00", topic: "Aspectos práticos dos conselhos" },
+        { number: 8, date: "28/set", startTime: "19:00", endTime: "20:00", topic: "Integração e planejamento futuros" },
+      ]
+    },
+    {
+      number: 2,
+      title: "Criando novos conselhos",
+      instructor: "Hamilton Felix",
+      duration: "4H",
+      sessions: [
+        { number: 1, date: "05/out", startTime: "19:00", endTime: "20:00", topic: "Prospecção de empresas" },
+        { number: 2, date: "05/out", startTime: "20:00", endTime: "21:00", topic: "Fechamento de Projetos" },
+        { number: 3, date: "12/out", startTime: "19:00", endTime: "20:00", topic: "Implementando o Conselho" },
+        { number: 4, date: "12/out", startTime: "20:00", endTime: "21:00", topic: "Evoluindo o Conselho" },
+      ]
+    }
+  ],
+  quartas: [
+    {
+      number: 1,
+      title: "Transição para conselhos",
+      instructor: "Marcelo Murilo",
+      duration: "8H",
+      sessions: [
+        { number: 1, date: "12/ago", startTime: "19:00", endTime: "20:00", topic: "Definindo seu nicho e propósito" },
+        { number: 2, date: "19/ago", startTime: "19:00", endTime: "20:00", topic: "Perfil de conselheiro que vende" },
+        { number: 3, date: "26/ago", startTime: "19:00", endTime: "20:00", topic: "Posts que geram oportunidades" },
+        { number: 4, date: "02/set", startTime: "19:00", endTime: "20:00", topic: "Interações que multiplicam alcance" },
+        { number: 5, date: "09/set", startTime: "19:00", endTime: "20:00", topic: "Conectando com quem importa" },
+        { number: 6, date: "16/set", startTime: "19:00", endTime: "20:00", topic: "Vendas e eventos estratégicos" },
+        { number: 7, date: "23/set", startTime: "19:00", endTime: "20:00", topic: "Aspectos práticos dos conselhos" },
+        { number: 8, date: "30/set", startTime: "19:00", endTime: "20:00", topic: "Integração e planejamento futuros" },
+      ]
+    },
+    {
+      number: 2,
+      title: "Criando novos conselhos",
+      instructor: "Hamilton Felix",
+      duration: "4H",
+      sessions: [
+        { number: 1, date: "07/out", startTime: "19:00", endTime: "20:00", topic: "Prospecção de empresas" },
+        { number: 2, date: "07/out", startTime: "20:00", endTime: "21:00", topic: "Fechamento de Projetos" },
+        { number: 3, date: "14/out", startTime: "19:00", endTime: "20:00", topic: "Implementando o Conselho" },
+        { number: 4, date: "14/out", startTime: "20:00", endTime: "21:00", topic: "Evoluindo o Conselho" },
+      ]
+    }
+  ]
+};
 
 const sessionDetails: Record<string, SessionDetail> = {
   "1-1": {
@@ -276,6 +308,9 @@ const sessionDetails: Record<string, SessionDetail> = {
 
 export default function ProgramSection() {
   const [selectedSession, setSelectedSession] = useState<{ moduleNumber: number; sessionNumber: number } | null>(null);
+  const [turma, setTurma] = useState<"segundas" | "quartas">("segundas");
+
+  const modules = modulesByTurma[turma];
 
   const getSessionDetail = (moduleNumber: number, sessionNumber: number): SessionDetail | null => {
     const key = `${moduleNumber}-${sessionNumber}`;
@@ -287,13 +322,38 @@ export default function ProgramSection() {
   return (
     <section className="py-20 md:py-24 bg-background" id="programa">
       <div className="max-w-7xl mx-auto px-6 md:px-8">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Programa da Mentoria
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             Dois módulos completos com especialistas renomados para transformar sua carreira
           </p>
+          {/* Turma selector */}
+          <div className="inline-flex items-center gap-1 bg-muted p-1 rounded-lg">
+            <button
+              onClick={() => setTurma("segundas")}
+              data-testid="button-turma-segundas"
+              className={`px-5 py-2 rounded-md text-sm font-semibold transition-colors ${
+                turma === "segundas"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Turma 4 — Segundas-feiras
+            </button>
+            <button
+              onClick={() => setTurma("quartas")}
+              data-testid="button-turma-quartas"
+              className={`px-5 py-2 rounded-md text-sm font-semibold transition-colors ${
+                turma === "quartas"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Turma 5 — Quartas-feiras
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

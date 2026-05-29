@@ -1196,7 +1196,7 @@ Valor: R$ ${batchConfig.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits
 Chave PIX (CNPJ): 17.840.516/0001-47
 Beneficiário: Opes Informática Ltda
 
-Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turma 3 (Maio a Julho 2026).
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 4/5 (Agosto a Outubro 2026).
 
 Qualquer dúvida, estamos à disposição!`;
     } else if (reg.paymentMethod === 'installments10') {
@@ -1212,7 +1212,7 @@ Total: R$ ${total10.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}${link
 
 Link de pagamento: ${link10}` : ''}
 
-Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turma 3 (Maio a Julho 2026).
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 4/5 (Agosto a Outubro 2026).
 
 Qualquer dúvida, estamos à disposição!`;
     } else {
@@ -1225,7 +1225,7 @@ Total: R$ ${batchConfig.installmentTotal.toLocaleString('pt-BR', { minimumFracti
 
 Link de pagamento: ${batchConfig.paymentLink}
 
-Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turma 3 (Maio a Julho 2026).
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 4/5 (Agosto a Outubro 2026).
 
 Qualquer dúvida, estamos à disposição!`;
     }
@@ -2576,9 +2576,9 @@ Qualquer dúvida, estamos à disposição!`;
       <Card className="bg-white border-gray-200 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-gray-900">Inscrições da Mentoria - Turma 3</CardTitle>
+            <CardTitle className="text-gray-900">Inscrições da Mentoria - Turmas 4 e 5</CardTitle>
             <CardDescription className="text-gray-600">
-              Maio a Julho 2026 - Marcelo Murilo & Hamilton Felix
+              Agosto a Outubro 2026 - Marcelo Murilo & Hamilton Felix
             </CardDescription>
           </div>
           <Button 

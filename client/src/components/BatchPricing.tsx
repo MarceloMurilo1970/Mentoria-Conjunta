@@ -30,9 +30,9 @@ const CURRENT_PRICE: PriceInfo = {
   paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
 };
 
-const REGISTRATION_START = new Date("2026-04-14T00:00:00-03:00");
-const REGISTRATION_END = new Date("2026-05-22T23:59:59-03:00");
-const MENTORIA_START = new Date("2026-05-18T19:00:00-03:00");
+const REGISTRATION_START = new Date("2026-06-23T00:00:00-03:00");
+const REGISTRATION_END = new Date("2026-08-07T23:59:59-03:00");
+const MENTORIA_START = new Date("2026-08-10T19:00:00-03:00");
 
 export function isBatchesOpen(currentDate: Date = new Date()): boolean {
   return currentDate >= REGISTRATION_START && currentDate <= REGISTRATION_END;
@@ -131,7 +131,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
           <CalendarClock className="w-10 h-10 text-primary mx-auto mb-4" />
           <p className="text-lg font-semibold text-foreground mb-1">Inscrições em breve!</p>
           <p className="text-sm text-muted-foreground mb-6">
-            A Turma 3 começa em 18 de Maio de 2026. As inscrições abrem em breve.
+            As Turmas 4 e 5 começam em 10 de Agosto de 2026. As inscrições abrem em breve.
           </p>
           <CountdownDisplay targetDate={REGISTRATION_START} label="Inscrições abrem em:" />
         </CardContent>
@@ -158,7 +158,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
           <Sparkles className="w-4 h-4" />
-          Turma 3 - Maio a Julho 2026
+          Turmas 4 e 5 — Agosto a Outubro 2026
         </div>
         <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
           Investimento na Sua Carreira
@@ -229,7 +229,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
               <Clock className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-semibold text-foreground">Início da Mentoria</p>
-                <p className="text-sm text-muted-foreground">18 de Maio de 2026 às 19h</p>
+                <p className="text-sm text-muted-foreground">10 de Agosto de 2026 às 19h</p>
               </div>
             </div>
             <CountdownDisplay targetDate={MENTORIA_START} label="Começa em:" />

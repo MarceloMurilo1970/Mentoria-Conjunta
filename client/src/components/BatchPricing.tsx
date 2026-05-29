@@ -30,7 +30,7 @@ const CURRENT_PRICE: PriceInfo = {
   paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
 };
 
-const REGISTRATION_START = new Date("2026-06-23T00:00:00-03:00");
+const REGISTRATION_START = new Date("2026-06-02T00:00:00-03:00");
 const REGISTRATION_END = new Date("2026-08-07T23:59:59-03:00");
 const MENTORIA_START = new Date("2026-08-10T19:00:00-03:00");
 

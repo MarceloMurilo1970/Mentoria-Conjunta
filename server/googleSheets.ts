@@ -254,19 +254,22 @@ export function calculateLeadScore(responses: Record<string, string>): {
 
     // Question 1: "Hoje, qual das opções melhor descreve sua atuação principal?"
     if (qLower.includes('qual das opções melhor descreve sua atuação principal') || 
-        qLower.includes('melhor descreve sua atuação')) {
+        qLower.includes('melhor descreve sua atuação') ||
+        qLower === 'atuação principal') {
       foundQuestions.atuacao = { q: question, a: answer };
     }
 
     // Question 2: "Você já participou de algum dos seguintes programas de formação para conselheiros?"
     if (qLower.includes('participou de algum dos seguintes programas de formação para conselheiros') ||
-        (qLower.includes('programas de formação') && qLower.includes('conselheiros'))) {
+        (qLower.includes('programas de formação') && qLower.includes('conselheiros')) ||
+        qLower === 'programas de formação') {
       foundQuestions.formacao = { q: question, a: answer };
     }
 
     // Question 3: "O que você acredita que mais precisa neste momento para acelerar sua transição para conselhos?"
     if (qLower.includes('mais precisa neste momento para acelerar sua transição') ||
-        qLower.includes('acelerar sua transição para conselhos')) {
+        qLower.includes('acelerar sua transição para conselhos') ||
+        qLower === 'necessidade de transição') {
       foundQuestions.transicao = { q: question, a: answer };
     }
   });

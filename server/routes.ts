@@ -9,6 +9,10 @@ import { addEventRegistration, getAllEventRegistrations, type EventRegistration,
 import path from "path";
 import { z } from "zod";
 import PDFDocument from "pdfkit";
+import multer from "multer";
+import * as XLSX from "xlsx";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 // Secret for signing tokens - must be set via environment
 const TOKEN_SECRET = process.env.SESSION_SECRET;
@@ -1713,6 +1717,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error syncing leads:", error);
       res.status(500).json({ error: "Erro ao sincronizar leads: " + (error as Error).message });
+    }
+  });
+
+  // Import leads from uploaded XLSX file
+  app.post("/api/crm/leads/import", requireAdmin, upload.single("file"), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado" });
+      }
+
+      const wb = XLSX.read(req.file.buffer, { type: "buffer" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      if (rows.length < 2) {
+        return res.status(400).json({ error: "Planilha vazia ou sem dados" });
+      }
+
+      const headers: string[] = rows[0].map((h: any) => String(h || "").trim());
+
+      // Core field columns (not stored as survey responses)
+      const CORE_COLS = new Set(["Nome Completo", "Email", "Telefone", "LinkedIn", "Data de Cadastro", "Tipo de Usuário", "Perfil Completo", "Idioma Preferido", "Especialidades", "Experiências", "Educação", "Propósito"]);
+
+      let imported = 0;
+      let updated = 0;
+      let skipped = 0;
+      let errors = 0;
+
+      const protectedStatuses = ["mentorado", "nao_abordar", "convertido"];
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0) continue;
+
+        try {
+          const get = (col: string): string => {
+            const idx = headers.indexOf(col);
+            return idx >= 0 && row[idx] != null ? String(row[idx]).trim() : "";
+          };
+
+          const name = get("Nome Completo");
+          const email = get("Email").toLowerCase();
+          if (!email) { skipped++; continue; }
+
+          // Build survey responses from non-core columns
+          const surveyResponses: Record<string, string> = {};
+          headers.forEach((header, idx) => {
+            if (!CORE_COLS.has(header) && row[idx] != null && String(row[idx]).trim()) {
+              surveyResponses[header] = String(row[idx]).trim();
+            }
+          });
+
+          const phone = get("Telefone") || null;
+          const linkedin = get("LinkedIn") || null;
+
+          const { score, temperature, breakdown } = calculateLeadScore(surveyResponses);
+          const uniqueCategories = Array.from(new Set(breakdown.map((b: any) => b.category)));
+          const aiSummary = uniqueCategories.join(", ") || null;
+
+          const existingLead = await storage.getLeadByEmail(email);
+
+          if (existingLead) {
+            if (protectedStatuses.includes(existingLead.status)) {
+              skipped++;
+              continue;
+            }
+
+            const updateData: any = {};
+            if (phone && !existingLead.phone) updateData.phone = phone;
+            if (linkedin && !existingLead.linkedin) updateData.linkedin = linkedin;
+            if (score > existingLead.score) {
+              updateData.score = score;
+              updateData.temperature = temperature;
+              updateData.surveyResponses = surveyResponses;
+              updateData.scoreBreakdown = breakdown;
+              updateData.aiSummary = aiSummary;
+            }
+
+            if (Object.keys(updateData).length > 0) {
+              await storage.updateLead(existingLead.id, updateData);
+              updated++;
+            } else {
+              skipped++;
+            }
+          } else {
+            await storage.createLead({
+              name: name || "Sem nome",
+              email,
+              phone,
+              linkedin,
+              surveyResponses,
+              score,
+              temperature,
+              scoreBreakdown: breakdown,
+              status: "novo",
+              aiSummary,
+            });
+            imported++;
+          }
+        } catch (rowError) {
+          console.error(`Error importing row ${i}:`, rowError);
+          errors++;
+        }
+      }
+
+      res.json({ success: true, imported, updated, skipped, errors, total: rows.length - 1 });
+    } catch (error) {
+      console.error("Error importing leads:", error);
+      res.status(500).json({ error: "Erro ao importar planilha: " + (error as Error).message });
     }
   });
 

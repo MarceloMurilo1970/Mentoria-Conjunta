@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import { useState, Fragment, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy, Pencil, Download, Banknote, BarChart3 } from "lucide-react";
+import { Loader2, Trash2, Check, X, Users, Calendar, Award, MessageSquare, ExternalLink, Lightbulb, TrendingUp, MessageCircleReply, Clock, RotateCcw, DollarSign, Edit2, Edit, Save, User, UserCheck, ChevronDown, ChevronUp, MessageCircle, FileText, Receipt, Target, Phone, Linkedin, RefreshCw, UserPlus, Plus, Flame, Snowflake, ThermometerSun, Send, Bot, CalendarClock, CheckCircle2, Settings, Copy, Pencil, Download, Banknote, BarChart3, Upload } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -3477,6 +3477,32 @@ function CRMSection() {
     },
   });
 
+  const importFileRef = useRef<HTMLInputElement>(null);
+  const importMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/crm/leads/import', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(err.error || 'Erro ao importar');
+      }
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/leads'] });
+      const desc = `${data.imported} novos, ${data.updated} atualizados, ${data.skipped} ignorados${data.errors > 0 ? `, ${data.errors} com erro` : ''}`;
+      toast({ title: `Importação concluída — ${data.total} linhas`, description: desc });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro na importação', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const syncRegistrationsMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch('/api/crm/leads/sync-registrations', {
@@ -3897,6 +3923,24 @@ function CRMSection() {
                 {syncMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                 Sincronizar Planilha
               </Button>
+              <Button variant="secondary" onClick={() => importFileRef.current?.click()} disabled={importMutation.isPending} data-testid="button-import-xlsx">
+                {importMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                Importar XLSX
+              </Button>
+              <input
+                ref={importFileRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                data-testid="input-import-file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    importMutation.mutate(file);
+                    e.target.value = '';
+                  }
+                }}
+              />
               <Button variant="secondary" onClick={() => regenerateMutation.mutate()} disabled={regenerateMutation.isPending} data-testid="button-regenerate-leads">
                 {regenerateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                 Regenerar Perfis

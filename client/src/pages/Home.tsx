@@ -112,7 +112,7 @@ export default function Home() {
           <Button variant="ghost" size="sm" asChild data-testid="button-back">
             <Link href="/">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar para a Live
+              Voltar ao início
             </Link>
           </Button>
         </div>

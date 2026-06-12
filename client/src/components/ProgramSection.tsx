@@ -340,7 +340,7 @@ export default function ProgramSection() {
                   : "text-muted-foreground"
               }`}
             >
-              Turma 4 — Segundas-feiras
+              Turma 3 — Segundas-feiras
             </button>
             <button
               onClick={() => setTurma("quartas")}
@@ -351,7 +351,7 @@ export default function ProgramSection() {
                   : "text-muted-foreground"
               }`}
             >
-              Turma 5 — Quartas-feiras
+              Turma 4 — Quartas-feiras
             </button>
           </div>
         </div>

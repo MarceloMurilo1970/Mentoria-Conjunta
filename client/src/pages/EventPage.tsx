@@ -124,7 +124,7 @@ export default function EventPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Hero Section - Live Already Happened */}
+      {/* Hero Section - Mentoria */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image with Dark Overlay */}
         <div className="absolute inset-0 z-0">
@@ -132,92 +132,51 @@ export default function EventPage() {
             src={promoImage}
             alt="Marcelo Murilo e Hamilton Felix"
             className="w-full h-full object-cover object-top"
+            style={{ objectPosition: "50% 15%" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-black"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/95 via-black/80 to-black"></div>
         </div>
 
         {/* Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
-          {/* Badge - Live Already Happened */}
+          {/* Badge - Mentoria */}
           <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-6 border border-yellow-400/30">
             <Sparkles className="w-4 h-4" />
-            Turmas 4 e 5 — Início em 10/08/2026
+            Mentoria — Turmas 3 e 4
           </div>
 
-          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-            Marcelo Murilo e Hamilton Felix revelaram
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight tracking-tight">
+            Mentoria
           </h1>
 
-          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-8 leading-tight">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
             <span className="text-white">Como criar </span>
-            <span className="text-yellow-400">AUTORIDADE</span>
-            <span className="text-white"> como </span>
-            <span className="text-yellow-400">CONSELHEIRO</span>
+            <span className="text-yellow-400">autoridade</span>
+            <span className="text-white">, construir </span>
+            <span className="text-yellow-400">oportunidades</span>
+            <span className="text-white"> e conquistar </span>
+            <span className="text-yellow-400">conselhos</span>
           </h2>
 
-          <p className="text-white/90 text-xl md:text-2xl mb-12 max-w-4xl mx-auto leading-relaxed">
-            E como construir oportunidades em empresas para conquistar sua posição em conselhos estratégicos
+          <p className="text-white/80 text-lg md:text-xl mb-10 max-w-3xl mx-auto leading-relaxed">
+            Com Marcelo Murilo e Hamilton Felix
           </p>
 
-          {/* Missed the Live? Section */}
+          {/* Launch Video Section */}
           <div className="bg-gray-900/70 backdrop-blur-sm rounded-2xl p-8 mb-10 border border-gray-700 max-w-3xl mx-auto">
-            <h3 className="text-2xl font-bold text-white mb-2">
-              Perdeu a Live?
-            </h3>
-            <p className="text-gray-300 mb-6">
-              Não se preocupe! Você ainda pode assistir a gravação e aprender tudo sobre a transição para conselhos.
+            <p className="text-gray-300 text-lg mb-6">
+              Quer saber mais sobre como funciona? Assista ao vídeo de lançamento da mentoria, onde Marcelo Murilo e Hamilton Felix explicam todo o conteúdo e funcionamento.
             </p>
-
-            {/* Resource Links */}
-            <div className="grid sm:grid-cols-3 gap-4">
-              <a 
-                href={RECORDING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group"
-                data-testid="link-recording"
-              >
-                <Card className="bg-primary/10 border-primary/30 hover:bg-primary/20 transition-colors h-full">
-                  <CardContent className="p-5 text-center">
-                    <PlayCircle className="w-10 h-10 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                    <h4 className="text-white font-semibold mb-1">Assistir Gravação</h4>
-                    <p className="text-gray-400 text-sm">Live completa</p>
-                  </CardContent>
-                </Card>
-              </a>
-
-              <a 
-                href={SUMMARY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group"
-                data-testid="link-summary"
-              >
-                <Card className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 transition-colors h-full">
-                  <CardContent className="p-5 text-center">
-                    <FileText className="w-10 h-10 text-blue-400 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                    <h4 className="text-white font-semibold mb-1">Resumo por IA</h4>
-                    <p className="text-gray-400 text-sm">Pontos principais</p>
-                  </CardContent>
-                </Card>
-              </a>
-
-              <a 
-                href={PRESENTATION_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group"
-                data-testid="link-presentation"
-              >
-                <Card className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 transition-colors h-full">
-                  <CardContent className="p-5 text-center">
-                    <Presentation className="w-10 h-10 text-purple-400 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                    <h4 className="text-white font-semibold mb-1">Apresentação</h4>
-                    <p className="text-gray-400 text-sm">Slides da live</p>
-                  </CardContent>
-                </Card>
-              </a>
-            </div>
+            <a
+              href={RECORDING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-4 rounded-xl transition-colors"
+              data-testid="link-launch-video"
+            >
+              <PlayCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              Assistir vídeo de lançamento
+            </a>
           </div>
 
           {/* CTA to continue */}

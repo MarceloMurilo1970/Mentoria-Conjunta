@@ -21,11 +21,11 @@ interface TimeLeft {
 }
 
 const CURRENT_PRICE: PriceInfo = {
-  pixPrice: 9400,
-  installmentPrice: 2085,
-  installmentTotal: 10425,
-  installment10Price: 1100,
-  installment10Total: 11000,
+  pixPrice: 10756.65,
+  installmentPrice: 2389.61,
+  installmentTotal: 11948.07,
+  installment10Price: 1297,
+  installment10Total: 12970,
   paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGomxwm8d-10425,00",
   paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
 };
@@ -60,7 +60,7 @@ function formatNumber(num: number): string {
 }
 
 function formatPrice(price: number): string {
-  return price.toLocaleString("pt-BR", { minimumFractionDigits: 0 });
+  return price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function CountdownDisplay({ targetDate, label }: { targetDate: Date; label: string }) {
@@ -184,31 +184,49 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
             </p>
           </div>
 
-          <div className="space-y-4 mb-6">
+          <div className="space-y-3 mb-6">
+            {/* PIX */}
             <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="default" className="text-xs">
-                  PIX
-                </Badge>
-                <span className="text-sm text-muted-foreground">à vista</span>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="default" className="text-xs">PIX</Badge>
+                  <span className="text-sm text-muted-foreground">à vista • melhor preço</span>
+                </div>
+                <span className="text-xs text-green-600 font-semibold">-17,1%</span>
               </div>
               <p className="text-3xl font-bold text-primary">
                 R$ {formatPrice(CURRENT_PRICE.pixPrice)}
               </p>
             </div>
 
-            <div className="p-4 rounded-lg bg-primary/5">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="text-xs">
-                  CARTÃO
-                </Badge>
-                <span className="text-sm text-muted-foreground">5x sem juros</span>
+            {/* 5x cartão */}
+            <div className="p-4 rounded-lg bg-primary/5 border border-border">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">CARTÃO</Badge>
+                  <span className="text-sm text-muted-foreground">5x</span>
+                </div>
+                <span className="text-xs text-muted-foreground">-7,9%</span>
               </div>
               <p className="text-2xl font-bold text-foreground">
                 5x R$ {formatPrice(CURRENT_PRICE.installmentPrice)}
               </p>
               <p className="text-sm text-muted-foreground">
                 Total: R$ {formatPrice(CURRENT_PRICE.installmentTotal)}
+              </p>
+            </div>
+
+            {/* 10x cartão */}
+            <div className="p-4 rounded-lg bg-muted/40 border border-border">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline" className="text-xs">CARTÃO</Badge>
+                <span className="text-sm text-muted-foreground">10x</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground">
+                10x R$ {formatPrice(CURRENT_PRICE.installment10Price)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Total: R$ {formatPrice(CURRENT_PRICE.installment10Total)}
               </p>
             </div>
           </div>

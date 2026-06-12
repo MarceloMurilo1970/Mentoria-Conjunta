@@ -3484,6 +3484,9 @@ function CRMSection() {
       formData.append('file', file);
       const res = await fetch('/api/crm/leads/import', {
         method: 'POST',
+        headers: {
+          'x-admin-email': currentVendorEmail || '',
+        },
         body: formData,
         credentials: 'include',
       });

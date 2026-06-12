@@ -21,6 +21,7 @@ import {
   Clock
 } from "lucide-react";
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
+import marceloMuriloPhoto from "@assets/image_1781300100610.png";
 import BatchPricing, { getBatchPrices, isBatchesOpen, isBatchesComingSoon } from "@/components/BatchPricing";
 import RegistrationForm from "@/components/RegistrationForm";
 import TestimonialTile from "@/components/TestimonialTile";
@@ -162,23 +163,6 @@ export default function EventPage() {
             Com Marcelo Murilo e Hamilton Felix
           </p>
 
-          {/* Launch Video Section */}
-          <div className="bg-gray-900/70 backdrop-blur-sm rounded-2xl p-8 mb-10 border border-gray-700 max-w-3xl mx-auto">
-            <p className="text-gray-300 text-lg mb-6">
-              Quer saber mais sobre como funciona? Assista ao vídeo de lançamento da mentoria, onde Marcelo Murilo e Hamilton Felix explicam todo o conteúdo e funcionamento.
-            </p>
-            <a
-              href={RECORDING_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-4 rounded-xl transition-colors"
-              data-testid="link-launch-video"
-            >
-              <PlayCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              Assistir vídeo de lançamento
-            </a>
-          </div>
-
           {/* CTA to continue */}
           <Button 
             size="lg" 
@@ -313,6 +297,126 @@ export default function EventPage() {
         </div>
       </section>
 
+      {/* Mentors Section */}
+      <section className="py-20 px-6 bg-gray-950">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <Users className="w-4 h-4" />
+              Seus Mentores
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Quem está por trás desta mentoria
+            </h2>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              Uma parceria entre dois especialistas com trajetórias complementares em autoridade, governança e criação de conselhos
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-10">
+            {/* Marcelo Murilo */}
+            <div className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800">
+              <div className="relative h-72 overflow-hidden">
+                <img
+                  src={marceloMuriloPhoto}
+                  alt="Marcelo Murilo"
+                  className="w-full h-full object-cover object-top"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
+                <div className="absolute bottom-4 left-6">
+                  <h3 className="text-2xl font-bold text-white">Marcelo Murilo</h3>
+                  <p className="text-yellow-400 text-sm font-medium">VP de Inovação, Tecnologia & M&A · Conselheiro · Mentor</p>
+                </div>
+              </div>
+              <div className="p-6 space-y-5">
+                <p className="text-gray-300 leading-relaxed">
+                  Empresário com 38 anos de carreira empreendedora, Marcelo Murilo cofundou a <strong className="text-white">Benner</strong> em 1997 — empresa com cerca de 2.000 colaboradores e atuação em software vertical para saúde, ERP, jurídico, logística e turismo. Lidera frentes de inovação, tecnologia e M&A há mais de duas décadas.
+                </p>
+                <p className="text-gray-300 leading-relaxed">
+                  Atua como conselheiro em múltiplas organizações, apoiando sócios e executivos na estruturação de governança, estratégia e qualidade das decisões. Criador do <strong className="text-white">Framework PREP-MM</strong>, desenvolvido especificamente para transformar trajetória executiva em autoridade reconhecida no mercado de conselhos.
+                </p>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="bg-gray-800 rounded-xl p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-400">TOP 3</div>
+                    <div className="text-xs text-gray-400 mt-1">Conselheiro do Ano<br/>Board Academy 2023, 2024 e 2025</div>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-400">38 anos</div>
+                    <div className="text-xs text-gray-400 mt-1">de carreira<br/>empreendedora</div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">CCA/IBGC Certificado</span>
+                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">Cambridge Judge Business School</span>
+                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">Expert GLG</span>
+                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">~35K seguidores LinkedIn</span>
+                </div>
+                <a
+                  href="https://www.linkedin.com/in/marcelomurilo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+                  data-testid="link-marcelo-linkedin"
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  Ver perfil no LinkedIn
+                </a>
+              </div>
+            </div>
+
+            {/* Hamilton Felix */}
+            <div className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800">
+              <div className="relative h-72 overflow-hidden bg-gradient-to-br from-primary/20 to-gray-800 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-36 h-36 rounded-full bg-primary/20 border-4 border-primary/30 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-5xl font-bold text-primary">HF</span>
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+                <div className="absolute bottom-4 left-6">
+                  <h3 className="text-2xl font-bold text-white">Hamilton Felix</h3>
+                  <p className="text-yellow-400 text-sm font-medium">CEO · Conselheiro · Investidor · Mentor · Palestrante</p>
+                </div>
+              </div>
+              <div className="p-6 space-y-5">
+                <p className="text-gray-300 leading-relaxed">
+                  Especialista em criação e estruturação de conselhos empresariais, Hamilton Felix atua como conselheiro em múltiplas organizações — entre elas Lyncros, Inesfly Brasil, SManager, SOS Docs e Qos Tecnologia — trazendo expertise em governança aplicada a PMEs e empresas em crescimento.
+                </p>
+                <p className="text-gray-300 leading-relaxed">
+                  Membro associado da <strong className="text-white">Board Academy BR</strong> e do <strong className="text-white">IBGC</strong>, seu trabalho diferencia estratégia de tática: identifica pontos fortes, oportunidades e ajuda executivos a conquistar posições concretas em conselhos com método e consistência.
+                </p>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="bg-gray-800 rounded-xl p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-400">6+</div>
+                    <div className="text-xs text-gray-400 mt-1">mandatos ativos<br/>como conselheiro</div>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-400">PMEs</div>
+                    <div className="text-xs text-gray-400 mt-1">foco em governança<br/>empresarial prática</div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">IBGC Associado</span>
+                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">Board Academy BR</span>
+                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">MBA Ibmec</span>
+                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">Felix Empresarial</span>
+                </div>
+                <a
+                  href="https://www.linkedin.com/in/hamiltonfelix2/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+                  data-testid="link-hamilton-linkedin"
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  Ver perfil no LinkedIn
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section className="py-20 px-6 bg-gray-950">
         <div className="max-w-6xl mx-auto">
@@ -343,6 +447,40 @@ export default function EventPage() {
                 highlightPhrase={testimonial.highlightPhrase}
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Launch Video Section */}
+      <section className="py-20 px-6 bg-black">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-6">
+            <PlayCircle className="w-4 h-4" />
+            Vídeo de Lançamento
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Assista ao vídeo completo da mentoria
+          </h2>
+          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+            Marcelo Murilo e Hamilton Felix explicam em detalhes todo o conteúdo, a metodologia e o funcionamento da mentoria — antes de você decidir.
+          </p>
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-10">
+            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <PlayCircle className="w-10 h-10 text-primary" />
+            </div>
+            <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
+              Veja como a mentoria já transformou a trajetória de dezenas de conselheiros — e entenda exatamente o que você vai receber ao participar.
+            </p>
+            <a
+              href={RECORDING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-xl transition-colors text-lg"
+              data-testid="link-launch-video"
+            >
+              <PlayCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              Assistir vídeo de lançamento
+            </a>
           </div>
         </div>
       </section>

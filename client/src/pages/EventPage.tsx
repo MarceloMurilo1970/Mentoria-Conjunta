@@ -125,60 +125,126 @@ export default function EventPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Hero Section - Mentoria */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image with Dark Overlay */}
-        <div className="absolute inset-0 z-0">
+      {/* Hero Section */}
+      <section className="flex flex-col md:flex-row min-h-screen bg-black">
+
+        {/* Left: Photo — Mobile top banner */}
+        <div className="relative md:hidden overflow-hidden" style={{ height: "390px" }}>
           <img
             src={promoImage}
             alt="Marcelo Murilo e Hamilton Felix"
             className="w-full h-full object-cover object-top"
-            style={{ objectPosition: "50% 15%" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/95 via-black/80 to-black"></div>
+          {/* Mask: hides "ENCONTRO ON-LINE" top, fades below names ~80% of mobile container */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to bottom, black 0%, black 12%, transparent 21%, transparent 55%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.98) 76%, black 80%)"
+          }} />
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
-          {/* Badge - Mentoria */}
-          <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-6 border border-yellow-400/30">
+        {/* Left: Photo — Desktop column, aspect-ratio + gradient clips below full names */}
+        <div 
+          className="hidden md:block relative md:w-[42%] lg:w-[38%] self-start overflow-hidden"
+          style={{ aspectRatio: "590 / 570" }}
+        >
+          <img
+            src={promoImage}
+            alt="Marcelo Murilo e Hamilton Felix"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+          />
+          {/* Top: hides "ENCONTRO ON-LINE" text */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to bottom, black 0%, black 9%, transparent 20%, transparent 100%)"
+          }} />
+          {/* Bottom: fade that covers "CONVIDAM..." (starts ~83%) but preserves name labels */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to bottom, transparent 0%, transparent 83%, rgba(0,0,0,0.97) 95%, black 100%)"
+          }} />
+          {/* Right edge blend into content */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to right, transparent 55%, rgba(0,0,0,0.35) 72%, black 100%)"
+          }} />
+        </div>
+
+        {/* Right: Content */}
+        <div className="flex-1 flex flex-col justify-center px-8 md:px-12 lg:px-16 py-12 md:py-20">
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-yellow-400/15 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-8 border border-yellow-400/25 self-start">
             <Sparkles className="w-4 h-4" />
             Mentoria — Turmas 3 e 4
           </div>
 
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight tracking-tight">
-            Mentoria
+          {/* Hooks */}
+          <div className="space-y-4 mb-10">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-lg md:text-xl text-gray-200 leading-snug">
+                Você está em <span className="text-yellow-400 font-semibold">transição para conselhos</span> e não sabe por onde começar?
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-lg md:text-xl text-gray-200 leading-snug">
+                Tem décadas de experiência executiva mas ainda não consegue <span className="text-yellow-400 font-semibold">posicionamento claro</span>?
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-lg md:text-xl text-gray-200 leading-snug">
+                Quer construir <span className="text-yellow-400 font-semibold">autoridade real</span> e atrair oportunidades concretas em conselhos?
+              </p>
+            </div>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">
+            Como criar <span className="text-yellow-400">autoridade</span>,<br className="hidden sm:block" /> construir <span className="text-yellow-400">oportunidades</span><br className="hidden sm:block" /> e conquistar <span className="text-yellow-400">conselhos</span>
           </h1>
 
-          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-            <span className="text-white">Como criar </span>
-            <span className="text-yellow-400">autoridade</span>
-            <span className="text-white">, construir </span>
-            <span className="text-yellow-400">oportunidades</span>
-            <span className="text-white"> e conquistar </span>
-            <span className="text-yellow-400">conselhos</span>
-          </h2>
-
-          <p className="text-white/80 text-lg md:text-xl mb-10 max-w-3xl mx-auto leading-relaxed">
-            Com Marcelo Murilo e Hamilton Felix
+          <p className="text-gray-400 text-base md:text-lg mb-10">
+            Com <span className="text-white font-medium">Marcelo Murilo</span> e <span className="text-white font-medium">Hamilton Felix</span>
           </p>
 
-          {/* CTA to continue */}
-          <Button 
-            size="lg" 
-            className="text-lg px-8 py-6 h-auto group" 
-            onClick={scrollToRegistration}
-            data-testid="button-scroll-to-mentorship"
-          >
-            Quero me inscrever na Mentoria
-            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        </div>
+          {/* CTAs */}
+          <div className="flex flex-wrap gap-4">
+            <Button
+              size="lg"
+              className="text-base px-8 h-auto py-4 group"
+              onClick={scrollToRegistration}
+              data-testid="button-scroll-to-mentorship"
+            >
+              Quero me inscrever
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-base px-8 h-auto py-4 border-gray-600 text-gray-300 hover:text-white"
+              onClick={() => document.getElementById('depoimentos')?.scrollIntoView({ behavior: 'smooth' })}
+              data-testid="button-scroll-to-testimonials"
+            >
+              Ver depoimentos
+            </Button>
+          </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center p-2">
-            <div className="w-1 h-3 bg-white/50 rounded-full"></div>
+          {/* Social proof strip */}
+          <div className="flex flex-wrap gap-6 mt-12 pt-8 border-t border-gray-800">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400">+60</div>
+              <div className="text-xs text-gray-500 mt-0.5">mentorados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400">3x</div>
+              <div className="text-xs text-gray-500 mt-0.5">Conselheiro do Ano</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400">38 anos</div>
+              <div className="text-xs text-gray-500 mt-0.5">de experiência</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400">10</div>
+              <div className="text-xs text-gray-500 mt-0.5">sessões ao vivo</div>
+            </div>
           </div>
         </div>
       </section>

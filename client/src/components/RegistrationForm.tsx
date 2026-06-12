@@ -331,6 +331,32 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
           )}
 
           <div className="space-y-4">
+            <Label>Turma *</Label>
+            <RadioGroup
+              onValueChange={(value) => setValue("turma", value as "turma_3" | "turma_4")}
+              className="space-y-3"
+            >
+              <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${watch("turma") === "turma_3" ? "border-primary bg-primary/5" : "border-border hover-elevate"}`}>
+                <RadioGroupItem value="turma_3" id="turma_3" data-testid="radio-turma3" />
+                <Label htmlFor="turma_3" className="flex-1 cursor-pointer">
+                  <div className="font-semibold text-foreground">Turma 3 — Segundas-feiras</div>
+                  <div className="text-sm text-muted-foreground mt-1">Início: 11 de Agosto de 2026 • 19h</div>
+                </Label>
+              </div>
+              <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${watch("turma") === "turma_4" ? "border-primary bg-primary/5" : "border-border hover-elevate"}`}>
+                <RadioGroupItem value="turma_4" id="turma_4" data-testid="radio-turma4" />
+                <Label htmlFor="turma_4" className="flex-1 cursor-pointer">
+                  <div className="font-semibold text-foreground">Turma 4 — Quartas-feiras</div>
+                  <div className="text-sm text-muted-foreground mt-1">Início: 13 de Agosto de 2026 • 19h</div>
+                </Label>
+              </div>
+            </RadioGroup>
+            {errors.turma && (
+              <p className="text-sm text-destructive">{errors.turma.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-4">
             <Label>Forma de Pagamento * <span className="text-primary font-semibold">({batchName})</span></Label>
             
             <RadioGroup

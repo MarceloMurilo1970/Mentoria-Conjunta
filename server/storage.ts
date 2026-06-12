@@ -60,6 +60,7 @@ export interface ManualRegistrationData {
   paidAmount: number;
   observations?: string | null;
   vendor?: string | null;
+  turma?: string | null;
   leadId?: string | null;
 }
 
@@ -114,6 +115,7 @@ export class DbStorage implements IStorage {
       paidAmount: data.paidAmount,
       vendor: data.vendor || null,
       observations: data.observations || null,
+      turma: data.turma || 'turma_3',
       batch: 3, // Current batch
     }).returning();
     return result[0];

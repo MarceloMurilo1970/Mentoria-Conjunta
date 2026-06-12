@@ -162,6 +162,7 @@ export const registrations = pgTable("registrations", {
   remainingPaymentDate: timestamp("remaining_payment_date"),
   vendor: text("vendor"),
   batch: integer("batch").default(3),
+  turma: text("turma").default("turma_2").notNull(),
   observations: text("observations"),
   invoiceIssued: boolean("invoice_issued").default(false),
   invoiceIssuedAt: timestamp("invoice_issued_at"),
@@ -191,6 +192,9 @@ export const insertRegistrationSchema = createInsertSchema(registrations).omit({
   paymentMethod: z.enum(["pix", "installments", "installments10"], {
     required_error: "Selecione uma forma de pagamento",
   }),
+  turma: z.enum(["turma_3", "turma_4"], {
+    required_error: "Selecione a turma desejada",
+  }),
 });
 
 export type InsertRegistration = z.infer<typeof insertRegistrationSchema>;
@@ -211,7 +215,8 @@ export const insertManualRegistrationSchema = createInsertSchema(registrations).
   totalAmount: z.number().min(0, "Valor total deve ser positivo"),
   paidAmount: z.number().min(0, "Valor pago deve ser positivo"),
   observations: z.string().optional().nullable(),
-  leadId: z.string().optional().nullable(), // Optional link to a lead
+  turma: z.enum(["turma_2", "turma_3", "turma_4"]).default("turma_3"),
+  leadId: z.string().optional().nullable(),
 });
 
 export type InsertManualRegistration = z.infer<typeof insertManualRegistrationSchema>;

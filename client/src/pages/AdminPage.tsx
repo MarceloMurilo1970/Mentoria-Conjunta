@@ -788,6 +788,11 @@ function MentorshipRegistrationsSection() {
   const [taxRate, setTaxRate] = useState(getSavedTaxRate());
   const [editingTaxRate, setEditingTaxRate] = useState(false);
   const [taxRateInput, setTaxRateInput] = useState((getSavedTaxRate() * 100).toFixed(2));
+
+  // Turma filter for registration list and DRE
+  const [turmaFilter, setTurmaFilter] = useState<'todas' | 'turma_2' | 'turma_3' | 'turma_4'>('todas');
+  const [dreTurmaFilter, setDreTurmaFilter] = useState<'todas' | 'turma_2' | 'turma_3' | 'turma_4'>('todas');
+  const [manualRegTurma, setManualRegTurma] = useState<'turma_2' | 'turma_3' | 'turma_4'>('turma_3');
   
   // Dynamically computed BATCH_CONFIG based on current tax rate
   const currentBatchConfig = getBatchConfig(taxRate);
@@ -1021,6 +1026,7 @@ function MentorshipRegistrationsSection() {
       totalAmount: number;
       paidAmount: number;
       observations?: string;
+      turma: 'turma_2' | 'turma_3' | 'turma_4';
     }) => {
       // Include signed auth token for fallback authentication in production
       const authToken = localStorage.getItem('crm_auth_token');
@@ -1058,6 +1064,7 @@ function MentorshipRegistrationsSection() {
     setManualRegTotalAmount('9400');
     setManualRegPaidAmount('0');
     setManualRegObservations('');
+    setManualRegTurma('turma_3');
   };
 
   const handleManualRegistration = () => {
@@ -1121,6 +1128,7 @@ function MentorshipRegistrationsSection() {
       totalAmount,
       paidAmount,
       observations: manualRegObservations.trim() || undefined,
+      turma: manualRegTurma,
     });
   };
 
@@ -1591,9 +1599,20 @@ Qualquer dúvida, estamos à disposição!`;
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="space-y-6">
+              {/* Turma filter for DRE */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">Filtrar por turma:</span>
+                {([['todas', 'Todas'], ['turma_2', 'Turma 2'], ['turma_3', 'T3 Seg'], ['turma_4', 'T4 Qua']] as const).map(([val, label]) => (
+                  <Button key={val} size="sm" variant={dreTurmaFilter === val ? 'default' : 'outline'} onClick={() => setDreTurmaFilter(val)} className="h-7 text-xs border-gray-300">
+                    {label}
+                  </Button>
+                ))}
+              </div>
+
               {/* DRE Cards - Grid Layout */}
               {(() => {
-                const dreData = registrations?.reduce((acc, reg) => {
+                const dreRegs = dreTurmaFilter === 'todas' ? registrations : registrations?.filter(r => r.turma === dreTurmaFilter);
+                const dreData = dreRegs?.reduce((acc, reg) => {
                   const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                   const comms = calculateCommissions(reg, batchConfig);
                   // When PAGO: use full net amount (after taxes and card fees)
@@ -2497,6 +2516,19 @@ Qualquer dúvida, estamos à disposição!`;
                   data-testid="input-manual-razao"
                 />
               </div>
+              <div className="sm:col-span-2">
+                <Label className="text-gray-700">Turma *</Label>
+                <Select value={manualRegTurma} onValueChange={(v: 'turma_2' | 'turma_3' | 'turma_4') => setManualRegTurma(v)}>
+                  <SelectTrigger className="mt-1 bg-white border-gray-300" data-testid="select-manual-turma">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="turma_3">Turma 3 — Segundas-feiras</SelectItem>
+                    <SelectItem value="turma_4">Turma 4 — Quartas-feiras</SelectItem>
+                    <SelectItem value="turma_2">Turma 2 (legado)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label className="text-gray-700">Forma de Pagamento</Label>
                 <Select value={manualRegPaymentMethod} onValueChange={(v: 'pix' | 'installments' | 'installments10') => setManualRegPaymentMethod(v)}>
@@ -2576,9 +2608,9 @@ Qualquer dúvida, estamos à disposição!`;
       <Card className="bg-white border-gray-200 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-gray-900">Inscrições da Mentoria - Turmas 4 e 5</CardTitle>
+            <CardTitle className="text-gray-900">Inscrições da Mentoria — Turmas 3 e 4</CardTitle>
             <CardDescription className="text-gray-600">
-              Agosto a Outubro 2026 - Marcelo Murilo & Hamilton Felix
+              Agosto a Outubro 2026 · Marcelo Murilo & Hamilton Felix
             </CardDescription>
           </div>
           <Button 
@@ -2591,9 +2623,22 @@ Qualquer dúvida, estamos à disposição!`;
           </Button>
         </CardHeader>
         <CardContent>
-          {registrations && registrations.length > 0 ? (
+          {/* Turma filter tabs */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {([['todas', 'Todas'] , ['turma_2', 'Turma 2 (legado)'], ['turma_3', 'Turma 3 — Seg'], ['turma_4', 'Turma 4 — Qua']] as const).map(([val, label]) => {
+              const count = val === 'todas' ? (registrations?.length || 0) : (registrations?.filter(r => r.turma === val).length || 0);
+              return (
+                <Button key={val} size="sm" variant={turmaFilter === val ? 'default' : 'outline'} onClick={() => setTurmaFilter(val)} className="border-gray-300 text-xs">
+                  {label} <span className="ml-1 opacity-70">({count})</span>
+                </Button>
+              );
+            })}
+          </div>
+          {(() => {
+            const filtered = turmaFilter === 'todas' ? (registrations || []) : (registrations || []).filter(r => r.turma === turmaFilter);
+            return filtered && filtered.length > 0 ? (
             <div className="space-y-4">
-              {registrations.map((reg, index) => {
+              {filtered.map((reg, index) => {
                 const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                 const commissions = calculateCommissions(reg, batchConfig);
                 
@@ -2603,6 +2648,9 @@ Qualquer dúvida, estamos à disposição!`;
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="text-gray-400 text-sm font-mono w-6">{index + 1}</span>
                       <span className="text-gray-900 font-medium flex-1 min-w-[150px]">{reg.name}</span>
+                      <Badge className={`text-xs shrink-0 ${reg.turma === 'turma_3' ? 'bg-green-700' : reg.turma === 'turma_4' ? 'bg-teal-700' : 'bg-slate-500'}`}>
+                        {reg.turma === 'turma_3' ? 'T3 Seg' : reg.turma === 'turma_4' ? 'T4 Qua' : 'T2'}
+                      </Badge>
                       {editingBatchId === reg.id ? (
                         <div className="flex items-center gap-1">
                           <Select value={batchValue.toString()} onValueChange={(val) => setBatchValue(Number(val))}>
@@ -2942,7 +2990,8 @@ Qualquer dúvida, estamos à disposição!`;
             <div className="text-center py-8 text-gray-400">
               Nenhuma inscrição registrada ainda.
             </div>
-          )}
+          );
+          })()}
         </CardContent>
       </Card>
 

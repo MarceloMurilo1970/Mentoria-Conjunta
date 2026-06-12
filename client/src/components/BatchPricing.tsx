@@ -22,12 +22,12 @@ interface TimeLeft {
 
 const CURRENT_PRICE: PriceInfo = {
   pixPrice: 10756.65,
-  installmentPrice: 2389.61,
-  installmentTotal: 11948.07,
+  installmentPrice: 2390,
+  installmentTotal: 11950,
   installment10Price: 1297,
   installment10Total: 12970,
-  paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGomxwm8d-10425,00",
-  paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
+  paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-7TdxtXL4ZT-11950,00",
+  paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-j3N9IUnwEh-12970,00",
 };
 
 const REGISTRATION_START = new Date("2026-06-02T00:00:00-03:00");

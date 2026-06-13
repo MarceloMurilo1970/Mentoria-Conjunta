@@ -141,22 +141,22 @@ export default function EventPage() {
         </div>
 
         {/* Left column: Marcelo Murilo — Desktop */}
-        <div className="hidden md:flex flex-col md:w-[25%] lg:w-[23%] h-full flex-shrink-0">
+        <div className="hidden md:flex flex-col md:w-[19%] lg:w-[18%] h-full flex-shrink-0">
           {/* Photo area */}
           <div className="relative flex-1 overflow-hidden">
             <img
               src={promoImage}
               alt="Marcelo Murilo"
               className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{ transform: "scale(1.9)", transformOrigin: "10% 22%" }}
+              style={{ transform: "scale(1.5)", transformOrigin: "12% 20%" }}
             />
-            {/* Bottom fade — covers poster text */}
+            {/* Bottom fade — strong, covers poster text */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.88) 75%, black 88%)"
+              background: "linear-gradient(to bottom, transparent 42%, rgba(0,0,0,0.95) 62%, black 74%)"
             }} />
-            {/* Right edge blends into center */}
+            {/* Right edge — strong blend into center */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to right, transparent 55%, rgba(0,0,0,0.4) 78%, black 100%)"
+              background: "linear-gradient(to right, transparent 35%, rgba(0,0,0,0.8) 60%, black 80%)"
             }} />
           </div>
           {/* Name strip — always visible */}
@@ -246,22 +246,22 @@ export default function EventPage() {
         </div>
 
         {/* Right column: Hamilton Felix — Desktop */}
-        <div className="hidden md:flex flex-col md:w-[25%] lg:w-[23%] h-full flex-shrink-0">
+        <div className="hidden md:flex flex-col md:w-[19%] lg:w-[18%] h-full flex-shrink-0">
           {/* Photo area */}
           <div className="relative flex-1 overflow-hidden">
             <img
               src={promoImage}
               alt="Hamilton Felix"
               className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{ transform: "scale(1.9)", transformOrigin: "90% 22%" }}
+              style={{ transform: "scale(1.5)", transformOrigin: "88% 20%" }}
             />
-            {/* Bottom fade — covers poster text */}
+            {/* Bottom fade — strong, covers poster text */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.88) 75%, black 88%)"
+              background: "linear-gradient(to bottom, transparent 42%, rgba(0,0,0,0.95) 62%, black 74%)"
             }} />
-            {/* Left edge blends into center */}
+            {/* Left edge — strong mask to hide Marcelo bleed */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to left, transparent 55%, rgba(0,0,0,0.4) 78%, black 100%)"
+              background: "linear-gradient(to left, transparent 25%, rgba(0,0,0,0.9) 50%, black 68%)"
             }} />
           </div>
           {/* Name strip — always visible */}

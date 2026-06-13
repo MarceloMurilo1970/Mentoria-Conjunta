@@ -126,47 +126,69 @@ export default function EventPage() {
   return (
     <div className="min-h-screen bg-black">
       {/* Hero Section */}
-      <section className="flex flex-col md:flex-row min-h-screen bg-black">
+      <section className="flex flex-col md:flex-row md:h-screen bg-black">
 
         {/* Left: Photo — Mobile top banner */}
-        <div className="relative md:hidden overflow-hidden" style={{ height: "390px" }}>
+        <div className="relative md:hidden overflow-hidden" style={{ height: "340px" }}>
           <img
             src={promoImage}
             alt="Marcelo Murilo e Hamilton Felix"
             className="w-full h-full object-cover object-top"
           />
-          {/* Mask: hides "ENCONTRO ON-LINE" top, fades below names ~80% of mobile container */}
           <div className="absolute inset-0" style={{
             background: "linear-gradient(to bottom, black 0%, black 12%, transparent 21%, transparent 55%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.98) 76%, black 80%)"
           }} />
         </div>
 
-        {/* Left: Photo — Desktop column, aspect-ratio + gradient clips below full names */}
-        <div 
-          className="hidden md:block relative md:w-[42%] lg:w-[38%] self-start overflow-hidden"
-          style={{ aspectRatio: "590 / 570" }}
-        >
-          <img
-            src={promoImage}
-            alt="Marcelo Murilo e Hamilton Felix"
-            className="absolute inset-0 w-full h-full object-cover object-top"
-          />
-          {/* Top: hides "ENCONTRO ON-LINE" text */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to bottom, black 0%, black 9%, transparent 20%, transparent 100%)"
-          }} />
-          {/* Bottom: fade that covers "CONVIDAM..." (starts ~83%) but preserves name labels */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to bottom, transparent 0%, transparent 83%, rgba(0,0,0,0.97) 95%, black 100%)"
-          }} />
-          {/* Right edge blend into content */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to right, transparent 55%, rgba(0,0,0,0.35) 72%, black 100%)"
-          }} />
+        {/* Left: Photos stacked vertically — Desktop, fills full screen height */}
+        <div className="hidden md:flex flex-col md:w-[36%] lg:w-[32%] h-full">
+
+          {/* Marcelo Murilo — top half, zoomed into left side of poster */}
+          <div className="relative flex-1 overflow-hidden">
+            <img
+              src={promoImage}
+              alt="Marcelo Murilo"
+              className="absolute inset-0 w-full h-full object-cover object-top"
+              style={{ transform: "scale(2.2)", transformOrigin: "10% 35%" }}
+            />
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.75) 82%, black 100%)"
+            }} />
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to right, transparent 62%, rgba(0,0,0,0.25) 82%, black 100%)"
+            }} />
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
+              <p className="text-sm font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
+              <p className="text-xs tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
+            </div>
+          </div>
+
+          <div className="h-px bg-white/10 flex-shrink-0" />
+
+          {/* Hamilton Felix — bottom half, zoomed into right side of poster */}
+          <div className="relative flex-1 overflow-hidden">
+            <img
+              src={promoImage}
+              alt="Hamilton Felix"
+              className="absolute inset-0 w-full h-full object-cover object-top"
+              style={{ transform: "scale(2.2)", transformOrigin: "90% 35%" }}
+            />
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.75) 82%, black 100%)"
+            }} />
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to right, transparent 62%, rgba(0,0,0,0.25) 82%, black 100%)"
+            }} />
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
+              <p className="text-sm font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
+              <p className="text-xs tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
+            </div>
+          </div>
+
         </div>
 
         {/* Right: Content */}
-        <div className="flex-1 flex flex-col justify-center px-8 md:px-12 lg:px-16 py-12 md:py-20">
+        <div className="flex-1 flex flex-col justify-center px-8 md:px-12 lg:px-16 py-10 md:py-14 overflow-y-auto">
 
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-yellow-400/15 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-8 border border-yellow-400/25 self-start">

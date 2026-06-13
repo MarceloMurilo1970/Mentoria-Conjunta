@@ -26,8 +26,8 @@ const CURRENT_PRICE: PriceInfo = {
   installmentTotal: 11950,
   installment10Price: 1297,
   installment10Total: 12970,
-  paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-7TdxtXL4ZT-11950,00",
-  paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-j3N9IUnwEh-12970,00",
+  paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
+  paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
 };
 
 const REGISTRATION_START = new Date("2026-06-02T00:00:00-03:00");

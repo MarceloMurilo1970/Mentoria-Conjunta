@@ -1095,10 +1095,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Batch pricing configuration
   const BATCH_CONFIG = [
-    { batch: 1, pixPrice: 8000, installmentPrice: 1775, installments: 5, installmentTotal: 8875, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00", installment10Price: 1775, installment10Total: 8875, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00" },
-    { batch: 2, pixPrice: 8700, installmentPrice: 1930, installments: 5, installmentTotal: 9650, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00", installment10Price: 1930, installment10Total: 9650, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00" },
-    { batch: 3, pixPrice: 9400, installmentPrice: 2085, installments: 5, installmentTotal: 10425, paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00", installment10Price: 1100, installment10Total: 11000, paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00" },
-    { batch: 4, pixPrice: 10000, installmentPrice: 1000, installments: 10, installmentTotal: 10000, paymentLink: "", installment10Price: 1000, installment10Total: 10000, paymentLink10: "" },
+    { batch: 1, pixPrice: 8000, installmentPrice: 1775, installments: 5, installmentTotal: 8875, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00", installment10Price: 1775, installment10Total: 8875, paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
+    { batch: 2, pixPrice: 8700, installmentPrice: 1930, installments: 5, installmentTotal: 9650, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00", installment10Price: 1930, installment10Total: 9650, paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
+    { batch: 3, pixPrice: 9400, installmentPrice: 2085, installments: 5, installmentTotal: 10425, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00", installment10Price: 1100, installment10Total: 11000, paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
+    { batch: 4, pixPrice: 10000, installmentPrice: 2390, installments: 5, installmentTotal: 11950, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00", installment10Price: 1297, installment10Total: 12970, paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
   ];
 
   // Generate contract PDF for a registration (authenticated users - admin or vendor)
@@ -1182,7 +1182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       doc.font('Helvetica-Bold').fontSize(10).text('MENTORES:');
       doc.moveDown(0.3);
       doc.font('Helvetica').fontSize(9);
-      doc.text('OPES INFORMATICA LTDA, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 17.840.516/0001-47, com sede na Rua Afonso Pena nº 384, Florianópolis, Santa Catarina/SC, CEP 88.070.650, neste ato representada por seu Administrador nos termos do Contrato Social, MARCELO MURILO SILVA, portador do RG nº 1.663.196-0 e do CPF/MF 753.118.289-00, residente e domiciliado na Alameda Cambará 829, Santana de Parnaíba, São Paulo/SP, CEP 06539-040, e-mail: contato@marcelomurilo.com.br, Conselheiro de Administração certificado pelo IBGC, especialista em governança corporativa e conselhos empresariais, com mais de 30 anos de experiência como diretor e executivo em multinacionais dos setores de tecnologia, seguros e financeiro, doravante designado MENTOR.');
+      doc.text('MENTORIA MM TREINAMENTOS LTDA, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 66.142.918/0001-83, neste ato representada por seu Administrador nos termos do Contrato Social, MARCELO MURILO SILVA, portador do RG nº 1.663.196-0 e do CPF/MF 753.118.289-00, residente e domiciliado na Alameda Cambará 829, Santana de Parnaíba, São Paulo/SP, CEP 06539-040, e-mail: contato@marcelomurilo.com.br, Conselheiro de Administração certificado pelo IBGC, especialista em governança corporativa e conselhos empresariais, com mais de 30 anos de experiência como diretor e executivo em multinacionais dos setores de tecnologia, seguros e financeiro, doravante designado MENTOR.');
       
       doc.moveDown(0.5);
       
@@ -1288,7 +1288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Dynamic values clause based on registration batch and payment method
       if (isPix) {
-        addParagraph(`O(A) MENTORADO(A) optou pelo pagamento à vista, via PIX, no valor de R$ ${formatCurrency(batchConfig.pixPrice)} (${formatCurrencyWord(batchConfig.pixPrice)}), utilizando como chave o CNPJ da OPES INFORMATICA LTDA: 17.840.516/0001-47.`);
+        addParagraph(`O(A) MENTORADO(A) optou pelo pagamento à vista, via PIX, no valor de R$ ${formatCurrency(batchConfig.pixPrice)} (${formatCurrencyWord(batchConfig.pixPrice)}), utilizando como chave o CNPJ da MENTORIA MM TREINAMENTOS LTDA: 66.142.918/0001-83.`);
       } else {
         addParagraph(`O(A) MENTORADO(A) optou pelo pagamento parcelado em ${batchConfig.installments}x sem juros de R$ ${formatCurrency(batchConfig.installmentPrice)} (${formatCurrencyWord(batchConfig.installmentPrice)}), totalizando R$ ${formatCurrency(batchConfig.installmentTotal)} (${formatCurrencyWord(batchConfig.installmentTotal)}), mediante cartão de crédito, através do link de pagamento: ${batchConfig.paymentLink}`);
       }
@@ -1435,7 +1435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       doc.text('_'.repeat(60), { align: 'center' });
       doc.font('Helvetica-Bold').text('MARCELO MURILO SILVA', { align: 'center' });
       doc.font('Helvetica').text('CPF: 753.118.289-00', { align: 'center' });
-      doc.text('OPES INFORMATICA LTDA', { align: 'center' });
+      doc.text('MENTORIA MM TREINAMENTOS LTDA', { align: 'center' });
       
       doc.moveDown(1.5);
       

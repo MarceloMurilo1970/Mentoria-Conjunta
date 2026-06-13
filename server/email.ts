@@ -23,8 +23,8 @@ const BATCHES = [
     installmentTotal: 8875,
     installment10Price: 1775,
     installment10Total: 8875,
-    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGnMgu7Ax-8875,00",
-    paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGnMgu7Ax-8875,00",
+    paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
+    paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
   },
   {
     id: 2,
@@ -36,8 +36,8 @@ const BATCHES = [
     installmentTotal: 9650,
     installment10Price: 1930,
     installment10Total: 9650,
-    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-kuyi8p4sl-9650,00",
-    paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-kuyi8p4sl-9650,00",
+    paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
+    paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
   },
   {
     id: 3,
@@ -49,8 +49,8 @@ const BATCHES = [
     installmentTotal: 10425,
     installment10Price: 1100,
     installment10Total: 11000,
-    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-6oGomxwm8d-10425,00",
-    paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
+    paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
+    paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
   },
 ];
 
@@ -142,8 +142,8 @@ export async function sendRegistrationEmail(
     <h3>Instruções para Pagamento via PIX (${batchInfo.batchName})</h3>
     <p>Para confirmar sua inscrição, realize o pagamento via PIX:</p>
     <ul>
-      <li><strong>Chave PIX (CNPJ):</strong> 17.840.516/0001-47</li>
-      <li><strong>Beneficiário:</strong> Opes Informática Ltda</li>
+      <li><strong>Chave PIX (CNPJ):</strong> 66.142.918/0001-83</li>
+      <li><strong>Beneficiário:</strong> Mentoria MM Treinamentos Ltda</li>
       <li><strong>Valor:</strong> R$ ${formatPrice(batchInfo.pixPrice)},00</li>
     </ul>
     <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>
@@ -264,7 +264,7 @@ export async function sendRegistrationNotificationEmail(
     ? `<p><strong>Link de Pagamento:</strong> <a href="${batchInfo.paymentLink}">${batchInfo.paymentLink}</a></p>`
     : registration.paymentMethod === 'installments10'
     ? `<p><strong>Link de Pagamento:</strong> <a href="${batchInfo.paymentLink10}">${batchInfo.paymentLink10}</a></p>`
-    : `<p><strong>PIX (CNPJ):</strong> 17.840.516/0001-47 - Opes Informática Ltda</p>`;
+    : `<p><strong>PIX (CNPJ):</strong> 66.142.918/0001-83 - Mentoria MM Treinamentos Ltda</p>`;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -477,8 +477,8 @@ export async function sendPartialPaymentEmail(
         <h4 style="color: #b45309; margin-top: 0;">Lembrete de Pagamento</h4>
         <p style="margin: 0;">Identificamos que seu pagamento está parcial. Para completar sua inscrição, realize o pagamento restante via PIX:</p>
         <ul style="margin-top: 10px;">
-          <li><strong>Chave PIX (CNPJ):</strong> 17.840.516/0001-47</li>
-          <li><strong>Beneficiário:</strong> Opes Informática Ltda</li>
+          <li><strong>Chave PIX (CNPJ):</strong> 66.142.918/0001-83</li>
+          <li><strong>Beneficiário:</strong> Mentoria MM Treinamentos Ltda</li>
         </ul>
         <p style="margin-top: 10px;"><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante.</p>
       </div>
@@ -571,8 +571,8 @@ export async function sendPendingPaymentEmail(
     <h3>Instruções para Pagamento via PIX (${batchInfo.batchName})</h3>
     <p>Para confirmar sua inscrição, realize o pagamento via PIX:</p>
     <ul>
-      <li><strong>Chave PIX (CNPJ):</strong> 17.840.516/0001-47</li>
-      <li><strong>Beneficiário:</strong> Opes Informática Ltda</li>
+      <li><strong>Chave PIX (CNPJ):</strong> 66.142.918/0001-83</li>
+      <li><strong>Beneficiário:</strong> Mentoria MM Treinamentos Ltda</li>
       <li><strong>Valor:</strong> R$ ${formatPrice(batchInfo.pixPrice)},00</li>
     </ul>
     <p><strong>Importante:</strong> Após realizar o pagamento, responda este email anexando o comprovante para confirmarmos sua inscrição.</p>

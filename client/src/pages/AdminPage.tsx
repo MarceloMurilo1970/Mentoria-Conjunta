@@ -640,7 +640,7 @@ const BATCH_CONFIG_BASE = [
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
-    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-hsK0gB3GT-8875,00",
+    paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
   },
   { 
     batch: 2, 
@@ -653,7 +653,7 @@ const BATCH_CONFIG_BASE = [
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
-    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-1PkHomyUfx-9650,00",
+    paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
   },
   { 
     batch: 3, 
@@ -666,12 +666,12 @@ const BATCH_CONFIG_BASE = [
     mmRate: 0.633,
     hfRate: 0.317,
     vendorRate: 0.05,
-    paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00",
+    paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
     // CJ7 - 10x option
     installment10Price: 1100,
     installment10Total: 11000,
     cardFee10: 1657,
-    paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
+    paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
   },
   { 
     batch: 4, 
@@ -1201,8 +1201,8 @@ Seguem as instruções para pagamento via PIX:
 
 Valor: R$ ${batchConfig.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
 
-Chave PIX (CNPJ): 17.840.516/0001-47
-Beneficiário: Opes Informática Ltda
+Chave PIX (CNPJ): 66.142.918/0001-83
+Beneficiário: Mentoria MM Treinamentos Ltda
 
 Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 4/5 (Agosto a Outubro 2026).
 

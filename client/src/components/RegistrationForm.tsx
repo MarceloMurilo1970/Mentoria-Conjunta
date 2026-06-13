@@ -35,8 +35,8 @@ const DEFAULT_PRICES: PriceInfo = {
   installment10Price: 1100,
   installment10Total: 11000,
   batchName: "Lote 3",
-  paymentLink: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLTUtSQ-2MFeYRgzrV-10425,00",
-  paymentLink10: "https://link.infinitepay.io/mentoriamarcelomurilo/VC1DLUEtSQ-Ibhdhr95b-11000,00",
+  paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
+  paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
 };
 
 function formatPrice(price: number): string {
@@ -118,11 +118,11 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
                 <div className="space-y-2 text-sm">
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Chave PIX (CNPJ):</span><br />
-                    <span className="font-mono text-base">17.840.516/0001-47</span>
+                    <span className="font-mono text-base">66.142.918/0001-83</span>
                   </p>
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Beneficiário:</span><br />
-                    Opes Informática Ltda
+                    Mentoria MM Treinamentos Ltda
                   </p>
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Valor:</span><br />
@@ -189,11 +189,11 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
                 <div className="space-y-2 text-sm">
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Chave PIX (CNPJ):</span><br />
-                    <span className="font-mono text-base">17.840.516/0001-47</span>
+                    <span className="font-mono text-base">66.142.918/0001-83</span>
                   </p>
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Beneficiário:</span><br />
-                    Opes Informática Ltda
+                    Mentoria MM Treinamentos Ltda
                   </p>
                   <p className="text-foreground">
                     <span className="text-muted-foreground">Valor:</span><br />

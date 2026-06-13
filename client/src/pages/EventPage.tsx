@@ -128,91 +128,66 @@ export default function EventPage() {
       {/* Hero Section */}
       <section className="flex flex-col md:flex-row md:h-screen bg-black">
 
-        {/* Left: Photo — Mobile top banner */}
-        <div className="relative md:hidden overflow-hidden" style={{ height: "340px" }}>
+        {/* Mobile: poster image strip */}
+        <div className="relative md:hidden overflow-hidden" style={{ height: "300px" }}>
           <img
             src={promoImage}
             alt="Marcelo Murilo e Hamilton Felix"
             className="w-full h-full object-cover object-top"
           />
           <div className="absolute inset-0" style={{
-            background: "linear-gradient(to bottom, black 0%, black 12%, transparent 21%, transparent 55%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.98) 76%, black 80%)"
+            background: "linear-gradient(to bottom, black 0%, black 10%, transparent 20%, transparent 58%, rgba(0,0,0,0.6) 70%, black 82%)"
           }} />
         </div>
 
-        {/* Left: Photos stacked vertically — Desktop, fills full screen height */}
-        <div className="hidden md:flex flex-col md:w-[36%] lg:w-[32%] h-full">
-
-          {/* Marcelo Murilo — top half, zoomed into left side of poster */}
-          <div className="relative flex-1 overflow-hidden">
-            <img
-              src={promoImage}
-              alt="Marcelo Murilo"
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{ transform: "scale(2.2)", transformOrigin: "10% 35%" }}
-            />
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.75) 82%, black 100%)"
-            }} />
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to right, transparent 62%, rgba(0,0,0,0.25) 82%, black 100%)"
-            }} />
-            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
-              <p className="text-sm font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
-              <p className="text-xs tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
-            </div>
+        {/* Left column: Marcelo Murilo — Desktop */}
+        <div className="hidden md:block md:w-[27%] lg:w-[25%] relative overflow-hidden h-full flex-shrink-0">
+          <img
+            src={promoImage}
+            alt="Marcelo Murilo"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+            style={{ transform: "scale(2.2)", transformOrigin: "10% 25%" }}
+          />
+          {/* Bottom fade + poster name cover */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7) 73%, black 88%)"
+          }} />
+          {/* Right edge blends into center */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to right, transparent 55%, rgba(0,0,0,0.4) 78%, black 100%)"
+          }} />
+          <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+            <p className="text-sm font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
+            <p className="text-xs tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
           </div>
-
-          <div className="h-px bg-white/10 flex-shrink-0" />
-
-          {/* Hamilton Felix — bottom half, zoomed into right side of poster */}
-          <div className="relative flex-1 overflow-hidden">
-            <img
-              src={promoImage}
-              alt="Hamilton Felix"
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{ transform: "scale(2.2)", transformOrigin: "90% 35%" }}
-            />
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.75) 82%, black 100%)"
-            }} />
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to right, transparent 62%, rgba(0,0,0,0.25) 82%, black 100%)"
-            }} />
-            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
-              <p className="text-sm font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
-              <p className="text-xs tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
-            </div>
-          </div>
-
         </div>
 
-        {/* Right: Content */}
-        <div className="flex-1 flex flex-col justify-center px-8 md:px-12 lg:px-16 py-10 md:py-14 overflow-y-auto">
+        {/* Center: Content */}
+        <div className="flex-1 flex flex-col justify-center px-6 md:px-8 lg:px-10 py-10 md:py-12 overflow-y-auto">
 
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-yellow-400/15 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-8 border border-yellow-400/25 self-start">
+          <div className="inline-flex items-center gap-2 bg-yellow-400/15 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-7 border border-yellow-400/25 self-start">
             <Sparkles className="w-4 h-4" />
             Mentoria — Turmas 3 e 4
           </div>
 
           {/* Hooks */}
-          <div className="space-y-4 mb-10">
+          <div className="space-y-3 mb-8">
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-lg md:text-xl text-gray-200 leading-snug">
+              <p className="text-base md:text-lg text-gray-200 leading-snug">
                 Você está em <span className="text-yellow-400 font-semibold">transição para conselhos</span> e não sabe por onde começar?
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-lg md:text-xl text-gray-200 leading-snug">
+              <p className="text-base md:text-lg text-gray-200 leading-snug">
                 Tem décadas de experiência executiva mas ainda não consegue <span className="text-yellow-400 font-semibold">posicionamento claro</span>?
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-lg md:text-xl text-gray-200 leading-snug">
+              <p className="text-base md:text-lg text-gray-200 leading-snug">
                 Quer construir <span className="text-yellow-400 font-semibold">autoridade real</span> e atrair oportunidades concretas em conselhos?
               </p>
             </div>
@@ -223,7 +198,7 @@ export default function EventPage() {
             Como criar <span className="text-yellow-400">autoridade</span>,<br className="hidden sm:block" /> construir <span className="text-yellow-400">oportunidades</span><br className="hidden sm:block" /> e conquistar <span className="text-yellow-400">conselhos</span>
           </h1>
 
-          <p className="text-gray-400 text-base md:text-lg mb-10">
+          <p className="text-gray-400 text-sm md:text-base mb-8">
             Com <span className="text-white font-medium">Marcelo Murilo</span> e <span className="text-white font-medium">Hamilton Felix</span>
           </p>
 
@@ -250,7 +225,7 @@ export default function EventPage() {
           </div>
 
           {/* Social proof strip */}
-          <div className="flex flex-wrap gap-6 mt-12 pt-8 border-t border-gray-800">
+          <div className="flex flex-wrap gap-6 mt-10 pt-7 border-t border-gray-800">
             <div className="text-center">
               <div className="text-2xl font-bold text-yellow-400">+60</div>
               <div className="text-xs text-gray-500 mt-0.5">mentorados</div>
@@ -269,6 +244,29 @@ export default function EventPage() {
             </div>
           </div>
         </div>
+
+        {/* Right column: Hamilton Felix — Desktop */}
+        <div className="hidden md:block md:w-[27%] lg:w-[25%] relative overflow-hidden h-full flex-shrink-0">
+          <img
+            src={promoImage}
+            alt="Hamilton Felix"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+            style={{ transform: "scale(2.2)", transformOrigin: "90% 25%" }}
+          />
+          {/* Bottom fade + poster name cover */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7) 73%, black 88%)"
+          }} />
+          {/* Left edge blends into center */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to left, transparent 55%, rgba(0,0,0,0.4) 78%, black 100%)"
+          }} />
+          <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+            <p className="text-sm font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
+            <p className="text-xs tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
+          </div>
+        </div>
+
       </section>
 
       {/* Pain Points Section */}

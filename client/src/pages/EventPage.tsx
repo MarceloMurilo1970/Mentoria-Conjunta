@@ -141,22 +141,26 @@ export default function EventPage() {
         </div>
 
         {/* Left column: Marcelo Murilo — Desktop */}
-        <div className="hidden md:block md:w-[27%] lg:w-[25%] relative overflow-hidden h-full flex-shrink-0">
-          <img
-            src={promoImage}
-            alt="Marcelo Murilo"
-            className="absolute inset-0 w-full h-full object-cover object-top"
-            style={{ transform: "scale(2.2)", transformOrigin: "10% 25%" }}
-          />
-          {/* Bottom fade + poster name cover */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7) 73%, black 88%)"
-          }} />
-          {/* Right edge blends into center */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to right, transparent 55%, rgba(0,0,0,0.4) 78%, black 100%)"
-          }} />
-          <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+        <div className="hidden md:flex flex-col md:w-[25%] lg:w-[23%] h-full flex-shrink-0">
+          {/* Photo area */}
+          <div className="relative flex-1 overflow-hidden">
+            <img
+              src={promoImage}
+              alt="Marcelo Murilo"
+              className="absolute inset-0 w-full h-full object-cover object-top"
+              style={{ transform: "scale(1.9)", transformOrigin: "10% 22%" }}
+            />
+            {/* Bottom fade — covers poster text */}
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.88) 75%, black 88%)"
+            }} />
+            {/* Right edge blends into center */}
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to right, transparent 55%, rgba(0,0,0,0.4) 78%, black 100%)"
+            }} />
+          </div>
+          {/* Name strip — always visible */}
+          <div className="bg-black px-6 py-3 flex-shrink-0 border-t border-white/10">
             <p className="text-sm font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
             <p className="text-xs tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
           </div>
@@ -227,10 +231,6 @@ export default function EventPage() {
           {/* Social proof strip */}
           <div className="flex flex-wrap gap-6 mt-10 pt-7 border-t border-gray-800">
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">+60</div>
-              <div className="text-xs text-gray-500 mt-0.5">mentorados</div>
-            </div>
-            <div className="text-center">
               <div className="text-2xl font-bold text-yellow-400">3x</div>
               <div className="text-xs text-gray-500 mt-0.5">Conselheiro do Ano</div>
             </div>
@@ -239,29 +239,33 @@ export default function EventPage() {
               <div className="text-xs text-gray-500 mt-0.5">de experiência</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">10</div>
+              <div className="text-2xl font-bold text-yellow-400">12</div>
               <div className="text-xs text-gray-500 mt-0.5">sessões ao vivo</div>
             </div>
           </div>
         </div>
 
         {/* Right column: Hamilton Felix — Desktop */}
-        <div className="hidden md:block md:w-[27%] lg:w-[25%] relative overflow-hidden h-full flex-shrink-0">
-          <img
-            src={promoImage}
-            alt="Hamilton Felix"
-            className="absolute inset-0 w-full h-full object-cover object-top"
-            style={{ transform: "scale(2.2)", transformOrigin: "90% 25%" }}
-          />
-          {/* Bottom fade + poster name cover */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7) 73%, black 88%)"
-          }} />
-          {/* Left edge blends into center */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to left, transparent 55%, rgba(0,0,0,0.4) 78%, black 100%)"
-          }} />
-          <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+        <div className="hidden md:flex flex-col md:w-[25%] lg:w-[23%] h-full flex-shrink-0">
+          {/* Photo area */}
+          <div className="relative flex-1 overflow-hidden">
+            <img
+              src={promoImage}
+              alt="Hamilton Felix"
+              className="absolute inset-0 w-full h-full object-cover object-top"
+              style={{ transform: "scale(1.9)", transformOrigin: "90% 22%" }}
+            />
+            {/* Bottom fade — covers poster text */}
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.88) 75%, black 88%)"
+            }} />
+            {/* Left edge blends into center */}
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to left, transparent 55%, rgba(0,0,0,0.4) 78%, black 100%)"
+            }} />
+          </div>
+          {/* Name strip — always visible */}
+          <div className="bg-black px-6 py-3 flex-shrink-0 border-t border-white/10">
             <p className="text-sm font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
             <p className="text-xs tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
           </div>

@@ -1204,7 +1204,7 @@ Valor: R$ ${batchConfig.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits
 Chave PIX (CNPJ): 66.142.918/0001-83
 Beneficiário: Mentoria MM Treinamentos Ltda
 
-Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 4/5 (Agosto a Outubro 2026).
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 3 e 4 (Agosto a Outubro 2026).
 
 Qualquer dúvida, estamos à disposição!`;
     } else if (reg.paymentMethod === 'installments10') {
@@ -1220,7 +1220,7 @@ Total: R$ ${total10.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}${link
 
 Link de pagamento: ${link10}` : ''}
 
-Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 4/5 (Agosto a Outubro 2026).
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 3 e 4 (Agosto a Outubro 2026).
 
 Qualquer dúvida, estamos à disposição!`;
     } else {
@@ -1233,7 +1233,7 @@ Total: R$ ${batchConfig.installmentTotal.toLocaleString('pt-BR', { minimumFracti
 
 Link de pagamento: ${batchConfig.paymentLink}
 
-Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 4/5 (Agosto a Outubro 2026).
+Após o pagamento, por favor envie o comprovante para confirmarmos sua inscrição na Mentoria Turmas 3 e 4 (Agosto a Outubro 2026).
 
 Qualquer dúvida, estamos à disposição!`;
     }

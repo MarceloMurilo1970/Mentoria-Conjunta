@@ -131,7 +131,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
           <CalendarClock className="w-10 h-10 text-primary mx-auto mb-4" />
           <p className="text-lg font-semibold text-foreground mb-1">Inscrições em breve!</p>
           <p className="text-sm text-muted-foreground mb-6">
-            As Turmas 4 e 5 começam em 10 de Agosto de 2026. As inscrições abrem em breve.
+            As Turmas 3 e 4 começam em 10 de Agosto de 2026. As inscrições abrem em breve.
           </p>
           <CountdownDisplay targetDate={REGISTRATION_START} label="Inscrições abrem em:" />
         </CardContent>
@@ -158,7 +158,7 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
           <Sparkles className="w-4 h-4" />
-          Turmas 4 e 5 — Agosto a Outubro 2026
+          Turmas 3 e 4 — Agosto a Outubro 2026
         </div>
         <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
           Investimento na Sua Carreira

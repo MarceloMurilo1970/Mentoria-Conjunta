@@ -167,60 +167,58 @@ export default function EventPage() {
         </div>
 
         {/* Center: Content */}
-        <div className="flex-1 flex flex-col justify-center px-6 md:px-8 lg:px-10 py-10 md:py-12 overflow-y-auto">
+        <div className="flex-1 flex flex-col justify-center px-6 md:px-8 lg:px-10 py-6 md:py-8 overflow-y-auto">
 
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-yellow-400/15 text-yellow-400 px-4 py-2 rounded-full text-sm font-semibold mb-7 border border-yellow-400/25 self-start">
-            <Sparkles className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 bg-yellow-400/15 text-yellow-400 px-3 py-1.5 rounded-full text-xs font-semibold mb-4 border border-yellow-400/25 self-start">
+            <Sparkles className="w-3.5 h-3.5" />
             Mentoria — Turmas 3 e 4
           </div>
 
           {/* Hooks */}
-          <div className="space-y-3 mb-8">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-base md:text-lg text-gray-200 leading-snug">
+          <div className="space-y-2 mb-5">
+            <div className="flex items-start gap-2.5">
+              <CheckCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm md:text-base text-gray-200 leading-snug">
                 Você está em <span className="text-yellow-400 font-semibold">transição para conselhos</span> e não sabe por onde começar?
               </p>
             </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-base md:text-lg text-gray-200 leading-snug">
+            <div className="flex items-start gap-2.5">
+              <CheckCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm md:text-base text-gray-200 leading-snug">
                 Tem décadas de experiência executiva mas ainda não consegue <span className="text-yellow-400 font-semibold">posicionamento claro</span>?
               </p>
             </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-base md:text-lg text-gray-200 leading-snug">
+            <div className="flex items-start gap-2.5">
+              <CheckCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm md:text-base text-gray-200 leading-snug">
                 Quer construir <span className="text-yellow-400 font-semibold">autoridade real</span> e atrair oportunidades concretas em conselhos?
               </p>
             </div>
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
             Como criar <span className="text-yellow-400">autoridade</span>,<br className="hidden sm:block" /> construir <span className="text-yellow-400">oportunidades</span><br className="hidden sm:block" /> e conquistar <span className="text-yellow-400">conselhos</span>
           </h1>
 
-          <p className="text-gray-400 text-sm md:text-base mb-8">
+          <p className="text-gray-400 text-xs md:text-sm mb-5">
             Com <span className="text-white font-medium">Marcelo Murilo</span> e <span className="text-white font-medium">Hamilton Felix</span>
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-3">
             <Button
-              size="lg"
-              className="text-base px-8 h-auto py-4 group"
+              className="group"
               onClick={scrollToRegistration}
               data-testid="button-scroll-to-mentorship"
             >
               Quero me inscrever
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button
-              size="lg"
               variant="outline"
-              className="text-base px-8 h-auto py-4 border-gray-600 text-gray-300 hover:text-white"
+              className="border-gray-600 text-gray-300 hover:text-white"
               onClick={() => document.getElementById('depoimentos')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-scroll-to-testimonials"
             >
@@ -229,17 +227,17 @@ export default function EventPage() {
           </div>
 
           {/* Social proof strip */}
-          <div className="flex flex-wrap gap-6 mt-10 pt-7 border-t border-gray-800">
+          <div className="flex flex-wrap gap-5 mt-6 pt-5 border-t border-gray-800">
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">3x</div>
+              <div className="text-xl font-bold text-yellow-400">3x</div>
               <div className="text-xs text-gray-500 mt-0.5">Conselheiro do Ano</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">38 anos</div>
+              <div className="text-xl font-bold text-yellow-400">38 anos</div>
               <div className="text-xs text-gray-500 mt-0.5">de experiência</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">12</div>
+              <div className="text-xl font-bold text-yellow-400">12</div>
               <div className="text-xs text-gray-500 mt-0.5">sessões ao vivo</div>
             </div>
           </div>
@@ -587,7 +585,7 @@ export default function EventPage() {
               {batchesOpen ? 'Inscrições Abertas' : comingSoon ? 'Inscrições em Breve' : 'Inscrições Encerradas'}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Mentoria Turmas 4 e 5
+              Mentoria Turmas 3 e 4
             </h2>
             <p className="text-xl text-gray-400">
               Agosto a Outubro de 2026 — 12 sessões ao vivo com Marcelo Murilo e Hamilton Felix
@@ -611,7 +609,7 @@ export default function EventPage() {
                 </h3>
                 <p className="text-gray-400">
                   {comingSoon
-                    ? 'As Turmas 4 e 5 começam em 10 de Agosto de 2026. Fique atento — as inscrições abrem em breve!'
+                    ? 'As Turmas 3 e 4 começam em 10 de Agosto de 2026. Fique atento — as inscrições abrem em breve!'
                     : 'O período de inscrições foi encerrado.'}
                 </p>
               </CardContent>
@@ -642,7 +640,7 @@ export default function EventPage() {
                 <Sparkles className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm sm:text-base font-medium text-center sm:text-left">
                   <span className="hidden sm:inline">Inscrições abertas! </span>
-                  Garanta sua vaga nas Turmas 4 e 5!
+                  Garanta sua vaga nas Turmas 3 e 4!
                 </span>
               </div>
               <Button 
@@ -663,7 +661,7 @@ export default function EventPage() {
               <div className="flex items-center gap-3 text-white">
                 <Clock className="w-5 h-5 flex-shrink-0 text-yellow-400" />
                 <span className="text-sm sm:text-base font-medium text-center sm:text-left">
-                  {comingSoon ? 'Turmas 4 e 5 em breve — início 10/08/2026' : 'Inscrições encerradas — aguarde a próxima turma!'}
+                  {comingSoon ? 'Turmas 3 e 4 em breve — início 10/08/2026' : 'Inscrições encerradas — aguarde a próxima turma!'}
                 </span>
               </div>
               <Button 

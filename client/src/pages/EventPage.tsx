@@ -424,39 +424,31 @@ export default function EventPage() {
                   <p className="text-yellow-400 text-sm font-medium">CEO · Conselheiro · Investidor · Mentor · Palestrante</p>
                 </div>
               </div>
-              <div className="p-6 space-y-5">
+              <div className="p-6 space-y-4">
                 <p className="text-gray-300 leading-relaxed">
-                  Especialista em criação e estruturação de conselhos empresariais, Hamilton Felix atua como conselheiro em múltiplas organizações — entre elas Lyncros, Inesfly Brasil, SManager, SOS Docs e Qos Tecnologia — trazendo expertise em governança aplicada a PMEs e empresas em crescimento.
+                  Hamilton Felix é Conselheiro, Investidor, Mentor e Palestrante, com mais de 30 anos de experiência dedicados a lançar e desenvolver negócios de vendas em TI e Consultoria em toda a América Latina. Sua carreira é marcada pelo engajamento direto com o C-Level de empresas públicas e grandes corporações privadas, ajudando sócios e executivos a alavancarem suas organizações por três pilares: <strong className="text-white">Governança (Conselho)</strong>, <strong className="text-white">Crescimento (Negócios)</strong> e <strong className="text-white">Longevidade (Cultura)</strong>.
                 </p>
                 <p className="text-gray-300 leading-relaxed">
-                  Membro associado da <strong className="text-white">Board Academy BR</strong> e do <strong className="text-white">IBGC</strong>, seu trabalho diferencia estratégia de tática: identifica pontos fortes, oportunidades e ajuda executivos a conquistar posições concretas em conselhos com método e consistência.
+                  Ao longo dessa trajetória, consolidou uma visão rara — a de quem viveu a empresa por dentro, em quase todos os seus ângulos. Passou pela gestão técnica como Gerente Técnico e CIO; pela liderança comercial multinacional como Diretor, VP de Vendas, Country Manager e CEO; pelo empreendedorismo, lançando e escalando negócios tradicionais e startups; e, hoje, pela governança, atuando como conselheiro de confiança com experiência em gestão, finanças, vendas, marketing, pessoas, tecnologia, inovação e operações.
                 </p>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="bg-gray-800 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-yellow-400">6+</div>
-                    <div className="text-xs text-gray-400 mt-1">mandatos ativos<br/>como conselheiro</div>
-                  </div>
-                  <div className="bg-gray-800 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-yellow-400">PMEs</div>
-                    <div className="text-xs text-gray-400 mt-1">foco em governança<br/>empresarial prática</div>
-                  </div>
+                <p className="text-gray-300 leading-relaxed">
+                  A mentoria de Hamilton parte de uma convicção construída na prática: elevar uma organização não depende de uma única competência, mas da capacidade de articular governança, crescimento e cultura ao mesmo tempo. É justamente nesse cruzamento — onde decisões de negócio, estratégia e liderança se encontram — que ele atua ao lado de cada fundador, sócio e executivo, com escuta ativa, diplomacia e visão estratégica.
+                </p>
+                <p className="text-gray-300 leading-relaxed">
+                  Não é teoria sobre carreira: é o relato vivido de quem fez múltiplas travessias e hoje capacita outros a elevar suas organizações com governança estratégica, crescimento sustentável e impacto duradouro.
+                </p>
+                <div className="pt-1">
+                  <a
+                    href="https://www.linkedin.com/in/hamiltonfelix2/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors w-full"
+                    data-testid="link-hamilton-linkedin"
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    Ver perfil no LinkedIn
+                  </a>
                 </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">IBGC Associado</span>
-                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">Board Academy BR</span>
-                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">MBA Ibmec</span>
-                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">Felix Empresarial</span>
-                </div>
-                <a
-                  href="https://www.linkedin.com/in/hamiltonfelix2/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
-                  data-testid="link-hamilton-linkedin"
-                >
-                  <LinkIcon className="w-4 h-4" />
-                  Ver perfil no LinkedIn
-                </a>
               </div>
             </div>
           </div>

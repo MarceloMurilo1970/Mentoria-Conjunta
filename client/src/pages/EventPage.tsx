@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
 import marceloMuriloPhoto from "@assets/image_1781300100610.png";
+import hamiltonFelixPhoto from "@assets/image_1781547519046.png";
+import bothMentorsPhoto from "@assets/image_1781547528348.png";
 import BatchPricing, { getBatchPrices, isBatchesOpen, isBatchesComingSoon } from "@/components/BatchPricing";
 import RegistrationForm from "@/components/RegistrationForm";
 import TestimonialTile from "@/components/TestimonialTile";
@@ -128,62 +130,31 @@ export default function EventPage() {
       {/* Hero Section — photos top, text bottom, fits one viewport */}
       <section className="bg-black flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '560px' }}>
 
-        {/* Photos row — side by side */}
-        <div className="flex flex-row flex-none" style={{ height: '26%' }}>
-
-          {/* Marcelo Murilo — background-image avoids object-top clipping.
-              Scale 2.5x (231% of 640px container = 1478px). Face center ≈ orig y=220.
-              bgPos x=5.5% centers face at container mid; bgPos y=20% shows eyes-to-chin */}
-          <div
-            className="relative w-1/2"
-            style={{
-              backgroundImage: `url(${promoImage})`,
-              backgroundSize: '231% auto',
-              backgroundPosition: '5.5% 20%',
-              backgroundRepeat: 'no-repeat',
-            }}
-          >
-            {/* Bottom fade */}
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.85) 72%, black 100%)"
-            }} />
-            {/* Left outer fade */}
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to left, transparent 55%, rgba(0,0,0,0.6) 80%, black 100%)"
-            }} />
-            <div className="absolute bottom-0 left-0 px-5 pb-2">
-              <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
-              <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
-            </div>
+        {/* Photos row — single combined photo of both mentors */}
+        <div className="relative flex-none w-full overflow-hidden" style={{ height: '26%' }}>
+          <img
+            src={bothMentorsPhoto}
+            alt="Marcelo Murilo e Hamilton Felix"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectPosition: 'center 15%' }}
+          />
+          {/* Bottom fade to black → merges with text section */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.8) 70%, black 100%)"
+          }} />
+          {/* Side vignette */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to right, black 0%, transparent 12%, transparent 88%, black 100%)"
+          }} />
+          {/* Name labels */}
+          <div className="absolute bottom-0 left-0 px-5 pb-2">
+            <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
+            <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
           </div>
-
-          {/* 2px black divider */}
-          <div className="w-0.5 flex-shrink-0 bg-black" />
-
-          {/* Hamilton Felix — mirrored. bgPos x=94.5%, y=20% */}
-          <div
-            className="relative w-1/2"
-            style={{
-              backgroundImage: `url(${promoImage})`,
-              backgroundSize: '231% auto',
-              backgroundPosition: '94.5% 20%',
-              backgroundRepeat: 'no-repeat',
-            }}
-          >
-            {/* Bottom fade */}
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.85) 72%, black 100%)"
-            }} />
-            {/* Right outer fade */}
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to right, transparent 55%, rgba(0,0,0,0.6) 80%, black 100%)"
-            }} />
-            <div className="absolute bottom-0 right-0 px-5 pb-2 text-right">
-              <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
-              <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
-            </div>
+          <div className="absolute bottom-0 right-0 px-5 pb-2 text-right">
+            <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
+            <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
           </div>
-
         </div>
 
         {/* Text content */}
@@ -451,13 +422,13 @@ export default function EventPage() {
 
             {/* Hamilton Felix */}
             <div className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800">
-              <div className="relative h-72 overflow-hidden bg-gradient-to-br from-primary/20 to-gray-800 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-36 h-36 rounded-full bg-primary/20 border-4 border-primary/30 flex items-center justify-center mx-auto mb-4">
-                    <span className="text-5xl font-bold text-primary">HF</span>
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+              <div className="relative h-72 overflow-hidden">
+                <img
+                  src={hamiltonFelixPhoto}
+                  alt="Hamilton Felix"
+                  className="w-full h-full object-cover object-top"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
                 <div className="absolute bottom-4 left-6">
                   <h3 className="text-2xl font-bold text-white">Hamilton Felix</h3>
                   <p className="text-yellow-400 text-sm font-medium">CEO · Conselheiro · Investidor · Mentor · Palestrante</p>

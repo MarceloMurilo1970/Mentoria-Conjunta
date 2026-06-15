@@ -154,38 +154,38 @@ export default function EventPage() {
           </div>
         </div>
 
-        {/* Text content */}
-        <div className="flex-1 flex flex-col justify-center px-8 md:px-14 lg:px-20 overflow-hidden">
+        {/* Text content — centered, flush against image */}
+        <div className="flex-1 flex flex-col items-center text-center px-6 md:px-12 overflow-hidden">
 
-          {/* Badge */}
-          <div className="inline-flex items-center gap-1.5 bg-yellow-400/15 text-yellow-400 px-3 py-1 rounded-full text-[11px] font-semibold mb-2.5 border border-yellow-400/25 self-start">
+          {/* Badge — overlaps bottom of image */}
+          <div className="inline-flex items-center gap-1.5 bg-yellow-400/15 text-yellow-400 px-3 py-1 rounded-full text-[11px] font-semibold border border-yellow-400/25 -mt-4 mb-3 z-10">
             <Sparkles className="w-3 h-3" />
             Mentoria — Turmas 3 e 4
           </div>
 
           {/* Hooks */}
           <div className="space-y-1 mb-3">
-            <div className="flex items-start gap-2">
+            <div className="flex items-start justify-center gap-2">
               <CheckCircle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs md:text-sm text-gray-300 leading-snug">
+              <p className="text-xs md:text-sm text-gray-300 leading-snug text-left">
                 Você está em <span className="text-yellow-400 font-medium">transição para conselhos</span> e não sabe por onde começar?
               </p>
             </div>
-            <div className="flex items-start gap-2">
+            <div className="flex items-start justify-center gap-2">
               <CheckCircle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs md:text-sm text-gray-300 leading-snug">
+              <p className="text-xs md:text-sm text-gray-300 leading-snug text-left">
                 Tem décadas de experiência executiva mas ainda não consegue <span className="text-yellow-400 font-medium">posicionamento claro</span>?
               </p>
             </div>
-            <div className="flex items-start gap-2">
+            <div className="flex items-start justify-center gap-2">
               <CheckCircle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs md:text-sm text-gray-300 leading-snug">
+              <p className="text-xs md:text-sm text-gray-300 leading-snug text-left">
                 Quer construir <span className="text-yellow-400 font-medium">autoridade real</span> e atrair oportunidades concretas em conselhos?
               </p>
             </div>
           </div>
 
-          {/* Title — 2 lines */}
+          {/* Title */}
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-1.5 leading-tight">
             Como criar <span className="text-yellow-400">autoridade</span>, construir <span className="text-yellow-400">oportunidades</span><br />
             e conquistar <span className="text-yellow-400">conselhos</span>
@@ -196,7 +196,7 @@ export default function EventPage() {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap gap-2.5 mb-3">
+          <div className="flex flex-wrap justify-center gap-2.5 mb-3">
             <Button
               size="sm"
               className="group"

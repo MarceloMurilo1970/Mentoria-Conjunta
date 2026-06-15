@@ -18,7 +18,8 @@ import {
   Award,
   Lightbulb,
   Link as LinkIcon,
-  Clock
+  Clock,
+  ChevronDown
 } from "lucide-react";
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
 import marceloMuriloPhoto from "@assets/image_1781300100610.png";
@@ -131,37 +132,36 @@ export default function EventPage() {
       <section className="bg-black flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '560px' }}>
 
         {/* Photos row — combined photo, fully visible, no cropping */}
-        <div className="flex-none w-full bg-black flex justify-center items-start overflow-hidden" style={{ height: '44%' }}>
+        <div className="flex-none w-full bg-black flex justify-center items-start overflow-hidden" style={{ height: '46%' }}>
           <div className="relative h-full flex justify-center">
             <img
               src={bothMentorsPhoto}
               alt="Marcelo Murilo e Hamilton Felix"
               className="h-full w-auto object-contain block"
             />
-            {/* Bottom fade to black */}
+            {/* Bottom gradient fade */}
             <div className="absolute inset-0 pointer-events-none" style={{
-              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.7) 80%, black 100%)"
+              background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.75) 75%, black 100%)"
             }} />
             {/* Name labels */}
-            <div className="absolute bottom-0 left-0 px-4 pb-2">
+            <div className="absolute bottom-9 left-0 px-4">
               <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
               <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
             </div>
-            <div className="absolute bottom-0 right-0 px-4 pb-2 text-right">
+            <div className="absolute bottom-9 right-0 px-4 text-right">
               <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
               <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
+            </div>
+            {/* Badge — over the gradient at the bottom of the image */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-yellow-400 px-3 py-1 rounded-full text-[11px] font-semibold border border-yellow-400/30 whitespace-nowrap">
+              <Sparkles className="w-3 h-3" />
+              Mentoria — Turmas 3 e 4
             </div>
           </div>
         </div>
 
         {/* Text content — centered, flush against image */}
-        <div className="flex-1 flex flex-col items-center text-center px-6 md:px-12 overflow-hidden">
-
-          {/* Badge — overlaps bottom of image */}
-          <div className="inline-flex items-center gap-1.5 bg-yellow-400/15 text-yellow-400 px-3 py-1 rounded-full text-[11px] font-semibold border border-yellow-400/25 -mt-4 mb-3 z-10">
-            <Sparkles className="w-3 h-3" />
-            Mentoria — Turmas 3 e 4
-          </div>
+        <div className="flex-1 flex flex-col items-center text-center px-6 md:px-12 overflow-hidden pt-4">
 
           {/* Hooks */}
           <div className="space-y-1 mb-3">
@@ -231,6 +231,12 @@ export default function EventPage() {
               <div className="text-base font-bold text-yellow-400">12</div>
               <div className="text-[10px] text-gray-500">sessões ao vivo</div>
             </div>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="mt-auto pb-3 flex flex-col items-center gap-1">
+            <span className="text-[10px] text-gray-600 tracking-widest uppercase">Saiba mais</span>
+            <ChevronDown className="w-4 h-4 text-gray-500 animate-bounce" />
           </div>
 
         </div>

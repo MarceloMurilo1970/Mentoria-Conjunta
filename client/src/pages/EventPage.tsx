@@ -131,25 +131,27 @@ export default function EventPage() {
         {/* Photos row — side by side */}
         <div className="flex flex-row flex-none" style={{ height: '52%' }}>
 
-          {/* Marcelo Murilo */}
+          {/* Marcelo Murilo
+              Scale 3x, origin-x 5.5% → centers face at cx≈320
+              origin-y 65% → shows original y≈149-264 (eyes to chin) */}
           <div className="relative w-1/2 overflow-hidden">
             <img
               src={promoImage}
               alt="Marcelo Murilo"
               className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{ transform: "scale(1.6)", transformOrigin: "0% 72%" }}
+              style={{ transform: "scale(3)", transformOrigin: "5.5% 65%" }}
             />
-            {/* Top — hide poster header */}
+            {/* Top — hide poster header text */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.4) 6%, transparent 14%)"
+              background: "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.6) 4%, transparent 11%)"
             }} />
-            {/* Bottom fade */}
+            {/* Bottom fade → merges with text section */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.7) 80%, black 100%)"
+              background: "linear-gradient(to bottom, transparent 48%, rgba(0,0,0,0.8) 76%, black 100%)"
             }} />
-            {/* Right edge — hide Hamilton bleed */}
+            {/* Left outer fade */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to right, transparent 65%, rgba(0,0,0,0.8) 85%, black 100%)"
+              background: "linear-gradient(to left, transparent 60%, rgba(0,0,0,0.5) 82%, black 100%)"
             }} />
             <div className="absolute bottom-0 left-0 px-5 pb-2">
               <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
@@ -157,28 +159,30 @@ export default function EventPage() {
             </div>
           </div>
 
-          {/* 1px black divider */}
-          <div className="w-px flex-shrink-0 bg-black" />
+          {/* 2px black divider */}
+          <div className="w-0.5 flex-shrink-0 bg-black" />
 
-          {/* Hamilton Felix */}
+          {/* Hamilton Felix
+              Scale 3x, origin-x 94.5% → centers face at cx≈320
+              origin-y 65% → shows original y≈149-264 (eyes to chin) */}
           <div className="relative w-1/2 overflow-hidden">
             <img
               src={promoImage}
               alt="Hamilton Felix"
               className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{ transform: "scale(1.6)", transformOrigin: "100% 72%" }}
+              style={{ transform: "scale(3)", transformOrigin: "94.5% 65%" }}
             />
-            {/* Top — hide poster header */}
+            {/* Top — hide poster header text */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.4) 6%, transparent 14%)"
+              background: "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.6) 4%, transparent 11%)"
             }} />
-            {/* Bottom fade */}
+            {/* Bottom fade → merges with text section */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.7) 80%, black 100%)"
+              background: "linear-gradient(to bottom, transparent 48%, rgba(0,0,0,0.8) 76%, black 100%)"
             }} />
-            {/* Left edge — hide Marcelo bleed */}
+            {/* Right outer fade */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to left, transparent 65%, rgba(0,0,0,0.8) 85%, black 100%)"
+              background: "linear-gradient(to right, transparent 60%, rgba(0,0,0,0.5) 82%, black 100%)"
             }} />
             <div className="absolute bottom-0 right-0 px-5 pb-2 text-right">
               <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>

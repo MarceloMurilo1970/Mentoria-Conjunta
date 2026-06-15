@@ -369,39 +369,44 @@ export default function EventPage() {
                   <p className="text-yellow-400 text-sm font-medium">VP de Inovação, Tecnologia & M&A · Conselheiro · Mentor</p>
                 </div>
               </div>
-              <div className="p-6 space-y-5">
+              <div className="p-6 space-y-4">
                 <p className="text-gray-300 leading-relaxed">
-                  Empresário com 38 anos de carreira empreendedora, Marcelo Murilo cofundou a <strong className="text-white">Benner</strong> em 1997 — empresa com cerca de 2.000 colaboradores e atuação em software vertical para saúde, ERP, jurídico, logística e turismo. Lidera frentes de inovação, tecnologia e M&A há mais de duas décadas.
+                  Marcelo Murilo é empreendedor desde os 18 anos e executivo C-Level com 38 anos de carreira na liderança de empresas de software e serviços.
                 </p>
                 <p className="text-gray-300 leading-relaxed">
-                  Atua como conselheiro em múltiplas organizações, apoiando sócios e executivos na estruturação de governança, estratégia e qualidade das decisões. Criador do <strong className="text-white">Framework PREP-MM</strong>, desenvolvido especificamente para transformar trajetória executiva em autoridade reconhecida no mercado de conselhos.
+                  Co-fundador e VP de Inovação, Tecnologia e M&A do <strong className="text-white">Grupo Benner</strong>, é também Conselheiro de Administração Certificado (CCA) pelo IBGC, com mandatos ativos em diversos conselhos empresariais.
                 </p>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="bg-gray-800 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-yellow-400">TOP 3</div>
-                    <div className="text-xs text-gray-400 mt-1">Conselheiro do Ano<br/>Board Academy 2023, 2024 e 2025</div>
-                  </div>
-                  <div className="bg-gray-800 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-yellow-400">38 anos</div>
-                    <div className="text-xs text-gray-400 mt-1">de carreira<br/>empreendedora</div>
-                  </div>
+                <p className="text-gray-300 leading-relaxed">
+                  Ao longo dessa trajetória, consolidou-se como referência nacional em governança corporativa, inovação estratégica e ESG. É colunista da <strong className="text-white">HSM Management</strong> e da <strong className="text-white">Revista RI</strong>, integra o Comitê de Tecnologia e Inovação do <strong className="text-white">30% Club Brazil</strong> e é autor do livro <strong className="text-white">"De Executivo a Conselheiro"</strong>, com lançamento previsto para agosto de 2026.
+                </p>
+                <p className="text-gray-300 leading-relaxed">
+                  A mentoria de Marcelo nasce de uma convicção: a transição da cadeira de executivo para a de conselheiro não é automática. Exige uma mudança real de mentalidade — sair da operação e do "fazer acontecer" para o exercício da influência, da supervisão e da pergunta certa no momento certo.
+                </p>
+                <p className="text-gray-300 leading-relaxed">
+                  Não é teoria sobre governança: é o relato vivido de quem fez a travessia e hoje ajuda outros executivos a fazerem a sua com clareza, propósito e autoridade.
+                </p>
+                <div className="flex flex-col gap-2 pt-1">
+                  <a
+                    href="https://www.linkedin.com/in/marcelomurilo/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+                    data-testid="link-marcelo-linkedin"
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    Ver perfil no LinkedIn
+                  </a>
+                  <a
+                    href="https://www.marcelomurilo.com.br"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+                    data-testid="link-marcelo-site"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                    Saiba mais sobre Marcelo Murilo
+                  </a>
                 </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">CCA/IBGC Certificado</span>
-                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">Cambridge Judge Business School</span>
-                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">Expert GLG</span>
-                  <span className="bg-primary/15 text-primary text-xs px-3 py-1 rounded-full">~35K seguidores LinkedIn</span>
-                </div>
-                <a
-                  href="https://www.linkedin.com/in/marcelomurilo/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
-                  data-testid="link-marcelo-linkedin"
-                >
-                  <LinkIcon className="w-4 h-4" />
-                  Ver perfil no LinkedIn
-                </a>
               </div>
             </div>
 

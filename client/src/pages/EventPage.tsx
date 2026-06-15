@@ -129,29 +129,27 @@ export default function EventPage() {
       <section className="bg-black flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '560px' }}>
 
         {/* Photos row — side by side */}
-        <div className="flex flex-row flex-none" style={{ height: '52%' }}>
+        <div className="flex flex-row flex-none" style={{ height: '26%' }}>
 
-          {/* Marcelo Murilo
-              Scale 3x, origin-x 5.5% → centers face at cx≈320
-              origin-y 65% → shows original y≈149-264 (eyes to chin) */}
-          <div className="relative w-1/2 overflow-hidden">
-            <img
-              src={promoImage}
-              alt="Marcelo Murilo"
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{ transform: "scale(3)", transformOrigin: "5.5% 65%" }}
-            />
-            {/* Top — hide poster header text */}
+          {/* Marcelo Murilo — background-image avoids object-top clipping.
+              Scale 2.5x (231% of 640px container = 1478px). Face center ≈ orig y=220.
+              bgPos x=5.5% centers face at container mid; bgPos y=20% shows eyes-to-chin */}
+          <div
+            className="relative w-1/2"
+            style={{
+              backgroundImage: `url(${promoImage})`,
+              backgroundSize: '231% auto',
+              backgroundPosition: '5.5% 20%',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            {/* Bottom fade */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.6) 4%, transparent 11%)"
-            }} />
-            {/* Bottom fade → merges with text section */}
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 48%, rgba(0,0,0,0.8) 76%, black 100%)"
+              background: "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.85) 72%, black 100%)"
             }} />
             {/* Left outer fade */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to left, transparent 60%, rgba(0,0,0,0.5) 82%, black 100%)"
+              background: "linear-gradient(to left, transparent 55%, rgba(0,0,0,0.6) 80%, black 100%)"
             }} />
             <div className="absolute bottom-0 left-0 px-5 pb-2">
               <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
@@ -162,27 +160,23 @@ export default function EventPage() {
           {/* 2px black divider */}
           <div className="w-0.5 flex-shrink-0 bg-black" />
 
-          {/* Hamilton Felix
-              Scale 3x, origin-x 94.5% → centers face at cx≈320
-              origin-y 65% → shows original y≈149-264 (eyes to chin) */}
-          <div className="relative w-1/2 overflow-hidden">
-            <img
-              src={promoImage}
-              alt="Hamilton Felix"
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{ transform: "scale(3)", transformOrigin: "94.5% 65%" }}
-            />
-            {/* Top — hide poster header text */}
+          {/* Hamilton Felix — mirrored. bgPos x=94.5%, y=20% */}
+          <div
+            className="relative w-1/2"
+            style={{
+              backgroundImage: `url(${promoImage})`,
+              backgroundSize: '231% auto',
+              backgroundPosition: '94.5% 20%',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            {/* Bottom fade */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.6) 4%, transparent 11%)"
-            }} />
-            {/* Bottom fade → merges with text section */}
-            <div className="absolute inset-0" style={{
-              background: "linear-gradient(to bottom, transparent 48%, rgba(0,0,0,0.8) 76%, black 100%)"
+              background: "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.85) 72%, black 100%)"
             }} />
             {/* Right outer fade */}
             <div className="absolute inset-0" style={{
-              background: "linear-gradient(to right, transparent 60%, rgba(0,0,0,0.5) 82%, black 100%)"
+              background: "linear-gradient(to right, transparent 55%, rgba(0,0,0,0.6) 80%, black 100%)"
             }} />
             <div className="absolute bottom-0 right-0 px-5 pb-2 text-right">
               <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>

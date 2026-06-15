@@ -132,7 +132,7 @@ export default function EventPage() {
       <section className="bg-black flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '560px' }}>
 
         {/* Photos row — combined photo, fully visible, no cropping */}
-        <div className="flex-none w-full bg-black flex justify-center items-start overflow-hidden" style={{ height: '46%' }}>
+        <div className="flex-none w-full bg-black flex justify-center items-start overflow-hidden" style={{ height: '52%' }}>
           <div className="relative h-full flex justify-center">
             <img
               src={bothMentorsPhoto}
@@ -161,53 +161,51 @@ export default function EventPage() {
         </div>
 
         {/* Text content — centered, flush against image */}
-        <div className="flex-1 flex flex-col items-center text-center px-6 md:px-12 overflow-hidden pt-4">
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 md:px-12 overflow-hidden py-4">
 
           {/* Hooks */}
-          <div className="space-y-1 mb-3">
+          <div className="space-y-1.5 mb-4">
             <div className="flex items-start justify-center gap-2">
-              <CheckCircle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs md:text-sm text-gray-300 leading-snug text-left">
+              <CheckCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm md:text-base text-gray-300 leading-snug text-left">
                 Você está em <span className="text-yellow-400 font-medium">transição para conselhos</span> e não sabe por onde começar?
               </p>
             </div>
             <div className="flex items-start justify-center gap-2">
-              <CheckCircle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs md:text-sm text-gray-300 leading-snug text-left">
+              <CheckCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm md:text-base text-gray-300 leading-snug text-left">
                 Tem décadas de experiência executiva mas ainda não consegue <span className="text-yellow-400 font-medium">posicionamento claro</span>?
               </p>
             </div>
             <div className="flex items-start justify-center gap-2">
-              <CheckCircle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs md:text-sm text-gray-300 leading-snug text-left">
+              <CheckCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm md:text-base text-gray-300 leading-snug text-left">
                 Quer construir <span className="text-yellow-400 font-medium">autoridade real</span> e atrair oportunidades concretas em conselhos?
               </p>
             </div>
           </div>
 
           {/* Title */}
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-1.5 leading-tight">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
             Como criar <span className="text-yellow-400">autoridade</span>, construir <span className="text-yellow-400">oportunidades</span><br />
             e conquistar <span className="text-yellow-400">conselhos</span>
           </h1>
 
-          <p className="text-gray-500 text-xs mb-3">
+          <p className="text-gray-500 text-sm mb-4">
             Com <span className="text-gray-300 font-medium">Marcelo Murilo</span> e <span className="text-gray-300 font-medium">Hamilton Felix</span>
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap justify-center gap-2.5 mb-3">
+          <div className="flex flex-wrap justify-center gap-3 mb-5">
             <Button
-              size="sm"
-              className="group"
               onClick={scrollToRegistration}
               data-testid="button-scroll-to-mentorship"
+              className="group"
             >
               Quero me inscrever
-              <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 ml-1.5 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button
-              size="sm"
               variant="outline"
               className="border-gray-700 text-gray-400"
               onClick={() => document.getElementById('depoimentos')?.scrollIntoView({ behavior: 'smooth' })}
@@ -217,24 +215,8 @@ export default function EventPage() {
             </Button>
           </div>
 
-          {/* Social proof strip */}
-          <div className="flex gap-5 pt-3 border-t border-gray-800/70">
-            <div>
-              <div className="text-base font-bold text-yellow-400">3x</div>
-              <div className="text-[10px] text-gray-500">Conselheiro do Ano</div>
-            </div>
-            <div>
-              <div className="text-base font-bold text-yellow-400">38 anos</div>
-              <div className="text-[10px] text-gray-500">de experiência</div>
-            </div>
-            <div>
-              <div className="text-base font-bold text-yellow-400">12</div>
-              <div className="text-[10px] text-gray-500">sessões ao vivo</div>
-            </div>
-          </div>
-
           {/* Scroll indicator */}
-          <div className="mt-auto pb-3 flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-1">
             <span className="text-[10px] text-gray-600 tracking-widest uppercase">Saiba mais</span>
             <ChevronDown className="w-4 h-4 text-gray-500 animate-bounce" />
           </div>

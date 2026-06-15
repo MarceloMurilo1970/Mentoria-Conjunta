@@ -130,30 +130,27 @@ export default function EventPage() {
       {/* Hero Section — photos top, text bottom, fits one viewport */}
       <section className="bg-black flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '560px' }}>
 
-        {/* Photos row — single combined photo of both mentors */}
-        <div className="relative flex-none w-full overflow-hidden" style={{ height: '26%' }}>
-          <img
-            src={bothMentorsPhoto}
-            alt="Marcelo Murilo e Hamilton Felix"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: 'center 15%' }}
-          />
-          {/* Bottom fade to black → merges with text section */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.8) 70%, black 100%)"
-          }} />
-          {/* Side vignette */}
-          <div className="absolute inset-0" style={{
-            background: "linear-gradient(to right, black 0%, transparent 12%, transparent 88%, black 100%)"
-          }} />
-          {/* Name labels */}
-          <div className="absolute bottom-0 left-0 px-5 pb-2">
-            <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
-            <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
-          </div>
-          <div className="absolute bottom-0 right-0 px-5 pb-2 text-right">
-            <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
-            <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
+        {/* Photos row — combined photo, fully visible, no cropping */}
+        <div className="flex-none w-full bg-black flex justify-center items-start overflow-hidden" style={{ height: '44%' }}>
+          <div className="relative h-full flex justify-center">
+            <img
+              src={bothMentorsPhoto}
+              alt="Marcelo Murilo e Hamilton Felix"
+              className="h-full w-auto object-contain block"
+            />
+            {/* Bottom fade to black */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.7) 80%, black 100%)"
+            }} />
+            {/* Name labels */}
+            <div className="absolute bottom-0 left-0 px-4 pb-2">
+              <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">MARCELO</p>
+              <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">MURILO</p>
+            </div>
+            <div className="absolute bottom-0 right-0 px-4 pb-2 text-right">
+              <p className="text-xs font-bold tracking-[0.18em] text-white leading-tight">HAMILTON</p>
+              <p className="text-[10px] tracking-[0.18em] text-blue-300 font-semibold">FELIX</p>
+            </div>
           </div>
         </div>
 

@@ -426,16 +426,19 @@ export default function EventPage() {
               </div>
               <div className="p-6 space-y-4">
                 <p className="text-gray-300 leading-relaxed">
-                  Hamilton Felix é Conselheiro, Investidor, Mentor e Palestrante, com mais de 30 anos de experiência dedicados a lançar e desenvolver negócios de vendas em TI e Consultoria em toda a América Latina. Sua carreira é marcada pelo engajamento direto com o C-Level de empresas públicas e grandes corporações privadas, ajudando sócios e executivos a alavancarem suas organizações por três pilares: <strong className="text-white">Governança (Conselho)</strong>, <strong className="text-white">Crescimento (Negócios)</strong> e <strong className="text-white">Longevidade (Cultura)</strong>.
+                  Hamilton Felix é Conselheiro, Investidor, Mentor e Palestrante, com mais de 30 anos de carreira lançando e desenvolvendo negócios de vendas em TI e Consultoria em toda a América Latina.
                 </p>
                 <p className="text-gray-300 leading-relaxed">
-                  Ao longo dessa trajetória, consolidou uma visão rara — a de quem viveu a empresa por dentro, em quase todos os seus ângulos. Passou pela gestão técnica como Gerente Técnico e CIO; pela liderança comercial multinacional como Diretor, VP de Vendas, Country Manager e CEO; pelo empreendedorismo, lançando e escalando negócios tradicionais e startups; e, hoje, pela governança, atuando como conselheiro de confiança com experiência em gestão, finanças, vendas, marketing, pessoas, tecnologia, inovação e operações.
+                  Atua junto ao C-Level de empresas públicas e grandes corporações privadas, ajudando sócios e executivos a alavancarem suas organizações por três pilares: <strong className="text-white">Governança (Conselho)</strong>, <strong className="text-white">Crescimento (Negócios)</strong> e <strong className="text-white">Longevidade (Cultura)</strong>.
                 </p>
                 <p className="text-gray-300 leading-relaxed">
-                  A mentoria de Hamilton parte de uma convicção construída na prática: elevar uma organização não depende de uma única competência, mas da capacidade de articular governança, crescimento e cultura ao mesmo tempo. É justamente nesse cruzamento — onde decisões de negócio, estratégia e liderança se encontram — que ele atua ao lado de cada fundador, sócio e executivo, com escuta ativa, diplomacia e visão estratégica.
+                  Ao longo dessa trajetória, consolidou uma visão rara — a de quem viveu a empresa por dentro. Passou pela gestão técnica como Gerente Técnico e CIO, pela liderança comercial multinacional como Diretor, VP de Vendas e CEO, pelo empreendedorismo escalando negócios e startups, e hoje pela governança como conselheiro de confiança.
                 </p>
                 <p className="text-gray-300 leading-relaxed">
-                  Não é teoria sobre carreira: é o relato vivido de quem fez múltiplas travessias e hoje capacita outros a elevar suas organizações com governança estratégica, crescimento sustentável e impacto duradouro.
+                  A mentoria de Hamilton nasce de uma convicção: elevar uma organização não depende de uma única competência. Exige articular governança, crescimento e cultura ao mesmo tempo, no cruzamento onde decisões de negócio, estratégia e liderança se encontram.
+                </p>
+                <p className="text-gray-300 leading-relaxed">
+                  Não é teoria sobre carreira: é o relato vivido de quem fez múltiplas travessias e hoje capacita outros a elevar suas organizações com crescimento sustentável e impacto duradouro.
                 </p>
                 <div className="pt-1">
                   <a

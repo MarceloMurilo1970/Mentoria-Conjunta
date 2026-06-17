@@ -993,6 +993,27 @@ function MentorshipRegistrationsSection() {
     },
   });
 
+  const cancelNfMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("POST", `/api/registrations/${id}/cancel-nf`, {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({
+        title: "NFS-e marcada como cancelada",
+        description: data?.warning || "Cancele também no portal faturador.marcelomurilo.com.br.",
+        variant: "default",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao cancelar NFS-e",
+        description: error?.message || "Não foi possível cancelar a nota fiscal.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const batchMutation = useMutation({
     mutationFn: async (data: { id: string; batch: number }) => {
       await apiRequest("PATCH", `/api/registrations/${data.id}/batch`, data);
@@ -2953,11 +2974,40 @@ Qualquer dúvida, estamos à disposição!`;
                               size="sm"
                               variant="outline"
                               onClick={() => emitNfMutation.mutate(reg.id)}
-                              disabled={emitNfMutation.isPending}
+                              disabled={emitNfMutation.isPending || cancelNfMutation.isPending}
                               className="h-6 text-xs border-gray-300 text-gray-500"
                               data-testid={`button-reemit-nf-${index}`}
                             >
                               Re-emitir
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                if (confirm(`Marcar NFS-e #${reg.nfNumber || reg.nfId} de ${reg.name} como cancelada?\n\nATENÇÃO: você também precisará cancelar manualmente no portal faturador.marcelomurilo.com.br.`)) {
+                                  cancelNfMutation.mutate(reg.id);
+                                }
+                              }}
+                              disabled={cancelNfMutation.isPending || emitNfMutation.isPending}
+                              className="h-6 text-xs border-red-300 text-red-600"
+                              data-testid={`button-cancel-nf-${index}`}
+                            >
+                              Cancelar NFS-e
+                            </Button>
+                          </>
+                        ) : reg.nfStatus === 'cancelled' ? (
+                          <>
+                            <span className="text-gray-400 text-xs font-medium">Cancelada{reg.nfNumber ? ` #${reg.nfNumber}` : ''}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => emitNfMutation.mutate(reg.id)}
+                              disabled={emitNfMutation.isPending || !reg.cpfCnpj}
+                              className="h-6 text-xs border-blue-400 text-blue-600"
+                              data-testid={`button-emit-nf-after-cancel-${index}`}
+                            >
+                              <Receipt className="w-3 h-3 mr-1" />
+                              Nova NFS-e
                             </Button>
                           </>
                         ) : reg.nfStatus === 'processing' || reg.nfStatus === 'pending' ? (

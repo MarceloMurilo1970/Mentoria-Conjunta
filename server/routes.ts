@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema, type User } from "@shared/schema";
 import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail, sendTestEmail, sendPaidConfirmationEmail, sendPartialPaymentEmail, sendPendingPaymentEmail } from "./email";
 import { addEventRegistration, getAllEventRegistrations, type EventRegistration, fetchSurveyResponses, calculateLeadScore } from "./googleSheets";
-import { emitNF, reemitNF } from "./nf";
+import { emitNF, reemitNF, cancelNF } from "./nf";
 import path from "path";
 import { z } from "zod";
 import PDFDocument from "pdfkit";
@@ -1057,6 +1057,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error emitting NF:", error);
       res.status(500).json({ error: error.message || "Erro ao emitir NF" });
+    }
+  });
+
+  // Mark NF as cancelled locally (admin use)
+  // Note: actual cancellation in Faturador must be done manually via the Faturador portal
+  // The external API key does not have permission to cancel NFs programmatically
+  app.post("/api/registrations/:id/cancel-nf", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      if (!registration.nfId || registration.nfId <= 0) {
+        return res.status(400).json({ error: "Nenhuma NFS-e emitida para cancelar" });
+      }
+
+      const updated = await storage.updateNfStatus(id, {
+        nfId: registration.nfId,
+        nfStatus: "cancelled",
+        nfPdfUrl: null,
+        nfEmittedAt: registration.nfEmittedAt ?? null,
+        nfNumber: registration.nfNumber ?? null,
+      });
+
+      res.json({
+        success: true,
+        registration: updated,
+        warning: `Cancele também manualmente no portal Faturador (NFS-e #${registration.nfNumber || registration.nfId}).`,
+      });
+    } catch (error: any) {
+      console.error("Error cancelling NF:", error);
+      res.status(500).json({ error: error.message || "Erro ao cancelar NF" });
     }
   });
 

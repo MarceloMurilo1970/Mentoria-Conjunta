@@ -1060,12 +1060,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mark NF as cancelled locally (admin use)
-  // Note: actual cancellation in Faturador must be done manually via the Faturador portal
-  // The external API key does not have permission to cancel NFs programmatically
+  // Cancel NF via Faturador API (admin use)
   app.post("/api/registrations/:id/cancel-nf", async (req, res) => {
     try {
       const { id } = req.params;
+      const { justificativa } = req.body;
       const registration = await storage.getRegistration(id);
       if (!registration) {
         return res.status(404).json({ error: "Inscrição não encontrada" });
@@ -1074,19 +1073,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Nenhuma NFS-e emitida para cancelar" });
       }
 
+      const motivo = justificativa || "Cancelamento solicitado pelo emissor";
+      const result = await cancelNF(registration.nfId, motivo);
+
       const updated = await storage.updateNfStatus(id, {
         nfId: registration.nfId,
-        nfStatus: "cancelled",
+        nfStatus: result.status,
         nfPdfUrl: null,
         nfEmittedAt: registration.nfEmittedAt ?? null,
         nfNumber: registration.nfNumber ?? null,
       });
 
-      res.json({
-        success: true,
-        registration: updated,
-        warning: `Cancele também manualmente no portal Faturador (NFS-e #${registration.nfNumber || registration.nfId}).`,
-      });
+      res.json({ success: true, registration: updated });
     } catch (error: any) {
       console.error("Error cancelling NF:", error);
       res.status(500).json({ error: error.message || "Erro ao cancelar NF" });

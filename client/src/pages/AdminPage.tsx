@@ -994,15 +994,14 @@ function MentorshipRegistrationsSection() {
   });
 
   const cancelNfMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return await apiRequest("POST", `/api/registrations/${id}/cancel-nf`, {});
+    mutationFn: async ({ id, justificativa }: { id: string; justificativa: string }) => {
+      return await apiRequest("POST", `/api/registrations/${id}/cancel-nf`, { justificativa });
     },
-    onSuccess: (data: any) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
       toast({
-        title: "NFS-e marcada como cancelada",
-        description: data?.warning || "Cancele também no portal faturador.marcelomurilo.com.br.",
-        variant: "default",
+        title: "NFS-e cancelada",
+        description: "A nota fiscal foi cancelada com sucesso.",
       });
     },
     onError: (error: any) => {
@@ -2984,9 +2983,16 @@ Qualquer dúvida, estamos à disposição!`;
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                if (confirm(`Marcar NFS-e #${reg.nfNumber || reg.nfId} de ${reg.name} como cancelada?\n\nATENÇÃO: você também precisará cancelar manualmente no portal faturador.marcelomurilo.com.br.`)) {
-                                  cancelNfMutation.mutate(reg.id);
+                                const justificativa = window.prompt(
+                                  `Cancelar NFS-e #${reg.nfNumber || reg.nfId} de ${reg.name}\n\nInforme o motivo do cancelamento (mínimo 15 caracteres):`,
+                                  "Cancelamento solicitado pelo cliente"
+                                );
+                                if (justificativa === null) return;
+                                if (justificativa.length < 15) {
+                                  alert("O motivo deve ter pelo menos 15 caracteres.");
+                                  return;
                                 }
+                                cancelNfMutation.mutate({ id: reg.id, justificativa });
                               }}
                               disabled={cancelNfMutation.isPending || emitNfMutation.isPending}
                               className="h-6 text-xs border-red-300 text-red-600"

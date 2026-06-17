@@ -95,7 +95,10 @@ export async function reemitNF(nfId: number): Promise<NfResult> {
   };
 }
 
-export async function cancelNF(nfId: number): Promise<{ success: boolean; status: string }> {
+export async function cancelNF(
+  nfId: number,
+  justificativa = "Cancelamento solicitado pelo emissor"
+): Promise<{ success: boolean; status: string; canceladaEm?: string }> {
   const apiKey = getApiKey();
 
   const response = await fetch(`${FATURADOR_API_URL}/invoices/${nfId}/cancel`, {
@@ -104,6 +107,7 @@ export async function cancelNF(nfId: number): Promise<{ success: boolean; status
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
+    body: JSON.stringify({ justificativa }),
   });
 
   if (!response.ok) {
@@ -115,6 +119,7 @@ export async function cancelNF(nfId: number): Promise<{ success: boolean; status
   return {
     success: true,
     status: data.invoice?.status ?? data.status ?? "cancelled",
+    canceladaEm: data.invoice?.canceladaEm ?? undefined,
   };
 }
 

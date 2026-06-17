@@ -1,0 +1,133 @@
+Autenticação
+Todas as requisições à API externa devem incluir o header Authorization:
+
+Authorization: Bearer fmm_sua_chave_aqui
+A chave identifica o app externo. O nome do app será registrado em cada NF criada.
+
+Endpoints Disponíveis
+POST
+/api/external/invoices
+Criar uma nova Nota Fiscal. Pode emitir automaticamente.
+
+Body (JSON):
+
+{
+  "companyId": 1,          // ID da empresa emissora (obrigatório)
+  "clientName": "Cliente LTDA",   // Nome do tomador (obrigatório)
+  "clientCnpjCpf": "12345678000190", // CNPJ ou CPF (obrigatório)
+  "clientEmail": "cliente@email.com", // Email (opcional)
+  "description": "Serviços de consultoria Jun/2026", // Descrição (obrigatório)
+  "value": 5000.00,        // Valor em reais (obrigatório)
+  "referenceMonth": 6,     // Mês referência 1-12 (obrigatório)
+  "referenceYear": 2026,   // Ano referência (obrigatório)
+  "autoEmit": true          // Se true, emite NFS-e automaticamente (opcional, default: false)
+}
+Resposta (201):
+
+{
+  "success": true,
+  "invoice": {
+    "id": 42,
+    "status": "issued",  // ou "pending" se autoEmit=false
+    "source": "api",
+    "sourceAppName": "MeuApp",
+    "companyName": "Empresa XYZ",
+    "clientName": "Cliente LTDA",
+    "value": 5000.00,
+    "referenceMonth": 6,
+    "referenceYear": 2026,
+    "focusNfeNumero": "1234",  // Número NFS-e (se emitida)
+    "pdfUrl": "https://...",   // URL do PDF (se emitida)
+    "issuedAt": "2026-06-17T...",
+    "createdAt": "2026-06-17T..."
+  },
+  "emission": {  // Presente apenas se autoEmit=true
+    "success": true,
+    "message": "NFS-e emitida com sucesso."
+  }
+}
+POST
+/api/external/invoices/:id/emit
+Emitir NFS-e de uma NF que foi criada como pendente (autoEmit=false).
+
+Resposta (200):
+
+{
+  "success": true,
+  "message": "NFS-e emitida com sucesso.",
+  "invoice": {
+    "id": 42,
+    "status": "issued",
+    "focusNfeNumero": "1234",
+    "pdfUrl": "https://...",
+    "issuedAt": "2026-06-17T..."
+  }
+}
+GET
+/api/external/invoices/:id
+Consultar dados e status de uma NF pelo ID.
+
+Resposta (200):
+
+{
+  "id": 42,
+  "status": "issued",       // pending | issued | processing | cancelled | error
+  "source": "api",
+  "sourceAppName": "MeuApp",
+  "companyName": "Empresa XYZ",
+  "clientName": "Cliente LTDA",
+  "value": 5000.00,
+  "focusNfeNumero": "1234",
+  "pdfUrl": "https://...",
+  "issuedAt": "2026-06-17T...",
+  ...
+}
+POST
+/api/external/invoices/:id/consult
+Forçar consulta de status no FocusNFe (útil se status é "processing").
+
+GET
+/api/external/companies
+Listar empresas disponíveis para emissão (pegar o companyId).
+
+Resposta (200):
+
+[
+  { "id": 1, "name": "Empresa XYZ", "cnpj": "12345678000190" },
+  { "id": 2, "name": "Empresa ABC", "cnpj": "98765432000111" }
+]
+Exemplo com cURL
+# Criar e emitir NF automaticamente
+curl -X POST https://faturador.marcelomurilo.com.br/api/external/invoices \
+  -H "Authorization: Bearer fmm_sua_chave_aqui" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "companyId": 1,
+    "clientName": "Cliente LTDA",
+    "clientCnpjCpf": "12345678000190",
+    "clientEmail": "cliente@email.com",
+    "description": "Consultoria Jun/2026",
+    "value": 5000.00,
+    "referenceMonth": 6,
+    "referenceYear": 2026,
+    "autoEmit": true
+  }'
+Copiar comando
+Origem das NFs (campo source)
+Cada NF registra como foi criada:
+
+scheduler
+Gerada automaticamente pelo sistema (contrato ativo)
+
+manual
+Criada manualmente pelo usuário no Faturador
+
+api
+Criada via API externa (o nome do app fica registrado)
+
+Códigos de Erro
+HTTP	Significado	Ação
+400	Dados inválidos	Verifique o body da requisição
+401	API key ausente ou inválida	Verifique o header Authorization
+404	Recurso não encontrado	Verifique IDs (empresa, NF)
+500	Erro interno / FocusNFe	Consulte o status da NF para detalhes

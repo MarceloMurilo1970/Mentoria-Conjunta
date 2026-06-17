@@ -6,6 +6,7 @@ import { storage } from "./storage";
 import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema, type User } from "@shared/schema";
 import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail, sendTestEmail, sendPaidConfirmationEmail, sendPartialPaymentEmail, sendPendingPaymentEmail } from "./email";
 import { addEventRegistration, getAllEventRegistrations, type EventRegistration, fetchSurveyResponses, calculateLeadScore } from "./googleSheets";
+import { emitNF, reemitNF } from "./nf";
 import path from "path";
 import { z } from "zod";
 import PDFDocument from "pdfkit";
@@ -865,6 +866,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     { batch: 3, pixPrice: 9400, installmentTotal: 10425, installment10Total: 11000 },
   ];
 
+  // Helper: emit NF after payment is confirmed as 'pago'
+  async function triggerNfEmission(id: string, registration: { name: string; cpfCnpj: string | null; email: string; paidAmount: number; turma: string | null; nfId: number | null }) {
+    if (!registration.cpfCnpj) {
+      console.warn(`[NF] Inscrição ${id} sem CPF/CNPJ — NF não emitida`);
+      return;
+    }
+    if (registration.nfId) {
+      console.info(`[NF] Inscrição ${id} já tem NF (id=${registration.nfId}) — pulando emissão`);
+      return;
+    }
+    try {
+      const nfResult = await emitNF({
+        name: registration.name,
+        cpfCnpj: registration.cpfCnpj,
+        email: registration.email,
+        paidAmount: registration.paidAmount,
+        turma: registration.turma,
+      });
+      await storage.updateNfStatus(id, {
+        nfId: nfResult.id,
+        nfStatus: nfResult.status,
+        nfPdfUrl: nfResult.pdfUrl ?? null,
+        nfEmittedAt: nfResult.issuedAt ? new Date(nfResult.issuedAt) : new Date(),
+        nfNumber: nfResult.focusNfeNumero ?? null,
+      });
+      console.info(`[NF] Emitida para inscrição ${id} — NF id=${nfResult.id} status=${nfResult.status}`);
+    } catch (nfError) {
+      console.error(`[NF] Erro ao emitir NF para inscrição ${id}:`, nfError);
+      try {
+        await storage.updateNfStatus(id, {
+          nfId: -1,
+          nfStatus: 'error',
+          nfPdfUrl: null,
+          nfEmittedAt: new Date(),
+          nfNumber: null,
+        });
+      } catch (_) {}
+    }
+  }
+
   // Update payment received status (legacy - now also updates paidAmount correctly)
   app.patch("/api/registrations/:id/payment", async (req, res) => {
     try {
@@ -892,13 +933,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paidAmount = received ? totalAmount * 100 : 0;
       const paymentStatus = received ? 'pago' : 'pendente';
       
-      const updated = await storage.updatePaymentStatus(id, {
+      await storage.updatePaymentStatus(id, {
         paymentStatus,
         paidAmount,
         totalAmount,
         remainingPaymentDate: null,
       });
-      
+
+      // Emit NF automatically when confirming payment
+      if (received) {
+        triggerNfEmission(id, {
+          name: registration.name,
+          cpfCnpj: registration.cpfCnpj,
+          email: registration.email,
+          paidAmount,
+          turma: registration.turma,
+          nfId: registration.nfId ?? null,
+        });
+      }
+
+      const updated = await storage.getRegistration(id);
       res.json({ success: true, registration: updated });
     } catch (error) {
       console.error("Error updating payment status:", error);
@@ -939,17 +993,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedPaidAmount = effectiveTotal * 100;
       }
       
-      const updated = await storage.updatePaymentStatus(id, {
+      await storage.updatePaymentStatus(id, {
         paymentStatus,
         paidAmount: validatedPaidAmount,
         totalAmount: effectiveTotal,
         remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? new Date(remainingPaymentDate) : null,
       });
-      
+
+      // Emit NF automatically when confirming full payment
+      if (paymentStatus === 'pago') {
+        triggerNfEmission(id, {
+          name: registration.name,
+          cpfCnpj: registration.cpfCnpj,
+          email: registration.email,
+          paidAmount: validatedPaidAmount,
+          turma: registration.turma,
+          nfId: registration.nfId ?? null,
+        });
+      }
+
+      const updated = await storage.getRegistration(id);
       res.json({ success: true, registration: updated });
     } catch (error) {
       console.error("Error updating payment status:", error);
       res.status(500).json({ error: "Erro ao atualizar status de pagamento" });
+    }
+  });
+
+  // Manual re-emit NF for a registration (admin use)
+  app.post("/api/registrations/:id/emit-nf", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      if (!registration.cpfCnpj) {
+        return res.status(400).json({ error: "CPF/CNPJ não informado — NF não pode ser emitida" });
+      }
+
+      let nfResult;
+      if (registration.nfId && registration.nfId > 0) {
+        nfResult = await reemitNF(registration.nfId);
+      } else {
+        nfResult = await emitNF({
+          name: registration.name,
+          cpfCnpj: registration.cpfCnpj,
+          email: registration.email,
+          paidAmount: registration.paidAmount || 0,
+          turma: registration.turma,
+        });
+      }
+
+      const updated = await storage.updateNfStatus(id, {
+        nfId: nfResult.id,
+        nfStatus: nfResult.status,
+        nfPdfUrl: nfResult.pdfUrl ?? null,
+        nfEmittedAt: nfResult.issuedAt ? new Date(nfResult.issuedAt) : new Date(),
+        nfNumber: nfResult.focusNfeNumero ?? null,
+      });
+
+      res.json({ success: true, registration: updated });
+    } catch (error: any) {
+      console.error("Error emitting NF:", error);
+      res.status(500).json({ error: error.message || "Erro ao emitir NF" });
     }
   });
 

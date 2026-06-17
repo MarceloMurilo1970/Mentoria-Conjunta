@@ -973,6 +973,26 @@ function MentorshipRegistrationsSection() {
     },
   });
 
+  const emitNfMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("POST", `/api/registrations/${id}/emit-nf`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({
+        title: "NFS-e emitida",
+        description: "A nota fiscal foi emitida com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao emitir NFS-e",
+        description: error?.message || "Não foi possível emitir a nota fiscal.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const batchMutation = useMutation({
     mutationFn: async (data: { id: string; batch: number }) => {
       await apiRequest("PATCH", `/api/registrations/${data.id}/batch`, data);
@@ -2911,26 +2931,91 @@ Qualquer dúvida, estamos à disposição!`;
                           </>
                         )}
                       </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-gray-500 text-xs">NFS-e:</span>
+                        {reg.nfStatus === 'issued' || reg.nfStatus === 'authorized' ? (
+                          <>
+                            <span className="text-green-600 text-xs font-medium">
+                              Emitida{reg.nfNumber ? ` #${reg.nfNumber}` : ''}
+                            </span>
+                            {reg.nfPdfUrl && (
+                              <a
+                                href={reg.nfPdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 text-xs underline"
+                                data-testid={`link-nf-pdf-${index}`}
+                              >
+                                Ver PDF
+                              </a>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => emitNfMutation.mutate(reg.id)}
+                              disabled={emitNfMutation.isPending}
+                              className="h-6 text-xs border-gray-300 text-gray-500"
+                              data-testid={`button-reemit-nf-${index}`}
+                            >
+                              Re-emitir
+                            </Button>
+                          </>
+                        ) : reg.nfStatus === 'processing' || reg.nfStatus === 'pending' ? (
+                          <span className="text-yellow-600 text-xs font-medium">Processando...</span>
+                        ) : reg.nfStatus === 'error' ? (
+                          <>
+                            <span className="text-red-500 text-xs font-medium">Erro</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => emitNfMutation.mutate(reg.id)}
+                              disabled={emitNfMutation.isPending}
+                              className="h-6 text-xs border-red-400 text-red-600"
+                              data-testid={`button-reemit-nf-error-${index}`}
+                            >
+                              <Receipt className="w-3 h-3 mr-1" />
+                              Re-emitir NFS-e
+                            </Button>
+                          </>
+                        ) : reg.paymentStatus === 'pago' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => emitNfMutation.mutate(reg.id)}
+                            disabled={emitNfMutation.isPending || !reg.cpfCnpj}
+                            className="h-6 text-xs border-blue-400 text-blue-600"
+                            data-testid={`button-emit-nf-${index}`}
+                            title={!reg.cpfCnpj ? 'CPF/CNPJ necessário para emitir NF' : ''}
+                          >
+                            <Receipt className="w-3 h-3 mr-1" />
+                            Emitir NFS-e
+                          </Button>
+                        ) : (
+                          <span className="text-gray-400 text-xs">Aguardando pagamento</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-500 text-xs">NF:</span>
+                        <span className="text-gray-500 text-xs">NF manual:</span>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => openInvoiceModal(reg)}
                           disabled={invoiceMutation.isPending}
-                          className="h-6 border-green-500 text-green-700 hover:bg-green-50 text-xs"
+                          className="h-6 border-green-500 text-green-700 text-xs"
                           data-testid={`button-invoice-${index}`}
                         >
                           <Receipt className="w-3 h-3 mr-1" />
-                          Emitir NF
+                          Registrar NF
                         </Button>
                         {reg.invoices && (() => {
-                          const invoiceList = JSON.parse(reg.invoices);
-                          return invoiceList.length > 0 ? (
-                            <span className="text-green-600 text-xs">
-                              {invoiceList.length} NF(s) emitida(s) - Total: R$ {invoiceList.reduce((sum: number, inv: {amount: number}) => sum + inv.amount, 0).toLocaleString('pt-BR')}
-                            </span>
-                          ) : null;
+                          try {
+                            const invoiceList = JSON.parse(reg.invoices);
+                            return invoiceList.length > 0 ? (
+                              <span className="text-green-600 text-xs">
+                                {invoiceList.length} NF(s) - R$ {invoiceList.reduce((sum: number, inv: {amount: number}) => sum + inv.amount, 0).toLocaleString('pt-BR')}
+                              </span>
+                            ) : null;
+                          } catch { return null; }
                         })()}
                       </div>
                     </div>

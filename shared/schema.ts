@@ -172,6 +172,11 @@ export const registrations = pgTable("registrations", {
   vendorPayments: text("vendor_payments"),
   hamiltonPaid: integer("hamilton_paid").default(0),
   hamiltonPaidAt: timestamp("hamilton_paid_at"),
+  nfId: integer("nf_id"),
+  nfStatus: text("nf_status"),
+  nfPdfUrl: text("nf_pdf_url"),
+  nfEmittedAt: timestamp("nf_emitted_at"),
+  nfNumber: text("nf_number"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

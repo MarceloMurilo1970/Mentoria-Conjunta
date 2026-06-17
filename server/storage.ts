@@ -48,6 +48,14 @@ export interface BatchUpdate {
   batch: number;
 }
 
+export interface NfUpdate {
+  nfId: number;
+  nfStatus: string;
+  nfPdfUrl?: string | null;
+  nfEmittedAt?: Date | null;
+  nfNumber?: string | null;
+}
+
 export interface ManualRegistrationData {
   name: string;
   email: string;
@@ -79,6 +87,7 @@ export interface IStorage {
   updateVendorCommission(id: string, update: VendorCommissionUpdate): Promise<Registration | undefined>;
   updateHamiltonPayment(id: string, update: HamiltonPaymentUpdate): Promise<Registration | undefined>;
   updateBatch(id: string, update: BatchUpdate): Promise<Registration | undefined>;
+  updateNfStatus(id: string, update: NfUpdate): Promise<Registration | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -206,6 +215,20 @@ export class DbStorage implements IStorage {
   async updateBatch(id: string, update: BatchUpdate): Promise<Registration | undefined> {
     const result = await db.update(registrations)
       .set({ batch: update.batch })
+      .where(eq(registrations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateNfStatus(id: string, update: NfUpdate): Promise<Registration | undefined> {
+    const result = await db.update(registrations)
+      .set({
+        nfId: update.nfId,
+        nfStatus: update.nfStatus,
+        nfPdfUrl: update.nfPdfUrl ?? null,
+        nfEmittedAt: update.nfEmittedAt ?? null,
+        nfNumber: update.nfNumber ?? null,
+      })
       .where(eq(registrations.id, id))
       .returning();
     return result[0];

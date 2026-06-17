@@ -1,0 +1,1 @@
+- [NF Automática (Faturador)](nf-faturador.md) — emissão automática de NFS-e via API ao marcar pagamento como "pago"

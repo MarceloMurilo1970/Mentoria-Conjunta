@@ -877,7 +877,9 @@ export class DbStorage implements IStorage {
           const t3Batches = t3.batches as any[];
           const lote3 = t3Batches.find((b: any) => b.batch === 3);
           const pixPlan = lote3?.plans?.find((p: any) => p.id === "pix");
-          if (pixPlan?.totalAmount === EXPECTED_LOTE3_PIX) {
+          const isCorrectPrice = pixPlan?.totalAmount === EXPECTED_LOTE3_PIX;
+          const isSimplified = t3Batches.length === 1; // Only 1 batch (no historical lotes)
+          if (isCorrectPrice && isSimplified) {
             return; // Already up-to-date, skip
           }
         }
@@ -908,22 +910,9 @@ export class DbStorage implements IStorage {
       ]},
     ];
 
-    // turma_3 and turma_4 (16.67% vendor) — values from official financial waterfall
+    // turma_3 and turma_4 (16.67% vendor) — current pricing, 3 plans only
     const t34Batches: BatchPricingItem[] = [
-      { batch: 1, label: "Lote 1", deadline: "07/12/2025", plans: [
-        { id: "pix", label: "PIX", totalAmount: 8000, installments: 1, feeRate: 0, paymentLink: "" },
-        { id: "installments", label: "5x Cartão", totalAmount: 8875, installments: 5, feeRate: 0.088, paymentLink: "" },
-      ]},
-      { batch: 2, label: "Lote 2", deadline: "31/12/2025", plans: [
-        { id: "pix", label: "PIX", totalAmount: 8700, installments: 1, feeRate: 0, paymentLink: "" },
-        { id: "installments", label: "5x Cartão", totalAmount: 9650, installments: 5, feeRate: 0.088, paymentLink: "" },
-      ]},
-      { batch: 3, label: "Lote 3", deadline: "07/08/2026", plans: [
-        { id: "pix", label: "PIX", totalAmount: 10756.65, installments: 1, feeRate: 0, paymentLink: "" },
-        { id: "installments", label: "5x Cartão", totalAmount: 11950, installments: 5, feeRate: 0.088, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00" },
-        { id: "installments10", label: "10x Cartão", totalAmount: 12970, installments: 10, feeRate: 0.1506, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
-      ]},
-      { batch: 4, label: "Lote 4 (Especial)", deadline: "Condição Especial", plans: [
+      { batch: 3, label: "Preços Atuais", deadline: "07/08/2026", plans: [
         { id: "pix", label: "PIX", totalAmount: 10756.65, installments: 1, feeRate: 0, paymentLink: "" },
         { id: "installments", label: "5x Cartão", totalAmount: 11950, installments: 5, feeRate: 0.088, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00" },
         { id: "installments10", label: "10x Cartão", totalAmount: 12970, installments: 10, feeRate: 0.1506, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },

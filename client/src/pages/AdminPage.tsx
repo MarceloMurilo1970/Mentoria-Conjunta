@@ -5497,7 +5497,8 @@ function TurmaConfigsSection() {
       hfRate: +(cfg.hfRate * 100).toFixed(4),
       batches: batchesToForm(cfg.batches as BatchPricingItem[], cfg),
     });
-    setPreviewBatch((cfg.batches as BatchPricingItem[])[0]?.batch ?? 1);
+    const cfgBatches = cfg.batches as BatchPricingItem[];
+    setPreviewBatch(cfgBatches[cfgBatches.length - 1]?.batch ?? cfgBatches[0]?.batch ?? 1);
     setEditDialogOpen(true);
   };
 
@@ -5514,7 +5515,8 @@ function TurmaConfigsSection() {
           ...b, plans: b.plans.map(p => ({ ...p, paymentLink: '' })),
         })),
       });
-      setPreviewBatch((last.batches as BatchPricingItem[])[0]?.batch ?? 1);
+      const lastBatches = last.batches as BatchPricingItem[];
+      setPreviewBatch(lastBatches[lastBatches.length - 1]?.batch ?? lastBatches[0]?.batch ?? 1);
     } else {
       setForm(emptyForm());
     }

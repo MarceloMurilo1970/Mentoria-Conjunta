@@ -9,7 +9,7 @@ import Hero from "@/components/Hero";
 import ProgramSection from "@/components/ProgramSection";
 import RegistrationForm from "@/components/RegistrationForm";
 import MentoriaCountdown from "@/components/MentoriaCountdown";
-import BatchPricing, { isBatchesOpen, isBatchesComingSoon, getBatchPrices } from "@/components/BatchPricing";
+import BatchPricing, { isBatchesOpen, isBatchesComingSoon, useBatchPrices } from "@/components/BatchPricing";
 import TestimonialTile from "@/components/TestimonialTile";
 import rodrigoPadovezPhoto from "@assets/IMG_7578_1763994202676.jpeg";
 import marceloMartinPhoto from "@assets/image_1764036231605.png";
@@ -101,7 +101,7 @@ export default function Home() {
 
   const batchesOpen = isBatchesOpen(new Date());
   const comingSoon = isBatchesComingSoon(new Date());
-  const priceInfo = getBatchPrices(new Date());
+  const priceInfo = useBatchPrices("turma_3");
 
   return (
     <div className="min-h-screen">

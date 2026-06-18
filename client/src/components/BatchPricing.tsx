@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Zap, CheckCircle, Sparkles, CalendarClock } from "lucide-react";
 
-interface PriceInfo {
+export interface PriceInfo {
   pixPrice: number;
   installmentPrice: number;
   installmentTotal: number;
   installment10Price: number;
   installment10Total: number;
+  batchName: string;
   paymentLink: string;
   paymentLink10: string;
 }
@@ -20,12 +22,13 @@ interface TimeLeft {
   seconds: number;
 }
 
-const CURRENT_PRICE: PriceInfo = {
+const FALLBACK_PRICES: PriceInfo = {
   pixPrice: 10756.65,
   installmentPrice: 2390,
   installmentTotal: 11950,
   installment10Price: 1297,
   installment10Total: 12970,
+  batchName: "Inscrição",
   paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
   paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
 };
@@ -42,17 +45,36 @@ export function isBatchesComingSoon(currentDate: Date = new Date()): boolean {
   return currentDate < REGISTRATION_START;
 }
 
-export function getBatchPrices(currentDate: Date = new Date()) {
+export function useBatchPrices(turmaId = "turma_3"): PriceInfo {
+  const { data: configs = [] } = useQuery<any[]>({ queryKey: ["/api/turma-configs"] });
+
+  const config = configs.find((c: any) => c.turmaId === turmaId);
+  if (!config) return FALLBACK_PRICES;
+
+  const batches = config.batches as any[];
+  if (!batches || batches.length === 0) return FALLBACK_PRICES;
+
+  const lastBatch = batches[batches.length - 1];
+  const plans: any[] = lastBatch?.plans ?? [];
+
+  const pixPlan = plans.find((p: any) => p.id === "pix" || p.installments === 1);
+  const c5Plan = plans.find((p: any) => p.id === "installments") ?? plans.find((p: any) => p.installments === 5);
+  const c10Plan = plans.find((p: any) => p.id === "installments10") ?? plans.find((p: any) => p.installments === 10);
+
   return {
-    pixPrice: CURRENT_PRICE.pixPrice,
-    installmentPrice: CURRENT_PRICE.installmentPrice,
-    installmentTotal: CURRENT_PRICE.installmentTotal,
-    installment10Price: CURRENT_PRICE.installment10Price,
-    installment10Total: CURRENT_PRICE.installment10Total,
-    batchName: "Inscrição",
-    paymentLink: CURRENT_PRICE.paymentLink,
-    paymentLink10: CURRENT_PRICE.paymentLink10,
+    pixPrice: pixPlan?.totalAmount ?? FALLBACK_PRICES.pixPrice,
+    installmentPrice: c5Plan ? Math.round(c5Plan.totalAmount / c5Plan.installments) : FALLBACK_PRICES.installmentPrice,
+    installmentTotal: c5Plan?.totalAmount ?? FALLBACK_PRICES.installmentTotal,
+    installment10Price: c10Plan ? Math.round(c10Plan.totalAmount / c10Plan.installments) : FALLBACK_PRICES.installment10Price,
+    installment10Total: c10Plan?.totalAmount ?? FALLBACK_PRICES.installment10Total,
+    batchName: lastBatch?.label ?? "Inscrição",
+    paymentLink: c5Plan?.paymentLink || FALLBACK_PRICES.paymentLink,
+    paymentLink10: c10Plan?.paymentLink || FALLBACK_PRICES.paymentLink10,
   };
+}
+
+export function getBatchPrices(currentDate: Date = new Date()): PriceInfo {
+  return FALLBACK_PRICES;
 }
 
 function formatNumber(num: number): string {
@@ -121,6 +143,7 @@ interface BatchPricingProps {
 }
 
 export default function BatchPricing({ currentDate = new Date() }: BatchPricingProps) {
+  const prices = useBatchPrices("turma_3");
   const isOpen = isBatchesOpen(currentDate);
   const comingSoon = isBatchesComingSoon(currentDate);
 
@@ -192,10 +215,9 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
                   <Badge variant="default" className="text-xs">PIX</Badge>
                   <span className="text-sm text-muted-foreground">à vista • melhor preço</span>
                 </div>
-                <span className="text-xs text-green-600 font-semibold">-17,1%</span>
               </div>
               <p className="text-3xl font-bold text-primary">
-                R$ {formatPrice(CURRENT_PRICE.pixPrice)}
+                R$ {formatPrice(prices.pixPrice)}
               </p>
             </div>
 
@@ -206,13 +228,12 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
                   <Badge variant="outline" className="text-xs">CARTÃO</Badge>
                   <span className="text-sm text-muted-foreground">5x</span>
                 </div>
-                <span className="text-xs text-muted-foreground">-7,9%</span>
               </div>
               <p className="text-2xl font-bold text-foreground">
-                5x R$ {formatPrice(CURRENT_PRICE.installmentPrice)}
+                5x R$ {formatPrice(prices.installmentPrice)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Total: R$ {formatPrice(CURRENT_PRICE.installmentTotal)}
+                Total: R$ {formatPrice(prices.installmentTotal)}
               </p>
             </div>
 
@@ -223,10 +244,10 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
                 <span className="text-sm text-muted-foreground">10x</span>
               </div>
               <p className="text-2xl font-bold text-foreground">
-                10x R$ {formatPrice(CURRENT_PRICE.installment10Price)}
+                10x R$ {formatPrice(prices.installment10Price)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Total: R$ {formatPrice(CURRENT_PRICE.installment10Total)}
+                Total: R$ {formatPrice(prices.installment10Total)}
               </p>
             </div>
           </div>

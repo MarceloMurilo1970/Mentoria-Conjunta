@@ -5600,8 +5600,8 @@ function TurmaConfigsSection() {
   const selectedFBatch = form.batches.find(b => b.batch === previewBatch) ?? form.batches[0];
   const waterfall = selectedFBatch ? calcWaterfall(selectedFBatch) : null;
 
-  const ConfigDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) => (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+  const configDialog = (
+    <Dialog open={editDialogOpen || newDialogOpen} onOpenChange={v => { if (!v) { setEditDialogOpen(false); setNewDialogOpen(false); } }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
         <DialogHeader>
           <DialogTitle className="text-gray-900">{editing ? `Editar ${editing.name}` : 'Nova Turma'}</DialogTitle>
@@ -5903,8 +5903,7 @@ function TurmaConfigsSection() {
         </CardContent>
       </Card>
 
-      <ConfigDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} />
-      <ConfigDialog open={newDialogOpen} onOpenChange={setNewDialogOpen} />
+      {configDialog}
     </div>
   );
 }

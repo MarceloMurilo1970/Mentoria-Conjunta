@@ -25,7 +25,7 @@ import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
 import marceloMuriloPhoto from "@assets/image_1781300100610.png";
 import hamiltonFelixPhoto from "@assets/image_1781547519046.png";
 import bothMentorsPhoto from "@assets/image_1781547528348.png";
-import BatchPricing, { getBatchPrices, isBatchesOpen, isBatchesComingSoon } from "@/components/BatchPricing";
+import BatchPricing, { useBatchPrices, isBatchesOpen, isBatchesComingSoon } from "@/components/BatchPricing";
 import RegistrationForm from "@/components/RegistrationForm";
 import TestimonialTile from "@/components/TestimonialTile";
 import ProgramSection from "@/components/ProgramSection";
@@ -107,7 +107,7 @@ const testimonials = [
 export default function EventPage() {
   const [showStickyBanner, setShowStickyBanner] = useState(false);
   const registrationRef = useRef<HTMLDivElement>(null);
-  const priceInfo = getBatchPrices(new Date());
+  const priceInfo = useBatchPrices("turma_3");
   const batchesOpen = isBatchesOpen(new Date());
   const comingSoon = isBatchesComingSoon(new Date());
 

@@ -863,13 +863,58 @@ export class DbStorage implements IStorage {
 
   async seedTurmaConfigsIfEmpty(): Promise<void> {
     const existing = await db.select().from(turmaConfigs).limit(1);
-    if (existing.length > 0) return;
+    if (existing.length > 0) {
+      // Check if existing data uses old format (no plans array)
+      const firstBatches = existing[0].batches as any[];
+      if (firstBatches.length > 0 && firstBatches[0].plans) {
+        return; // Already new format, skip
+      }
+      // Old format detected — delete all and re-seed with new format
+      await db.delete(turmaConfigs);
+      console.log("[seed] turma_configs: old format detected, re-seeding with new plans format");
+    }
 
-    const legacyBatches: BatchPricingItem[] = [
-      { batch: 1, label: "Lote 1", deadline: "07/12/2025", pixPrice: 8000, card5Total: 8875, card5Installments: 5, card10Total: 8875, card10Installments: 5 },
-      { batch: 2, label: "Lote 2", deadline: "31/12/2025", pixPrice: 8700, card5Total: 9650, card5Installments: 5, card10Total: 9650, card10Installments: 5 },
-      { batch: 3, label: "Lote 3", deadline: "04/01/2026", pixPrice: 9400, card5Total: 10425, card5Installments: 5, card10Total: 11000, card10Installments: 10 },
-      { batch: 4, label: "Lote 4 (Especial)", deadline: "Condição Especial", pixPrice: 10000, card5Total: 10000, card5Installments: 10, card10Total: 10000, card10Installments: 10 },
+    // turma_2 (legacy, 5% vendor)
+    const t2Batches: BatchPricingItem[] = [
+      { batch: 1, label: "Lote 1", deadline: "07/12/2025", plans: [
+        { id: "pix", label: "PIX", totalAmount: 8000, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 8875, installments: 5, feeRate: 0.088, paymentLink: "" },
+      ]},
+      { batch: 2, label: "Lote 2", deadline: "31/12/2025", plans: [
+        { id: "pix", label: "PIX", totalAmount: 8700, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 9650, installments: 5, feeRate: 0.088, paymentLink: "" },
+      ]},
+      { batch: 3, label: "Lote 3", deadline: "04/01/2026", plans: [
+        { id: "pix", label: "PIX", totalAmount: 9400, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 10425, installments: 5, feeRate: 0.088, paymentLink: "" },
+        { id: "installments10", label: "10x Cartão", totalAmount: 11000, installments: 10, feeRate: 0.1506, paymentLink: "" },
+      ]},
+      { batch: 4, label: "Lote 4 (Especial)", deadline: "Condição Especial", plans: [
+        { id: "pix", label: "PIX", totalAmount: 10000, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 10000, installments: 5, feeRate: 0.088, paymentLink: "" },
+      ]},
+    ];
+
+    // turma_3 and turma_4 (16.67% vendor) — values from official financial waterfall
+    const t34Batches: BatchPricingItem[] = [
+      { batch: 1, label: "Lote 1", deadline: "07/12/2025", plans: [
+        { id: "pix", label: "PIX", totalAmount: 8000, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 8875, installments: 5, feeRate: 0.088, paymentLink: "" },
+      ]},
+      { batch: 2, label: "Lote 2", deadline: "31/12/2025", plans: [
+        { id: "pix", label: "PIX", totalAmount: 8700, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 9650, installments: 5, feeRate: 0.088, paymentLink: "" },
+      ]},
+      { batch: 3, label: "Lote 3", deadline: "04/01/2026", plans: [
+        { id: "pix", label: "PIX", totalAmount: 9952.18, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 11054.50, installments: 5, feeRate: 0.088, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00" },
+        { id: "installments10", label: "10x Cartão", totalAmount: 12000, installments: 10, feeRate: 0.1506, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
+      ]},
+      { batch: 4, label: "Lote 4 (Especial)", deadline: "Condição Especial", plans: [
+        { id: "pix", label: "PIX", totalAmount: 9952.18, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 11054.50, installments: 5, feeRate: 0.088, paymentLink: "" },
+        { id: "installments10", label: "10x Cartão", totalAmount: 12000, installments: 10, feeRate: 0.1506, paymentLink: "" },
+      ]},
     ];
 
     await db.insert(turmaConfigs).values([
@@ -885,7 +930,7 @@ export class DbStorage implements IStorage {
         hfRate: 0.3333,
         card5PaymentLink: "",
         card10PaymentLink: "",
-        batches: legacyBatches,
+        batches: t2Batches,
       },
       {
         turmaId: "turma_3",
@@ -899,7 +944,7 @@ export class DbStorage implements IStorage {
         hfRate: 0.3333,
         card5PaymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
         card10PaymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
-        batches: legacyBatches,
+        batches: t34Batches,
       },
       {
         turmaId: "turma_4",
@@ -913,11 +958,11 @@ export class DbStorage implements IStorage {
         hfRate: 0.3333,
         card5PaymentLink: "",
         card10PaymentLink: "",
-        batches: legacyBatches,
+        batches: t34Batches,
       },
-    ]);
+    ] as any);
 
-    console.log("[seed] turma_configs seeded with 3 initial configs");
+    console.log("[seed] turma_configs seeded with new plans format (PIX/5x/10x per lote)");
   }
 }
 

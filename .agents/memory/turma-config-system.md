@@ -1,31 +1,44 @@
 ---
 name: Turma Config System
-description: Per-turma financial configuration table driving commission and DRE calculations
+description: Per-turma financial config — BatchPricingItem now uses flexible PaymentPlan[] instead of fixed pixPrice/card5Total fields
 ---
 
-## What was built
-`turma_configs` table (Drizzle, PostgreSQL) with: turmaId (unique), name, active, taxRate, card5FeeRate, card10FeeRate, vendorCommissionRate, mmRate, hfRate, card5PaymentLink, card10PaymentLink, batches (jsonb → BatchPricingItem[]).
+## Current Design (as of June 2026)
 
-Prices in batches are in **R$ (float)**, not centavos — to match existing BATCH_CONFIG_BASE convention.
+`BatchPricingItem` has **`plans: PaymentPlan[]`** — each plan has:
+- `id`: "pix", "installments", "installments10", or custom
+- `label`, `totalAmount`, `installments`, `feeRate` (0..1 decimal), `paymentLink`
 
-## How it plugs in
-`resolveConfig(reg, turmaConfigsList, taxRate)` in AdminPage.tsx returns the **same shape** as `typeof BATCH_CONFIG[0]`, so `calculateCommissions(reg, batchConfig)` signature did not change. All call sites replaced with `rc(reg)` (a closure around resolveConfig defined inside MentorshipRegistrationsSection).
+This replaced the old fixed `pixPrice / card5Total / card5Installments / card10Total / card10Installments` fields.
 
-**Why same shape:** avoids updating 20+ call sites in the component.
+## Seed Values (turma_3 & turma_4, Lote 3)
+- PIX: R$9,952.18 — 0% fee
+- 5x Cartão: R$11,054.50 — 8.80% fee
+- 10x Cartão: R$12,000.00 — 15.06% fee
 
-## Seed data (seeded once on startup)
-- turma_2: vendorCommissionRate=0.05 (legacy 5%), active=false
-- turma_3: vendorCommissionRate=0.1667, active=true, with payment links
-- turma_4: vendorCommissionRate=0.1667, active=true
+These produce identical net (R$8,782.80) after taxes (11.75%) + gateway fee. Verified against official financial waterfall.
 
-## Critical: Drizzle jsonb typing quirk
-`db.insert(turmaConfigs).values(data as any)` and `.set(data as any)` required because Drizzle's `jsonb().$type<T[]>()` strict array type doesn't match plain TS arrays at compile time. Safe to cast — the runtime behavior is correct.
+## resolveConfig (AdminPage.tsx)
+- Detects new format via `bpAny.plans` existence
+- Falls back to legacy `pixPrice/card5Total` reading for old data
+- Returns same BATCH_CONFIG shape so all calculateCommissions call sites unchanged
 
-**Why:** TypeScript infers `pop()` return type as `unknown` on the internal array type, breaking the generic constraint.
+## Storage Seed Auto-migration
+- On startup, if existing data lacks `plans` key → deletes all turma_configs rows → re-seeds with new format
+- Detection: `firstBatches[0].plans` check
 
-## Admin UI
-Tab "Turmas" in AdminPage → `TurmaConfigsSection` component with:
-- Cards per turma showing all rates at a glance
-- Edit dialog with rate fields, batch pricing table (editable rows), waterfall preview table
-- "Nova Turma" button clones rates from most recent turma
-- Waterfall preview updates live from form values
+## DB Columns
+- `card5FeeRate`, `card10FeeRate`, `card5PaymentLink`, `card10PaymentLink` still exist in DB for backward compat
+- `buildPayload` derives these from the last batch's plans before sending to API
+
+## Admin UI (TurmaConfigsSection)
+- Cards per turma showing rates + last batch prices (PIX, 5x, 10x)
+- Edit dialog: 4-column rate grid (imposto, vendedor, MM, HF) + flexible batch/plan editor
+- Per-batch plan table: id, label, totalAmount, installments, feeRate (%), paymentLink
+- Waterfall preview: dynamic columns per plan (not hardcoded PIX/5x/10x)
+- "Nova Turma" clones rates + batches/plans from most recent config
+
+## Drizzle jsonb typing quirk
+`db.insert(turmaConfigs).values(data as any)` required — Drizzle's jsonb strict array type doesn't match plain TS arrays.
+
+**Why flexible plans:** Fee rates now vary per batch (lote), not globally per turma. Plans[] enables any number of payment options per lote with independent fee rates.

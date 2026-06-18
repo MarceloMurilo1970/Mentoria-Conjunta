@@ -4,15 +4,20 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // ------ Turma Configuration ------
+export interface PaymentPlan {
+  id: string;           // matches paymentMethod: "pix", "installments", "installments10", or custom
+  label: string;        // display name: "PIX", "5x Cartão", "10x Cartão"
+  totalAmount: number;  // R$ total charged
+  installments: number; // 1, 5, 10, etc.
+  feeRate: number;      // gateway fee rate 0..1 (e.g. 0.088 = 8.80%)
+  paymentLink: string;  // URL or ""
+}
+
 export interface BatchPricingItem {
   batch: number;
   label: string;
   deadline: string;
-  pixPrice: number;          // R$ (float)
-  card5Total: number;        // R$ total cobrado no cartão 5x
-  card5Installments: number; // número de parcelas (5)
-  card10Total: number;       // R$ total cobrado no cartão 10x
-  card10Installments: number; // número de parcelas (10)
+  plans: PaymentPlan[];  // flexible payment plans (replaces fixed pixPrice/card5Total/card10Total)
 }
 
 export const turmaConfigs = pgTable("turma_configs", {

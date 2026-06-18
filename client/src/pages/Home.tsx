@@ -99,9 +99,11 @@ export default function Home() {
     registrationRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const [selectedTurma, setSelectedTurma] = useState<"turma_3" | "turma_4">("turma_3");
+
   const batchesOpen = isBatchesOpen(new Date());
   const comingSoon = isBatchesComingSoon(new Date());
-  const priceInfo = useBatchPrices("turma_3");
+  const priceInfo = useBatchPrices(selectedTurma);
 
   return (
     <div className="min-h-screen">
@@ -787,9 +789,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           {showRegistrationForm ? (
             <div className="space-y-12">
-              <BatchPricing currentDate={new Date()} />
+              <BatchPricing currentDate={new Date()} turmaId={selectedTurma} />
               {batchesOpen ? (
-                <RegistrationForm priceInfo={priceInfo} />
+                <RegistrationForm
+                  priceInfo={priceInfo}
+                  defaultTurma={selectedTurma}
+                  onTurmaChange={setSelectedTurma}
+                />
               ) : (
                 <Card className="max-w-2xl mx-auto border-muted">
                   <CardContent className="py-12 text-center">

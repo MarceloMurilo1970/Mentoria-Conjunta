@@ -26,6 +26,8 @@ interface PriceInfo {
 interface RegistrationFormProps {
   onSuccess?: () => void;
   priceInfo?: PriceInfo;
+  defaultTurma?: "turma_3" | "turma_4";
+  onTurmaChange?: (turma: "turma_3" | "turma_4") => void;
 }
 
 const DEFAULT_PRICES: PriceInfo = {
@@ -43,7 +45,7 @@ function formatPrice(price: number): string {
   return price.toLocaleString("pt-BR", { minimumFractionDigits: 0 });
 }
 
-export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES }: RegistrationFormProps) {
+export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES, defaultTurma, onTurmaChange }: RegistrationFormProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "installments" | "installments10" | null>(null);
   const [emailError, setEmailError] = useState(false);
@@ -59,6 +61,7 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
     watch,
   } = useForm<InsertRegistration>({
     resolver: zodResolver(insertRegistrationSchema),
+    defaultValues: defaultTurma ? { turma: defaultTurma } : undefined,
   });
 
   const selectedPayment = watch("paymentMethod");
@@ -333,7 +336,11 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
           <div className="space-y-4">
             <Label>Turma *</Label>
             <RadioGroup
-              onValueChange={(value) => setValue("turma", value as "turma_3" | "turma_4")}
+              defaultValue={defaultTurma}
+              onValueChange={(value) => {
+                setValue("turma", value as "turma_3" | "turma_4");
+                onTurmaChange?.(value as "turma_3" | "turma_4");
+              }}
               className="space-y-3"
             >
               <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${watch("turma") === "turma_3" ? "border-primary bg-primary/5" : "border-border hover-elevate"}`}>

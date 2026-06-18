@@ -140,10 +140,11 @@ function CountdownDisplay({ targetDate, label }: { targetDate: Date; label: stri
 
 interface BatchPricingProps {
   currentDate?: Date;
+  turmaId?: string;
 }
 
-export default function BatchPricing({ currentDate = new Date() }: BatchPricingProps) {
-  const prices = useBatchPrices("turma_3");
+export default function BatchPricing({ currentDate = new Date(), turmaId = "turma_3" }: BatchPricingProps) {
+  const prices = useBatchPrices(turmaId);
   const isOpen = isBatchesOpen(currentDate);
   const comingSoon = isBatchesComingSoon(currentDate);
 
@@ -181,7 +182,11 @@ export default function BatchPricing({ currentDate = new Date() }: BatchPricingP
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
           <Sparkles className="w-4 h-4" />
-          Turmas 3 e 4 — Agosto a Outubro 2026
+          {turmaId === "turma_3"
+            ? "Turma 3 — Segundas-feiras — Agosto a Outubro 2026"
+            : turmaId === "turma_4"
+            ? "Turma 4 — Quartas-feiras — Agosto a Outubro 2026"
+            : "Turmas 3 e 4 — Agosto a Outubro 2026"}
         </div>
         <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
           Investimento na Sua Carreira

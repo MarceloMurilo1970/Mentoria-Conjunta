@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Registration, Lead, Vendor, LeadActivity, LeadFollowUp } from "@shared/schema";
+import type { Registration, Lead, Vendor, LeadActivity, LeadFollowUp, TurmaConfig, BatchPricingItem } from "@shared/schema";
 import BatchPricing from "@/components/BatchPricing";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -637,8 +637,8 @@ const BATCH_CONFIG_BASE = [
     installments: 5, 
     installmentTotal: 8875,
     cardFee: 781,
-    mmRate: 0.633,
-    hfRate: 0.317,
+    mmRate: 0.6667,
+    hfRate: 0.3333,
     vendorRate: 0.05,
     paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
   },
@@ -650,8 +650,8 @@ const BATCH_CONFIG_BASE = [
     installments: 5, 
     installmentTotal: 9650,
     cardFee: 849,
-    mmRate: 0.633,
-    hfRate: 0.317,
+    mmRate: 0.6667,
+    hfRate: 0.3333,
     vendorRate: 0.05,
     paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
   },
@@ -663,8 +663,8 @@ const BATCH_CONFIG_BASE = [
     installments: 5, 
     installmentTotal: 10425,
     cardFee: 917,
-    mmRate: 0.633,
-    hfRate: 0.317,
+    mmRate: 0.6667,
+    hfRate: 0.3333,
     vendorRate: 0.05,
     paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
     // CJ7 - 10x option
@@ -681,8 +681,8 @@ const BATCH_CONFIG_BASE = [
     installments: 10, 
     installmentTotal: 10000,
     cardFee: 1506,
-    mmRate: 0.633,
-    hfRate: 0.317,
+    mmRate: 0.6667,
+    hfRate: 0.3333,
     vendorRate: 0.05,
     paymentLink: "",
     installment10Price: 1000,
@@ -702,6 +702,49 @@ function getBatchConfig(taxRate: number) {
 
 // For backwards compatibility - default BATCH_CONFIG
 const BATCH_CONFIG = getBatchConfig(getSavedTaxRate());
+
+// Resolve the effective batch config for a registration, merging turma config rates.
+// Returns same shape as BATCH_CONFIG items so all existing call sites work unchanged.
+function resolveConfig(
+  reg: Registration,
+  turmaConfigsList: TurmaConfig[],
+  taxRate: number
+): typeof BATCH_CONFIG[0] {
+  const batchNum = reg.batch || 3;
+  const tc = turmaConfigsList.find(c => c.turmaId === reg.turma);
+  if (tc && tc.batches && (tc.batches as BatchPricingItem[]).length > 0) {
+    const items = tc.batches as BatchPricingItem[];
+    const bp = items.find(b => b.batch === batchNum)
+             ?? items.filter(b => b.batch <= batchNum).pop()
+             ?? items[items.length - 1];
+    if (bp) {
+      const c5i = bp.card5Installments || 5;
+      const c10i = bp.card10Installments || 10;
+      const c10tot = bp.card10Total || bp.card5Total;
+      return {
+        batch: batchNum,
+        deadline: bp.deadline,
+        pixPrice: bp.pixPrice,
+        installmentPrice: Math.round(bp.card5Total / c5i),
+        installments: c5i,
+        installmentTotal: bp.card5Total,
+        cardFee: Math.round(bp.card5Total * tc.card5FeeRate),
+        installment10Price: Math.round(c10tot / c10i),
+        installment10Total: c10tot,
+        cardFee10: Math.round(c10tot * tc.card10FeeRate),
+        taxRate: tc.taxRate,
+        mmRate: tc.mmRate,
+        hfRate: tc.hfRate,
+        vendorRate: tc.vendorCommissionRate,
+        paymentLink: tc.card5PaymentLink,
+        paymentLink10: tc.card10PaymentLink,
+      };
+    }
+  }
+  // Fallback to legacy BATCH_CONFIG
+  const base = getBatchConfig(taxRate);
+  return base.find(b => b.batch === batchNum) ?? base[base.length - 1];
+}
 
 // Calculate commissions for a registration
 // Order: 1) Tax on gross, 2) Subtract tax + card fee, 3) Vendor 5% if exists, 4) Split MM 2/3, HF 1/3
@@ -737,9 +780,9 @@ function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFI
   // Distributable amount after vendor commission
   const distributableAmount = netAfterTax - vendorComm;
   
-  // Split: MM gets 2/3, HF gets 1/3
-  const mmComm = Math.round(distributableAmount * (2/3));
-  const hfComm = Math.round(distributableAmount * (1/3));
+  // Split using turma-level rates (default 2/3 MM, 1/3 HF)
+  const mmComm = Math.round(distributableAmount * (batchConfig.mmRate ?? (2/3)));
+  const hfComm = Math.round(distributableAmount * (batchConfig.hfRate ?? (1/3)));
   
   return {
     gross: total,
@@ -796,6 +839,14 @@ function MentorshipRegistrationsSection() {
   
   // Dynamically computed BATCH_CONFIG based on current tax rate
   const currentBatchConfig = getBatchConfig(taxRate);
+
+  // Turma config — used to override rates per turma
+  const { data: turmaConfigsList = [] } = useQuery<TurmaConfig[]>({
+    queryKey: ['/api/turma-configs'],
+  });
+
+  // rc(reg) = resolveConfig for a registration (merges turma config rates + batch prices)
+  const rc = (r: Registration) => resolveConfig(r, turmaConfigsList, taxRate);
 
   // Transfer control states
   const [transferDashboardOpen, setTransferDashboardOpen] = useState(false);
@@ -1229,7 +1280,7 @@ function MentorshipRegistrationsSection() {
   };
 
   const copyPaymentInstructions = (reg: Registration) => {
-    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+    const batchConfig = rc(reg);
     const firstName = reg.name.split(' ')[0];
     
     let text = '';
@@ -1361,7 +1412,7 @@ Qualquer dúvida, estamos à disposição!`;
     vendorRegs.forEach(reg => {
       if (remainingPayment <= 0) return;
       
-      const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+      const batchConfig = rc(reg);
       const comms = calculateCommissions(reg, batchConfig);
       const alreadyPaid = reg.vendorCommissionPaid || 0;
       const owedToVendor = comms.vendorComm - alreadyPaid;
@@ -1431,7 +1482,7 @@ Qualquer dúvida, estamos à disposição!`;
 
   const getSelectedBatchConfig = () => {
     if (!selectedRegistration) return currentBatchConfig[0];
-    return currentBatchConfig.find(b => b.batch === (selectedRegistration.batch || 1)) || currentBatchConfig[0];
+    return rc(selectedRegistration);
   };
 
   const getRemainingAmount = () => {
@@ -1470,7 +1521,7 @@ Qualquer dúvida, estamos à disposição!`;
   
   // Calculate total commissions (only count vendor commissions for vendors with hasCommission=true)
   const totalCommissions = filteredRegistrations.reduce((acc, reg) => {
-    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+    const batchConfig = rc(reg);
     const comms = calculateCommissions(reg, batchConfig);
     // Only add vendor commission if vendor has commission enabled
     const vendorHasCommission = reg.vendor && vendorsWithCommission.includes(reg.vendor);
@@ -1685,7 +1736,7 @@ Qualquer dúvida, estamos à disposição!`;
               {(() => {
                 const dreRegs = dreTurmaFilter === 'todas' ? registrations : registrations?.filter(r => r.turma === dreTurmaFilter);
                 const dreData = dreRegs?.reduce((acc, reg) => {
-                  const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+                  const batchConfig = rc(reg);
                   const comms = calculateCommissions(reg, batchConfig);
                   // When PAGO: use full net amount (after taxes and card fees)
                   // When PARCIAL: use proportional amount based on paidAmount (in cents)
@@ -1812,7 +1863,7 @@ Qualquer dúvida, estamos à disposição!`;
                       {vendorsWithCommission.map(vendor => {
                         const vendorRegs = registrations?.filter(r => r.vendor === vendor.name) || [];
                         const vendorStats = vendorRegs.reduce((acc, reg) => {
-                          const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+                          const batchConfig = rc(reg);
                           const comms = calculateCommissions(reg, batchConfig);
                           const paidAmountReais = (reg.paidAmount || 0) / 100;
                           
@@ -1897,7 +1948,7 @@ Qualquer dúvida, estamos à disposição!`;
                                       </thead>
                                       <tbody className="divide-y divide-slate-200">
                                         {vendorRegs.map(reg => {
-                                          const bc = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+                                          const bc = rc(reg);
                                           const comms = calculateCommissions(reg, bc);
                                           const paidAmountReais = (reg.paidAmount || 0) / 100;
                                           const ns = (reg.paymentStatus || '').toLowerCase().trim();
@@ -2010,7 +2061,7 @@ Qualquer dúvida, estamos à disposição!`;
                                         setTransferPaymentDate(new Date().toISOString().split('T')[0]);
                                         const pendingIds = new Set<number>();
                                         (registrations || []).filter(r => r.vendor === vendor.name).forEach(r => {
-                                          const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0];
+                                          const bc = rc(r);
                                           const comms = calculateCommissions(r, bc);
                                           const paidAmountReais = (r.paidAmount || 0) / 100;
                                           const ns = (r.paymentStatus || '').toLowerCase().trim();
@@ -2047,7 +2098,7 @@ Qualquer dúvida, estamos à disposição!`;
                 </h3>
                 {(() => {
                   const hamiltonStats = registrations?.reduce((acc, reg) => {
-                    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+                    const batchConfig = rc(reg);
                     const comms = calculateCommissions(reg, batchConfig);
                     const paidAmountReais = (reg.paidAmount || 0) / 100;
                     
@@ -2134,7 +2185,7 @@ Qualquer dúvida, estamos à disposição!`;
                                 </thead>
                                 <tbody className="divide-y divide-slate-200">
                                   {registrations?.map(reg => {
-                                    const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+                                    const batchConfig = rc(reg);
                                     const comms = calculateCommissions(reg, batchConfig);
                                     const paidAmountReais = (reg.paidAmount || 0) / 100;
                                     const normalizedStatus = (reg.paymentStatus || '').toLowerCase().trim();
@@ -2191,9 +2242,9 @@ Qualquer dúvida, estamos à disposição!`;
                                   <tr className="bg-purple-50 font-semibold">
                                     <td className="px-3 py-2 text-gray-700">TOTAL</td>
                                     <td className="px-3 py-2 text-right">R$ {hamiltonStats.soldValue.toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-red-600">R$ {(registrations?.reduce((s, r) => { const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0]; return s + calculateCommissions(r, bc).taxes; }, 0) || 0).toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-orange-600">R$ {(registrations?.reduce((s, r) => { const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0]; return s + calculateCommissions(r, bc).cardFee; }, 0) || 0).toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-emerald-700">R$ {(registrations?.reduce((s, r) => { const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0]; return s + calculateCommissions(r, bc).netAfterTax; }, 0) || 0).toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-red-600">R$ {(registrations?.reduce((s, r) => { const bc = rc(r); return s + calculateCommissions(r, bc).taxes; }, 0) || 0).toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-orange-600">R$ {(registrations?.reduce((s, r) => { const bc = rc(r); return s + calculateCommissions(r, bc).cardFee; }, 0) || 0).toLocaleString('pt-BR')}</td>
+                                    <td className="px-3 py-2 text-right text-emerald-700">R$ {(registrations?.reduce((s, r) => { const bc = rc(r); return s + calculateCommissions(r, bc).netAfterTax; }, 0) || 0).toLocaleString('pt-BR')}</td>
                                     <td className="px-3 py-2"></td>
                                     <td className="px-3 py-2 text-right text-purple-700">R$ {hamiltonStats.hfTotal.toLocaleString('pt-BR')}</td>
                                     <td className="px-3 py-2 text-right text-blue-700">R$ {hamiltonStats.hfDueNow.toLocaleString('pt-BR')}</td>
@@ -2245,7 +2296,7 @@ Qualquer dúvida, estamos à disposição!`;
                                   setTransferPaymentDate(new Date().toISOString().split('T')[0]);
                                   const pendingIds = new Set<number>();
                                   (registrations || []).forEach(r => {
-                                    const bc = currentBatchConfig.find(b => b.batch === (r.batch || 1)) || currentBatchConfig[0];
+                                    const bc = rc(r);
                                     const comms = calculateCommissions(r, bc);
                                     const paidAmountReais = (r.paidAmount || 0) / 100;
                                     const ns = (r.paymentStatus || '').toLowerCase().trim();
@@ -2294,7 +2345,7 @@ Qualquer dúvida, estamos à disposição!`;
               : (registrations || []);
 
             const pendingRegs = sourceRegs.map(reg => {
-              const bc = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+              const bc = rc(reg);
               const comms = calculateCommissions(reg, bc);
               const paidAmountReais = (reg.paidAmount || 0) / 100;
               const ns = (reg.paymentStatus || '').toLowerCase().trim();
@@ -2388,7 +2439,7 @@ Qualquer dúvida, estamos à disposição!`;
                                 <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
                               </td>
                               <td className="px-3 py-2 text-right text-gray-700">
-                                R$ {(reg.paymentMethod === 'pix' ? (currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0]).pixPrice : reg.paymentMethod === 'installments10' ? (currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0]).installment10Total || 0 : (currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0]).installmentTotal).toLocaleString('pt-BR')}
+                                R$ {(reg.paymentMethod === 'pix' ? (rc(reg)).pixPrice : reg.paymentMethod === 'installments10' ? (rc(reg)).installment10Total || 0 : (rc(reg)).installmentTotal).toLocaleString('pt-BR')}
                               </td>
                               <td className={`px-3 py-2 text-right font-semibold ${accentClass}`}>
                                 R$ {balance.toLocaleString('pt-BR')}
@@ -2698,7 +2749,7 @@ Qualquer dúvida, estamos à disposição!`;
           {filteredRegistrations.length > 0 ? (
             <div className="space-y-4">
               {filteredRegistrations.map((reg, index) => {
-                const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
+                const batchConfig = rc(reg);
                 const commissions = calculateCommissions(reg, batchConfig);
                 
                 return (
@@ -5350,6 +5401,478 @@ function AnalyticsSection() {
   );
 }
 
+// ────────────────────────────────────────────────────────────
+// TurmaConfigsSection — full CRUD for per-turma financial config
+// ────────────────────────────────────────────────────────────
+function TurmaConfigsSection() {
+  const { toast } = useToast();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<TurmaConfig | null>(null);
+  const [previewBatch, setPreviewBatch] = useState(3);
+
+  // -- form state --
+  const emptyForm = () => ({
+    turmaId: '', name: '', active: true,
+    taxRate: 11.75, card5FeeRate: 8.8, card10FeeRate: 15.06,
+    vendorCommissionRate: 16.67, mmRate: 66.67, hfRate: 33.33,
+    card5PaymentLink: '', card10PaymentLink: '',
+    batches: [
+      { batch: 1, label: 'Lote 1', deadline: '', pixPrice: 0, card5Total: 0, card5Installments: 5, card10Total: 0, card10Installments: 10 },
+    ] as BatchPricingItem[],
+  });
+  const [form, setForm] = useState(emptyForm());
+
+  const { data: configs = [], isLoading } = useQuery<TurmaConfig[]>({ queryKey: ['/api/turma-configs'] });
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: { id?: number; payload: object }) => {
+      if (data.id) {
+        return apiRequest('PATCH', `/api/turma-configs/${data.id}`, data.payload);
+      }
+      return apiRequest('POST', '/api/turma-configs', data.payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/turma-configs'] });
+      setEditDialogOpen(false);
+      setNewDialogOpen(false);
+      toast({ title: 'Configuração salva!', description: 'Turma atualizada com sucesso.' });
+    },
+    onError: () => toast({ title: 'Erro', description: 'Não foi possível salvar.', variant: 'destructive' }),
+  });
+
+  const openEdit = (cfg: TurmaConfig) => {
+    setEditing(cfg);
+    setForm({
+      turmaId: cfg.turmaId,
+      name: cfg.name,
+      active: cfg.active,
+      taxRate: +(cfg.taxRate * 100).toFixed(4),
+      card5FeeRate: +(cfg.card5FeeRate * 100).toFixed(4),
+      card10FeeRate: +(cfg.card10FeeRate * 100).toFixed(4),
+      vendorCommissionRate: +(cfg.vendorCommissionRate * 100).toFixed(4),
+      mmRate: +(cfg.mmRate * 100).toFixed(4),
+      hfRate: +(cfg.hfRate * 100).toFixed(4),
+      card5PaymentLink: cfg.card5PaymentLink,
+      card10PaymentLink: cfg.card10PaymentLink,
+      batches: (cfg.batches as BatchPricingItem[]).map(b => ({ ...b })),
+    });
+    setPreviewBatch((cfg.batches as BatchPricingItem[])[0]?.batch ?? 1);
+    setEditDialogOpen(true);
+  };
+
+  const openNew = () => {
+    const last = [...configs].sort((a, b) => b.id - a.id)[0];
+    if (last) {
+      setForm({
+        turmaId: '',
+        name: '',
+        active: true,
+        taxRate: +(last.taxRate * 100).toFixed(4),
+        card5FeeRate: +(last.card5FeeRate * 100).toFixed(4),
+        card10FeeRate: +(last.card10FeeRate * 100).toFixed(4),
+        vendorCommissionRate: +(last.vendorCommissionRate * 100).toFixed(4),
+        mmRate: +(last.mmRate * 100).toFixed(4),
+        hfRate: +(last.hfRate * 100).toFixed(4),
+        card5PaymentLink: '',
+        card10PaymentLink: '',
+        batches: (last.batches as BatchPricingItem[]).map(b => ({ ...b })),
+      });
+      setPreviewBatch((last.batches as BatchPricingItem[])[0]?.batch ?? 1);
+    } else {
+      setForm(emptyForm());
+    }
+    setEditing(null);
+    setNewDialogOpen(true);
+  };
+
+  const buildPayload = () => ({
+    turmaId: form.turmaId.trim(),
+    name: form.name.trim(),
+    active: form.active,
+    taxRate: form.taxRate / 100,
+    card5FeeRate: form.card5FeeRate / 100,
+    card10FeeRate: form.card10FeeRate / 100,
+    vendorCommissionRate: form.vendorCommissionRate / 100,
+    mmRate: form.mmRate / 100,
+    hfRate: form.hfRate / 100,
+    card5PaymentLink: form.card5PaymentLink.trim(),
+    card10PaymentLink: form.card10PaymentLink.trim(),
+    batches: form.batches,
+  });
+
+  const updateBatch = (idx: number, field: keyof BatchPricingItem, val: string | number) => {
+    const updated = form.batches.map((b, i) => i === idx ? { ...b, [field]: typeof val === 'string' && field !== 'label' && field !== 'deadline' ? parseFloat(val) || 0 : val } : b);
+    setForm(f => ({ ...f, batches: updated }));
+  };
+
+  const addBatch = () => {
+    const lastBatch = form.batches[form.batches.length - 1];
+    const newBatch: BatchPricingItem = {
+      batch: (lastBatch?.batch ?? 0) + 1,
+      label: `Lote ${(lastBatch?.batch ?? 0) + 1}`,
+      deadline: '',
+      pixPrice: lastBatch?.pixPrice ?? 0,
+      card5Total: lastBatch?.card5Total ?? 0,
+      card5Installments: lastBatch?.card5Installments ?? 5,
+      card10Total: lastBatch?.card10Total ?? 0,
+      card10Installments: lastBatch?.card10Installments ?? 10,
+    };
+    setForm(f => ({ ...f, batches: [...f.batches, newBatch] }));
+  };
+
+  const removeBatch = (idx: number) => {
+    setForm(f => ({ ...f, batches: f.batches.filter((_, i) => i !== idx) }));
+  };
+
+  // Waterfall calculation for preview
+  const calcWaterfall = (bp: BatchPricingItem) => {
+    const tax = form.taxRate / 100;
+    const fee5 = form.card5FeeRate / 100;
+    const fee10 = form.card10FeeRate / 100;
+    const vendorR = form.vendorCommissionRate / 100;
+    const mmR = form.mmRate / 100;
+    const hfR = form.hfRate / 100;
+
+    const cols = [
+      { label: 'PIX', gross: bp.pixPrice, feeRate: 0 },
+      { label: `${bp.card5Installments || 5}x Cartão`, gross: bp.card5Total, feeRate: fee5 },
+      { label: `${bp.card10Installments || 10}x Cartão`, gross: bp.card10Total || bp.card5Total, feeRate: fee10 },
+    ];
+
+    return cols.map(col => {
+      const cardFee = col.gross * col.feeRate;
+      const taxes = col.gross * tax;
+      const net = col.gross - taxes - cardFee;
+      const vendor = net * vendorR;
+      const sobra = net - vendor;
+      const mm = sobra * mmR;
+      const hf = sobra * hfR;
+      return { ...col, cardFee, taxes, net, vendor, sobra, mm, hf };
+    });
+  };
+
+  const fmtR = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtPct = (v: number) => `${v.toFixed(2)}%`;
+
+  const selectedBatchItem = form.batches.find(b => b.batch === previewBatch) ?? form.batches[0];
+  const waterfall = selectedBatchItem ? calcWaterfall(selectedBatchItem) : null;
+
+  const ConfigDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
+        <DialogHeader>
+          <DialogTitle className="text-gray-900">{editing ? `Editar ${editing.name}` : 'Nova Turma'}</DialogTitle>
+          <DialogDescription className="text-gray-500">Configure taxas, tarifas e preços por lote.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-2">
+          {/* Basic info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label className="text-gray-700 text-sm">ID da Turma</Label>
+              <Input value={form.turmaId} onChange={e => setForm(f => ({ ...f, turmaId: e.target.value }))}
+                placeholder="ex: turma_5" className="bg-white border-gray-300 text-gray-900" disabled={!!editing} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-gray-700 text-sm">Nome</Label>
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="ex: Turma 5 — Terças-feiras" className="bg-white border-gray-300 text-gray-900" />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Switch checked={form.active} onCheckedChange={v => setForm(f => ({ ...f, active: v }))} id="active-sw" />
+            <Label htmlFor="active-sw" className="text-gray-700 text-sm cursor-pointer">Turma ativa</Label>
+          </div>
+
+          {/* Financial rates */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-1">Taxas e Tarifas</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'Imposto (NF)', key: 'taxRate' as const },
+                { label: 'Taxa Gateway 5x', key: 'card5FeeRate' as const },
+                { label: 'Taxa Gateway 10x', key: 'card10FeeRate' as const },
+              ].map(({ label, key }) => (
+                <div key={key} className="space-y-1">
+                  <Label className="text-gray-700 text-sm">{label}</Label>
+                  <div className="relative">
+                    <Input type="number" step="0.01" value={form[key]}
+                      onChange={e => setForm(f => ({ ...f, [key]: parseFloat(e.target.value) || 0 }))}
+                      className="bg-white border-gray-300 text-gray-900 pr-8" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Distribution */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-1">Distribuição do Líquido</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'Comissão Vendedor', key: 'vendorCommissionRate' as const },
+                { label: 'Marcelo Murilo (MM)', key: 'mmRate' as const },
+                { label: 'Hamilton Felix (HF)', key: 'hfRate' as const },
+              ].map(({ label, key }) => (
+                <div key={key} className="space-y-1">
+                  <Label className="text-gray-700 text-sm">{label}</Label>
+                  <div className="relative">
+                    <Input type="number" step="0.01" value={form[key]}
+                      onChange={e => setForm(f => ({ ...f, [key]: parseFloat(e.target.value) || 0 }))}
+                      className="bg-white border-gray-300 text-gray-900 pr-8" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">MM% e HF% são aplicados sobre a sobra (líquido − comissão vendedor).</p>
+          </div>
+
+          {/* Payment links */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-1">Links de Pagamento</h3>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-gray-700 text-sm">Link Cartão 5x</Label>
+                <Input value={form.card5PaymentLink} onChange={e => setForm(f => ({ ...f, card5PaymentLink: e.target.value }))}
+                  placeholder="https://link.infinitepay.io/..." className="bg-white border-gray-300 text-gray-900" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-gray-700 text-sm">Link Cartão 10x</Label>
+                <Input value={form.card10PaymentLink} onChange={e => setForm(f => ({ ...f, card10PaymentLink: e.target.value }))}
+                  placeholder="https://link.infinitepay.io/..." className="bg-white border-gray-300 text-gray-900" />
+              </div>
+            </div>
+          </div>
+
+          {/* Batches table */}
+          <div>
+            <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-1">
+              <h3 className="text-sm font-semibold text-gray-800">Preços por Lote</h3>
+              <Button size="sm" variant="outline" onClick={addBatch} className="border-gray-300 text-gray-700">
+                <Plus className="w-3 h-3 mr-1" /> Novo Lote
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-2 py-1.5 text-left text-gray-600 font-medium">Lote</th>
+                    <th className="px-2 py-1.5 text-left text-gray-600 font-medium">Label</th>
+                    <th className="px-2 py-1.5 text-left text-gray-600 font-medium">Prazo</th>
+                    <th className="px-2 py-1.5 text-right text-gray-600 font-medium">PIX (R$)</th>
+                    <th className="px-2 py-1.5 text-right text-gray-600 font-medium">Total 5x (R$)</th>
+                    <th className="px-2 py-1.5 text-right text-gray-600 font-medium">Parc. 5x</th>
+                    <th className="px-2 py-1.5 text-right text-gray-600 font-medium">Total 10x (R$)</th>
+                    <th className="px-2 py-1.5 text-right text-gray-600 font-medium">Parc. 10x</th>
+                    <th className="px-2 py-1.5"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.batches.map((bp, idx) => (
+                    <tr key={idx} className="border-t border-gray-100">
+                      <td className="px-2 py-1">
+                        <Input type="number" value={bp.batch} onChange={e => updateBatch(idx, 'batch', parseInt(e.target.value) || 0)}
+                          className="w-12 h-7 text-xs bg-white border-gray-300" />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input value={bp.label} onChange={e => updateBatch(idx, 'label', e.target.value)}
+                          className="w-24 h-7 text-xs bg-white border-gray-300" />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input value={bp.deadline} onChange={e => updateBatch(idx, 'deadline', e.target.value)}
+                          className="w-28 h-7 text-xs bg-white border-gray-300" placeholder="dd/mm/aaaa" />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input type="number" step="0.01" value={bp.pixPrice} onChange={e => updateBatch(idx, 'pixPrice', e.target.value)}
+                          className="w-24 h-7 text-xs text-right bg-white border-gray-300" />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input type="number" step="0.01" value={bp.card5Total} onChange={e => updateBatch(idx, 'card5Total', e.target.value)}
+                          className="w-24 h-7 text-xs text-right bg-white border-gray-300" />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input type="number" value={bp.card5Installments} onChange={e => updateBatch(idx, 'card5Installments', parseInt(e.target.value) || 5)}
+                          className="w-14 h-7 text-xs text-right bg-white border-gray-300" />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input type="number" step="0.01" value={bp.card10Total} onChange={e => updateBatch(idx, 'card10Total', e.target.value)}
+                          className="w-24 h-7 text-xs text-right bg-white border-gray-300" />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input type="number" value={bp.card10Installments} onChange={e => updateBatch(idx, 'card10Installments', parseInt(e.target.value) || 10)}
+                          className="w-14 h-7 text-xs text-right bg-white border-gray-300" />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Button size="icon" variant="ghost" onClick={() => removeBatch(idx)} disabled={form.batches.length <= 1}
+                          className="h-7 w-7 text-red-500">
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Waterfall preview */}
+          {waterfall && (
+            <div>
+              <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-1">
+                <h3 className="text-sm font-semibold text-gray-800">Preview — Cascata Financeira</h3>
+                <Select value={String(previewBatch)} onValueChange={v => setPreviewBatch(parseInt(v))}>
+                  <SelectTrigger className="w-32 h-8 text-xs bg-white border-gray-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {form.batches.map(b => (
+                      <SelectItem key={b.batch} value={String(b.batch)}>{b.label || `Lote ${b.batch}`}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border border-gray-200 rounded-md overflow-hidden">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="px-3 py-2 text-left text-gray-700 font-semibold w-44">Linha</th>
+                      {waterfall.map(col => (
+                        <th key={col.label} className="px-3 py-2 text-right text-gray-700 font-semibold">{col.label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { key: 'gross', label: 'Preço ofertado (bruto)', cls: 'font-semibold text-gray-900' },
+                      { key: 'cardFee', label: `(-) Taxa gateway (${fmtPct(form.card5FeeRate)} / ${fmtPct(form.card10FeeRate)})`, cls: 'text-orange-600' },
+                      { key: 'taxes', label: `(-) Imposto ${fmtPct(form.taxRate)}`, cls: 'text-red-600' },
+                      { key: 'net', label: 'Líquido pós-impostos', cls: 'font-semibold text-emerald-700 bg-emerald-50' },
+                      { key: 'vendor', label: `(-) Comissão vendedor ${fmtPct(form.vendorCommissionRate)}`, cls: 'text-amber-700' },
+                      { key: 'sobra', label: 'Sobra sócios', cls: 'font-semibold text-blue-700 bg-blue-50' },
+                      { key: 'mm', label: `→ MM ${fmtPct(form.mmRate)} da sobra`, cls: 'text-indigo-700' },
+                      { key: 'hf', label: `→ HF ${fmtPct(form.hfRate)} da sobra`, cls: 'text-violet-700' },
+                    ].map(row => (
+                      <tr key={row.key} className="border-t border-gray-100">
+                        <td className={`px-3 py-2 text-gray-700 ${row.cls}`}>{row.label}</td>
+                        {waterfall.map(col => (
+                          <td key={col.label} className={`px-3 py-2 text-right ${row.cls}`}>
+                            R$ {fmtR((col as Record<string, number>)[row.key] ?? 0)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => { setEditDialogOpen(false); setNewDialogOpen(false); }} className="border-gray-300 text-gray-700">
+            Cancelar
+          </Button>
+          <Button onClick={() => saveMutation.mutate({ id: editing?.id, payload: buildPayload() })}
+            disabled={saveMutation.isPending || !form.turmaId || !form.name}
+            className="bg-blue-600 hover:bg-blue-700 text-white">
+            {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-white border-gray-200">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <CardTitle className="text-gray-900 flex items-center gap-2">
+                <Settings className="w-5 h-5 text-blue-600" />
+                Configuração de Turmas
+              </CardTitle>
+              <CardDescription className="text-gray-500 mt-1">
+                Taxas de imposto, tarifas do gateway e distribuição de receita por turma.
+              </CardDescription>
+            </div>
+            <Button onClick={openNew} className="bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-nova-turma">
+              <Plus className="w-4 h-4 mr-2" /> Nova Turma
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {configs.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Nenhuma configuração encontrada.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {configs.map(cfg => {
+                const batches = cfg.batches as BatchPricingItem[];
+                return (
+                  <div key={cfg.id} className="border border-gray-200 rounded-md p-4 bg-gray-50 space-y-3"
+                    data-testid={`card-turma-${cfg.turmaId}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">{cfg.name}</p>
+                        <p className="text-xs text-gray-500 font-mono">{cfg.turmaId}</p>
+                      </div>
+                      <Badge variant={cfg.active ? 'default' : 'secondary'}
+                        className={cfg.active ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500'}>
+                        {cfg.active ? 'Ativa' : 'Inativa'}
+                      </Badge>
+                    </div>
+
+                    <div className="text-xs space-y-1">
+                      <div className="flex justify-between text-gray-600">
+                        <span>Imposto</span><span className="font-mono">{(cfg.taxRate * 100).toFixed(2)}%</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Gateway 5x / 10x</span>
+                        <span className="font-mono">{(cfg.card5FeeRate * 100).toFixed(2)}% / {(cfg.card10FeeRate * 100).toFixed(2)}%</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Comissão vendedor</span><span className="font-mono text-amber-700">{(cfg.vendorCommissionRate * 100).toFixed(2)}%</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>MM / HF</span>
+                        <span className="font-mono text-indigo-700">{(cfg.mmRate * 100).toFixed(2)}% / {(cfg.hfRate * 100).toFixed(2)}%</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Lotes</span><span>{batches.length}</span>
+                      </div>
+                      {batches.length > 0 && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>PIX {batches[batches.length-1]?.label}</span>
+                          <span className="font-mono">R$ {batches[batches.length-1]?.pixPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button variant="outline" size="sm" onClick={() => openEdit(cfg)}
+                      className="w-full border-gray-300 text-gray-700" data-testid={`button-edit-turma-${cfg.turmaId}`}>
+                      <Edit2 className="w-3 h-3 mr-1" /> Editar
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <ConfigDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+      <ConfigDialog open={newDialogOpen} onOpenChange={setNewDialogOpen} />
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { data: dbInfo } = useQuery<{ dbUrl: string }>({
     queryKey: ['/api/db-info'],
@@ -5385,6 +5908,10 @@ export default function AdminPage() {
               <TrendingUp className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Stats</span>
             </TabsTrigger>
+            <TabsTrigger value="turmas" data-testid="tab-turmas" className="data-[state=active]:bg-gray-100 flex-1 min-w-[60px] px-2 py-1.5">
+              <Settings className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Turmas</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="crm">
@@ -5405,6 +5932,10 @@ export default function AdminPage() {
 
           <TabsContent value="analytics">
             <AnalyticsSection />
+          </TabsContent>
+
+          <TabsContent value="turmas">
+            <TurmaConfigsSection />
           </TabsContent>
         </Tabs>
 

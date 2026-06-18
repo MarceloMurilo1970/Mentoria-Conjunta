@@ -1,7 +1,40 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, jsonb, serial, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// ------ Turma Configuration ------
+export interface BatchPricingItem {
+  batch: number;
+  label: string;
+  deadline: string;
+  pixPrice: number;          // R$ (float)
+  card5Total: number;        // R$ total cobrado no cartão 5x
+  card5Installments: number; // número de parcelas (5)
+  card10Total: number;       // R$ total cobrado no cartão 10x
+  card10Installments: number; // número de parcelas (10)
+}
+
+export const turmaConfigs = pgTable("turma_configs", {
+  id: serial("id").primaryKey(),
+  turmaId: text("turma_id").notNull().unique(),    // "turma_3", "turma_4", …
+  name: text("name").notNull(),
+  active: boolean("active").notNull().default(true),
+  taxRate: real("tax_rate").notNull().default(0.1175),           // imposto sobre bruto
+  card5FeeRate: real("card5_fee_rate").notNull().default(0.088), // taxa gateway 5x
+  card10FeeRate: real("card10_fee_rate").notNull().default(0.1506), // taxa gateway 10x
+  vendorCommissionRate: real("vendor_commission_rate").notNull().default(0.1667), // % do líquido
+  mmRate: real("mm_rate").notNull().default(0.6667),             // % da sobra → Marcelo
+  hfRate: real("hf_rate").notNull().default(0.3333),             // % da sobra → Hamilton
+  card5PaymentLink: text("card5_payment_link").notNull().default(""),
+  card10PaymentLink: text("card10_payment_link").notNull().default(""),
+  batches: jsonb("batches").$type<BatchPricingItem[]>().notNull().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTurmaConfigSchema = createInsertSchema(turmaConfigs).omit({ id: true, createdAt: true });
+export type InsertTurmaConfig = z.infer<typeof insertTurmaConfigSchema>;
+export type TurmaConfig = typeof turmaConfigs.$inferSelect;
 
 // Users table for authentication (admin and vendor access)
 export const users = pgTable("users", {

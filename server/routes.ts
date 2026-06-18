@@ -859,6 +859,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ---- Turma Configs API ----
+  // Seed on startup
+  storage.seedTurmaConfigsIfEmpty().catch(e => console.error("[seed] turma_configs error:", e));
+
+  app.get("/api/turma-configs", async (_req, res) => {
+    try {
+      const configs = await storage.getTurmaConfigs();
+      res.json(configs);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar configurações de turma" });
+    }
+  });
+
+  app.post("/api/turma-configs", async (req, res) => {
+    try {
+      const config = await storage.createTurmaConfig(req.body);
+      res.json(config);
+    } catch (error) {
+      console.error("Error creating turma config:", error);
+      res.status(500).json({ error: "Erro ao criar configuração de turma" });
+    }
+  });
+
+  app.patch("/api/turma-configs/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
+      const updated = await storage.updateTurmaConfig(id, req.body);
+      if (!updated) return res.status(404).json({ error: "Configuração não encontrada" });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating turma config:", error);
+      res.status(500).json({ error: "Erro ao atualizar configuração de turma" });
+    }
+  });
+
   // Batch configuration for pricing
   const BATCH_PRICING = [
     { batch: 1, pixPrice: 8000, installmentTotal: 8875, installment10Total: 8875 },

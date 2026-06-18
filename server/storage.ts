@@ -8,7 +8,8 @@ import {
   type User, type InsertUser, users,
   type VendorActivityLog, type InsertVendorActivityLog, vendorActivityLog,
   type CommissionPayment, type InsertCommissionPayment, commissionPayments,
-  type CommissionPaymentHistory, type InsertCommissionPaymentHistory, commissionPaymentHistory
+  type CommissionPaymentHistory, type InsertCommissionPaymentHistory, commissionPaymentHistory,
+  type TurmaConfig, type InsertTurmaConfig, turmaConfigs, type BatchPricingItem
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, gte, isNull, and, or, ilike } from "drizzle-orm";
@@ -88,6 +89,13 @@ export interface IStorage {
   updateHamiltonPayment(id: string, update: HamiltonPaymentUpdate): Promise<Registration | undefined>;
   updateBatch(id: string, update: BatchUpdate): Promise<Registration | undefined>;
   updateNfStatus(id: string, update: NfUpdate): Promise<Registration | undefined>;
+
+  // Turma configs
+  getTurmaConfigs(): Promise<TurmaConfig[]>;
+  getTurmaConfig(turmaId: string): Promise<TurmaConfig | undefined>;
+  createTurmaConfig(data: InsertTurmaConfig): Promise<TurmaConfig>;
+  updateTurmaConfig(id: number, data: Partial<InsertTurmaConfig>): Promise<TurmaConfig | undefined>;
+  seedTurmaConfigsIfEmpty(): Promise<void>;
 }
 
 export class DbStorage implements IStorage {
@@ -829,6 +837,87 @@ export class DbStorage implements IStorage {
     }
 
     return { marceloTotal, marceloReceived, hamiltonTotal, hamiltonReceived };
+  }
+
+  // ---- Turma Configs ----
+  async getTurmaConfigs(): Promise<TurmaConfig[]> {
+    return await db.select().from(turmaConfigs).orderBy(desc(turmaConfigs.createdAt));
+  }
+
+  async getTurmaConfig(turmaId: string): Promise<TurmaConfig | undefined> {
+    const result = await db.select().from(turmaConfigs).where(eq(turmaConfigs.turmaId, turmaId)).limit(1);
+    return result[0];
+  }
+
+  async createTurmaConfig(data: InsertTurmaConfig): Promise<TurmaConfig> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await db.insert(turmaConfigs).values(data as any).returning();
+    return result[0];
+  }
+
+  async updateTurmaConfig(id: number, data: Partial<InsertTurmaConfig>): Promise<TurmaConfig | undefined> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await db.update(turmaConfigs).set(data as any).where(eq(turmaConfigs.id, id)).returning();
+    return result[0];
+  }
+
+  async seedTurmaConfigsIfEmpty(): Promise<void> {
+    const existing = await db.select().from(turmaConfigs).limit(1);
+    if (existing.length > 0) return;
+
+    const legacyBatches: BatchPricingItem[] = [
+      { batch: 1, label: "Lote 1", deadline: "07/12/2025", pixPrice: 8000, card5Total: 8875, card5Installments: 5, card10Total: 8875, card10Installments: 5 },
+      { batch: 2, label: "Lote 2", deadline: "31/12/2025", pixPrice: 8700, card5Total: 9650, card5Installments: 5, card10Total: 9650, card10Installments: 5 },
+      { batch: 3, label: "Lote 3", deadline: "04/01/2026", pixPrice: 9400, card5Total: 10425, card5Installments: 5, card10Total: 11000, card10Installments: 10 },
+      { batch: 4, label: "Lote 4 (Especial)", deadline: "Condição Especial", pixPrice: 10000, card5Total: 10000, card5Installments: 10, card10Total: 10000, card10Installments: 10 },
+    ];
+
+    await db.insert(turmaConfigs).values([
+      {
+        turmaId: "turma_2",
+        name: "Turma 2 (Legado)",
+        active: false,
+        taxRate: 0.1175,
+        card5FeeRate: 0.088,
+        card10FeeRate: 0.1506,
+        vendorCommissionRate: 0.05,
+        mmRate: 0.6667,
+        hfRate: 0.3333,
+        card5PaymentLink: "",
+        card10PaymentLink: "",
+        batches: legacyBatches,
+      },
+      {
+        turmaId: "turma_3",
+        name: "Turma 3 — Segundas-feiras",
+        active: true,
+        taxRate: 0.1175,
+        card5FeeRate: 0.088,
+        card10FeeRate: 0.1506,
+        vendorCommissionRate: 0.1667,
+        mmRate: 0.6667,
+        hfRate: 0.3333,
+        card5PaymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
+        card10PaymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
+        batches: legacyBatches,
+      },
+      {
+        turmaId: "turma_4",
+        name: "Turma 4 — Quartas-feiras",
+        active: true,
+        taxRate: 0.1175,
+        card5FeeRate: 0.088,
+        card10FeeRate: 0.1506,
+        vendorCommissionRate: 0.1667,
+        mmRate: 0.6667,
+        hfRate: 0.3333,
+        card5PaymentLink: "",
+        card10PaymentLink: "",
+        batches: legacyBatches,
+      },
+    ]);
+
+    console.log("[seed] turma_configs seeded with 3 initial configs");
   }
 }
 

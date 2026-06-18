@@ -2759,7 +2759,13 @@ Qualquer dúvida, estamos à disposição!`;
       <Card className="bg-white border-gray-200 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-gray-900">Inscrições da Mentoria — Turmas 3 e 4</CardTitle>
+            <CardTitle className="text-gray-900">
+              Inscrições da Mentoria —{' '}
+              {turmaFilter === 'turma_2' ? 'Turma 2 (Legado)'
+                : turmaFilter === 'turma_3' ? 'Turma 3'
+                : turmaFilter === 'turma_4' ? 'Turma 4'
+                : 'Turmas 3 e 4'}
+            </CardTitle>
             <CardDescription className="text-gray-600">
               Agosto a Outubro 2026 · Marcelo Murilo & Hamilton Felix
             </CardDescription>

@@ -976,18 +976,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         remainingPaymentDate: null,
       });
 
-      // Emit NF automatically when confirming payment
-      if (received) {
-        triggerNfEmission(id, {
-          name: registration.name,
-          cpfCnpj: registration.cpfCnpj,
-          email: registration.email,
-          paidAmount,
-          turma: registration.turma,
-          nfId: registration.nfId ?? null,
-        });
-      }
-
       const updated = await storage.getRegistration(id);
       res.json({ success: true, registration: updated });
     } catch (error) {
@@ -1035,18 +1023,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalAmount: effectiveTotal,
         remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? new Date(remainingPaymentDate) : null,
       });
-
-      // Emit NF automatically when confirming full payment
-      if (paymentStatus === 'pago') {
-        triggerNfEmission(id, {
-          name: registration.name,
-          cpfCnpj: registration.cpfCnpj,
-          email: registration.email,
-          paidAmount: validatedPaidAmount,
-          turma: registration.turma,
-          nfId: registration.nfId ?? null,
-        });
-      }
 
       const updated = await storage.getRegistration(id);
       res.json({ success: true, registration: updated });

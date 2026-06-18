@@ -110,15 +110,22 @@ export async function cancelNF(
     body: JSON.stringify({ justificativa }),
   });
 
+  const data = await response.json().catch(() => ({}));
+  console.log(`[NF] Cancel response for nfId=${nfId}: HTTP ${response.status}`, JSON.stringify(data));
+
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(`Faturador API ${response.status}: ${JSON.stringify(err)}`);
+    throw new Error(`Faturador API ${response.status}: ${JSON.stringify(data)}`);
   }
 
-  const data = await response.json();
+  const resolvedStatus: string = data.invoice?.status ?? data.status ?? data.nfse?.status ?? null;
+  if (!resolvedStatus) {
+    console.warn(`[NF] Cancel for nfId=${nfId} returned OK but no status field. Full body: ${JSON.stringify(data)}`);
+    throw new Error(`Cancelamento não confirmado pelo Faturador — resposta sem status. Verifique o sistema de faturamento manualmente.`);
+  }
+
   return {
     success: true,
-    status: data.invoice?.status ?? data.status ?? "cancelled",
+    status: resolvedStatus,
     canceladaEm: data.invoice?.canceladaEm ?? undefined,
   };
 }

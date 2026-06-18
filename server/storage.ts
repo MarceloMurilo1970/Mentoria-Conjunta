@@ -862,16 +862,29 @@ export class DbStorage implements IStorage {
   }
 
   async seedTurmaConfigsIfEmpty(): Promise<void> {
+    const EXPECTED_LOTE3_PIX = 10756.65; // current price on mentoria page
+
     const existing = await db.select().from(turmaConfigs).limit(1);
     if (existing.length > 0) {
       // Check if existing data uses old format (no plans array)
       const firstBatches = existing[0].batches as any[];
-      if (firstBatches.length > 0 && firstBatches[0].plans) {
-        return; // Already new format, skip
+      const hasPlans = firstBatches.length > 0 && firstBatches[0].plans;
+      if (hasPlans) {
+        // Check if the lote 3 PIX price is already correct
+        const allConfigs = await db.select().from(turmaConfigs);
+        const t3 = allConfigs.find(c => c.turmaId === "turma_3");
+        if (t3) {
+          const t3Batches = t3.batches as any[];
+          const lote3 = t3Batches.find((b: any) => b.batch === 3);
+          const pixPlan = lote3?.plans?.find((p: any) => p.id === "pix");
+          if (pixPlan?.totalAmount === EXPECTED_LOTE3_PIX) {
+            return; // Already up-to-date, skip
+          }
+        }
       }
-      // Old format detected — delete all and re-seed with new format
+      // Old format or stale values detected — delete all and re-seed
       await db.delete(turmaConfigs);
-      console.log("[seed] turma_configs: old format detected, re-seeding with new plans format");
+      console.log("[seed] turma_configs: stale data detected, re-seeding with current prices");
     }
 
     // turma_2 (legacy, 5% vendor)
@@ -905,15 +918,15 @@ export class DbStorage implements IStorage {
         { id: "pix", label: "PIX", totalAmount: 8700, installments: 1, feeRate: 0, paymentLink: "" },
         { id: "installments", label: "5x Cartão", totalAmount: 9650, installments: 5, feeRate: 0.088, paymentLink: "" },
       ]},
-      { batch: 3, label: "Lote 3", deadline: "04/01/2026", plans: [
-        { id: "pix", label: "PIX", totalAmount: 9952.18, installments: 1, feeRate: 0, paymentLink: "" },
-        { id: "installments", label: "5x Cartão", totalAmount: 11054.50, installments: 5, feeRate: 0.088, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00" },
-        { id: "installments10", label: "10x Cartão", totalAmount: 12000, installments: 10, feeRate: 0.1506, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
+      { batch: 3, label: "Lote 3", deadline: "07/08/2026", plans: [
+        { id: "pix", label: "PIX", totalAmount: 10756.65, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 11950, installments: 5, feeRate: 0.088, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00" },
+        { id: "installments10", label: "10x Cartão", totalAmount: 12970, installments: 10, feeRate: 0.1506, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
       ]},
       { batch: 4, label: "Lote 4 (Especial)", deadline: "Condição Especial", plans: [
-        { id: "pix", label: "PIX", totalAmount: 9952.18, installments: 1, feeRate: 0, paymentLink: "" },
-        { id: "installments", label: "5x Cartão", totalAmount: 11054.50, installments: 5, feeRate: 0.088, paymentLink: "" },
-        { id: "installments10", label: "10x Cartão", totalAmount: 12000, installments: 10, feeRate: 0.1506, paymentLink: "" },
+        { id: "pix", label: "PIX", totalAmount: 10756.65, installments: 1, feeRate: 0, paymentLink: "" },
+        { id: "installments", label: "5x Cartão", totalAmount: 11950, installments: 5, feeRate: 0.088, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00" },
+        { id: "installments10", label: "10x Cartão", totalAmount: 12970, installments: 10, feeRate: 0.1506, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
       ]},
     ];
 

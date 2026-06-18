@@ -1456,16 +1456,20 @@ Qualquer dúvida, estamos à disposição!`;
     );
   }
 
-  const paidCount = registrations?.filter(r => r.paymentReceived).length || 0;
-  const totalCount = registrations?.length || 0;
-  const pixCount = registrations?.filter(r => r.paymentMethod === 'pix').length || 0;
+  const filteredRegistrations = turmaFilter === 'todas'
+    ? (registrations || [])
+    : (registrations || []).filter(r => r.turma === turmaFilter);
+
+  const paidCount = filteredRegistrations.filter(r => r.paymentReceived).length;
+  const totalCount = filteredRegistrations.length;
+  const pixCount = filteredRegistrations.filter(r => r.paymentMethod === 'pix').length;
   const installmentsCount = totalCount - pixCount;
   
   // Get list of vendors with commission enabled for filtering
   const vendorsWithCommission = vendors.filter(v => v.hasCommission !== false).map(v => v.name);
   
   // Calculate total commissions (only count vendor commissions for vendors with hasCommission=true)
-  const totalCommissions = (registrations || []).reduce((acc, reg) => {
+  const totalCommissions = filteredRegistrations.reduce((acc, reg) => {
     const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
     const comms = calculateCommissions(reg, batchConfig);
     // Only add vendor commission if vendor has commission enabled
@@ -1481,6 +1485,34 @@ Qualquer dúvida, estamos à disposição!`;
 
   return (
     <div className="space-y-6">
+      {/* Turma filter — afeta TODOS os cards e a lista abaixo */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium text-gray-600">Exibindo:</span>
+        {([
+          ['todas',   'Todas as turmas'],
+          ['turma_2', 'Turma 2 (legado)'],
+          ['turma_3', 'Turma 3 — Seg'],
+          ['turma_4', 'Turma 4 — Qua'],
+        ] as const).map(([val, label]) => {
+          const count = val === 'todas'
+            ? (registrations?.length || 0)
+            : (registrations?.filter(r => r.turma === val).length || 0);
+          return (
+            <Button
+              key={val}
+              size="sm"
+              variant={turmaFilter === val ? 'default' : 'outline'}
+              onClick={() => setTurmaFilter(val)}
+              className="border-gray-300 text-xs"
+              data-testid={`button-turma-filter-${val}`}
+            >
+              {label}
+              <span className="ml-1 opacity-60">({count})</span>
+            </Button>
+          );
+        })}
+      </div>
+
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-white border-gray-200 shadow-sm">
@@ -2663,22 +2695,9 @@ Qualquer dúvida, estamos à disposição!`;
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Turma filter tabs */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {([['todas', 'Todas'] , ['turma_2', 'Turma 2 (legado)'], ['turma_3', 'Turma 3 — Seg'], ['turma_4', 'Turma 4 — Qua']] as const).map(([val, label]) => {
-              const count = val === 'todas' ? (registrations?.length || 0) : (registrations?.filter(r => r.turma === val).length || 0);
-              return (
-                <Button key={val} size="sm" variant={turmaFilter === val ? 'default' : 'outline'} onClick={() => setTurmaFilter(val)} className="border-gray-300 text-xs">
-                  {label} <span className="ml-1 opacity-70">({count})</span>
-                </Button>
-              );
-            })}
-          </div>
-          {(() => {
-            const filtered = turmaFilter === 'todas' ? (registrations || []) : (registrations || []).filter(r => r.turma === turmaFilter);
-            return filtered && filtered.length > 0 ? (
+          {filteredRegistrations.length > 0 ? (
             <div className="space-y-4">
-              {filtered.map((reg, index) => {
+              {filteredRegistrations.map((reg, index) => {
                 const batchConfig = currentBatchConfig.find(b => b.batch === (reg.batch || 1)) || currentBatchConfig[0];
                 const commissions = calculateCommissions(reg, batchConfig);
                 
@@ -3131,8 +3150,7 @@ Qualquer dúvida, estamos à disposição!`;
             <div className="text-center py-8 text-gray-400">
               Nenhuma inscrição registrada ainda.
             </div>
-          );
-          })()}
+          )}
         </CardContent>
       </Card>
 

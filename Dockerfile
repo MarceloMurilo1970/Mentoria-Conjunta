@@ -46,4 +46,4 @@ COPY --from=builder /app/attached_assets ./attached_assets
 
 EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "--unhandled-rejections=warn", "dist/index.js"]

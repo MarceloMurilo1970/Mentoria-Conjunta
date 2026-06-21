@@ -23,8 +23,9 @@ RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 COPY . .
 
 # Build: Vite (front) + esbuild (back)
+# --external:./vite exclui o módulo dev-only do bundle de produção
 RUN pnpm exec vite build && \
-    pnpm exec esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+    pnpm exec esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --external:./vite
 
 # Instala apenas dependências de produção
 RUN pnpm install --prod --no-frozen-lockfile
@@ -46,4 +47,4 @@ COPY --from=builder /app/attached_assets ./attached_assets
 
 EXPOSE 3000
 
-CMD ["node", "--unhandled-rejections=warn", "dist/index.js"]
+CMD ["node", "dist/index.js"]

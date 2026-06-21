@@ -41,9 +41,8 @@ ENV PORT=3000
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
-
-# Assets usados pelo frontend (já compilados no dist/public)
-# O dist/public contém o build do Vite com tudo embutido
+# Assets usados pelo email (servidos via Express em /email-assets)
+COPY --from=builder /app/attached_assets ./attached_assets
 
 EXPOSE 3000
 

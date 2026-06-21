@@ -17,6 +17,7 @@ import isabellaSaltonPhoto from "@assets/image_1764036258435.png";
 import luizBuenoPhoto from "@assets/image_1764117861153.png";
 import elizaCoralPhoto from "@assets/image_1764192966736.png";
 import ronaldoCarneiroPhoto from "@assets/image_1764434298472.png";
+import marcosArgachoyPhoto from "@assets/marcos_argachoy.jpg";
 
 const testimonials = [
   {
@@ -78,6 +79,14 @@ const testimonials = [
     videoUrl: "https://marcelomurilo-my.sharepoint.com/:v:/g/personal/contato_marcelomurilo_com_br/IQCIaHgiaB8YQ5zEAsGeu8LzAd-qj36gJXa9RYbXzp2hVsI?e=hxUtdy",
     text: "Por atuar em Consultoria com empresas familiares, em 2025 fui estudar governança corporativa.\n\nConheci o Marcelo Murilo, acompanhei seus posts no LinkedIn, gostei da forma que ele ensina.\n\nAlém de empresário, Marcelo atua como Conselheiro em várias empresas. Ele tem autoridade e maestria para orientar a transição para Conselhos.\n\nFiz Mentoria em grupo com MM, aprendi muito, principalmente para identificar meu propósito profissional.\n\nCada encontro, um relatório claro, objetivo e personalizado, direcionando a pessoa a se conhecer, como também compartilhar conhecimentos de forma estruturada para alcançar seu público alvo.\n\nDefinição de propósito, clareza sobre meu posicionamento, além de entender cada passo da transição de forma estruturada e prompts de IA personalizados que me ajudam muito no dia a dia, foram apenas alguns dos ganhos que obtive na Mentoria com MM.\n\nValeu muito o investimento!",
     highlightPhrase: "Valeu muito o investimento!",
+  },
+  {
+    name: "Marcos Argachoy",
+    role: "Conselheiro",
+    linkedin: "https://www.linkedin.com/in/marcosargachoy/",
+    photo: marcosArgachoyPhoto,
+    text: "Olá Murilo, ontem mesmo estava trocando mensagens com o Marcelo Martin (turma 1) e comentando como foi e tem sido muito proveitosa a mentoria com vocês!\n\nEstou conseguindo excelentes conexões, ainda não tive frutos dessas conexões mas me surpreendi com alguns comentários bem satisfatórios de CEOs e outros conselheiros e em números já adicionados mais de 600 contatos novos e importantes!\n\nSério, fiquei muito contente e abriu um leque enorme de oportunidades na minha cabeça. Melhorou até meu relacionamento com os diretores da empresa onde estou.\n\nSó tenho a agradecer e elogiar a mentoria, vale cada centavo investido!!!! E muito mais! Grande abraço e vamos nos falando!",
+    highlightPhrase: "Vale cada centavo investido! E muito mais!",
   },
 ];
 

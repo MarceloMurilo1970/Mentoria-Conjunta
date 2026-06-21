@@ -1,25 +1,50 @@
-# Usa imagem base que já tem: node + libs nativas + node_modules
-ARG BASE_IMAGE=127259105548.dkr.ecr.us-east-1.amazonaws.com/ecr_mentoria_base:latest
-FROM ${BASE_IMAGE}
+# ========= BUILD STAGE =========
+FROM node:20-slim AS builder
 
 WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=80
 
-# Copia código fonte (node_modules já estão na base)
+# Dependências de sistema para pacotes nativos (bcrypt, pdfkit, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3 \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instala pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copia manifestos
+COPY package.json pnpm-lock.yaml .pnpm-settings.yaml ./
+
+# Instala dependências
+RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
+
+# Copia código fonte
 COPY . .
 
-# Recebe commit hash do build-arg
-ARG COMMIT_HASH=dev
-ENV VITE_COMMIT_HASH=${COMMIT_HASH}
-
 # Build: Vite (front) + esbuild (back)
-# --external:./vite mantém o require dinâmico do vite fora do bundle (só roda em dev)
-RUN npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --external:./vite
+RUN pnpm exec vite build && \
+    pnpm exec esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
-# Trocar node_modules completo pelo prod-only (remove devDeps)
-RUN rm -rf node_modules && mv node_modules_prod node_modules
+# Instala apenas dependências de produção
+RUN pnpm install --prod --no-frozen-lockfile
 
-EXPOSE 80
+# ========= RUNTIME STAGE =========
+FROM node:20-slim
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Copia apenas o necessário para rodar
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+# Assets usados pelo frontend (já compilados no dist/public)
+# O dist/public contém o build do Vite com tudo embutido
+
+EXPOSE 3000
 
 CMD ["node", "dist/index.js"]

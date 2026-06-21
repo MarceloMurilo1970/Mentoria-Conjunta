@@ -1,9 +1,6 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import pg from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
-
-neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -11,24 +8,28 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const poolConfig = {
+const poolConfig: pg.PoolConfig = {
   connectionString: process.env.DATABASE_URL,
   connectionTimeoutMillis: 10000,
   max: 10,
+  // Use SSL only if the URL contains sslmode=require or is a cloud provider
+  ssl: process.env.DATABASE_URL.includes('sslmode=require')
+    ? { rejectUnauthorized: false }
+    : undefined,
 };
 
-export const pool = new Pool(poolConfig);
+export const pool = new pg.Pool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('Unexpected pool error:', err.message);
 });
 
-export const db = drizzle({ client: pool, schema });
+export const db = drizzle(pool, { schema });
 
 export async function ensureConnection(): Promise<boolean> {
   const maxRetries = 5;
   const baseDelay = 1000;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const client = await pool.connect();

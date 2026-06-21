@@ -1,18 +1,16 @@
-import { config } from "dotenv";
-import { resolve } from "path";
-
-// Try loading .env from multiple locations (Dokploy may place it differently)
-config({ path: resolve(process.cwd(), '.env') });
-config({ path: resolve('/app', '.env') });
-config({ path: resolve('/app/.env') });
-
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
 
+// Load .env file (Dokploy createEnvFile places it in working dir)
+import { config as dotenvConfig } from "dotenv";
+dotenvConfig();
+
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
-  console.error("FATAL: DATABASE_URL not set. CWD:", process.cwd(), "ENV keys:", Object.keys(process.env).filter(k => k.startsWith('D') || k.startsWith('N') || k.startsWith('P')).join(','));
+  console.error("FATAL: DATABASE_URL not set after dotenv load.");
+  console.error("CWD:", process.cwd());
+  console.error("ENV keys:", Object.keys(process.env).sort().join(', '));
   process.exit(1);
 }
 

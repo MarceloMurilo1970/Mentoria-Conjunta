@@ -1,22 +1,27 @@
 import { config } from "dotenv";
-config(); // Load .env file if present (Dokploy createEnvFile)
+import { resolve } from "path";
+
+// Try loading .env from multiple locations (Dokploy may place it differently)
+config({ path: resolve(process.cwd(), '.env') });
+config({ path: resolve('/app', '.env') });
+config({ path: resolve('/app/.env') });
 
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+const dbUrl = process.env.DATABASE_URL;
+if (!dbUrl) {
+  console.error("FATAL: DATABASE_URL not set. CWD:", process.cwd(), "ENV keys:", Object.keys(process.env).filter(k => k.startsWith('D') || k.startsWith('N') || k.startsWith('P')).join(','));
+  process.exit(1);
 }
 
 const poolConfig: pg.PoolConfig = {
-  connectionString: process.env.DATABASE_URL,
+  connectionString: dbUrl,
   connectionTimeoutMillis: 10000,
   max: 10,
   // Use SSL only if the URL contains sslmode=require or is a cloud provider
-  ssl: process.env.DATABASE_URL.includes('sslmode=require')
+  ssl: dbUrl.includes('sslmode=require')
     ? { rejectUnauthorized: false }
     : undefined,
 };

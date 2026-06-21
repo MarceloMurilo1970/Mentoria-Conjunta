@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Instala pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Instala pnpm (versão compatível com Node 20)
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
 # Copia manifestos
 COPY package.json pnpm-lock.yaml .pnpm-settings.yaml ./

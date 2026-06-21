@@ -769,7 +769,7 @@ export default function Home() {
             Depoimentos de Mentorados
           </h2>
           <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-            Veja o que nossos mentorados têm a dizer sobre a experiência
+            Veja o que nossos mentorados têm a dizer sobre a experiência na mentoria
           </p>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

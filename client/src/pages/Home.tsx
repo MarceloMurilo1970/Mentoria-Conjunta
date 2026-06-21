@@ -772,7 +772,7 @@ export default function Home() {
             Veja o que nossos mentorados têm a dizer sobre a experiência na mentoria
           </p>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {testimonials.map((testimonial, index) => (
               <TestimonialTile
                 key={index}

@@ -39,15 +39,15 @@ export default function TestimonialTile({
 
   const renderText = () => {
     if (isExpanded) {
-      return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
+      return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line text-sm">{text}</p>;
     }
 
     if (highlightPhrase && isLongText) {
       return (
-        <div className="space-y-4">
-          <p className="text-lg font-semibold text-primary italic">"{highlightPhrase}"</p>
-          <p className="text-sm text-muted-foreground italic">
-            {text.slice(0, 150)}...
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-primary italic">"{highlightPhrase}"</p>
+          <p className="text-xs text-muted-foreground italic">
+            {text.slice(0, 120)}...
           </p>
         </div>
       );
@@ -55,9 +55,9 @@ export default function TestimonialTile({
 
     if (highlightPhrase && !isLongText) {
       return (
-        <div className="space-y-4">
-          <p className="text-lg font-semibold text-primary italic">"{highlightPhrase}"</p>
-          <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-primary italic">"{highlightPhrase}"</p>
+          <p className="text-xs italic text-muted-foreground leading-relaxed whitespace-pre-line">
             {text}
           </p>
         </div>
@@ -66,22 +66,22 @@ export default function TestimonialTile({
 
     if (text.length > 500) {
       return (
-        <p className="italic text-muted-foreground leading-relaxed">
-          {text.slice(0, 250)}...
+        <p className="text-sm italic text-muted-foreground leading-relaxed">
+          {text.slice(0, 200)}...
         </p>
       );
     }
 
-    return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
+    return <p className="text-sm italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
   };
 
   return (
     <Card className="border-card-border hover-elevate h-full flex flex-col" data-testid={`testimonial-${name.toLowerCase().replace(/\s+/g, '-')}`}>
-      <CardContent className="pt-6 pb-6 flex flex-col flex-1">
-        <Quote className="w-8 h-8 text-primary mb-4" />
+      <CardContent className="pt-4 pb-4 flex flex-col flex-1">
+        <Quote className="w-5 h-5 text-primary mb-3" />
         
         {videoUrl && (
-          <div className="mb-6">
+          <div className="mb-4">
             <a
               href={videoUrl}
               target="_blank"
@@ -89,7 +89,6 @@ export default function TestimonialTile({
               className="block relative group overflow-hidden rounded-lg"
               data-testid={`link-video-${name.toLowerCase().replace(/\s+/g, '-')}`}
             >
-              {/* Video Thumbnail */}
               <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
                 {videoThumbnail && (
                   <img
@@ -98,16 +97,12 @@ export default function TestimonialTile({
                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-70 transition-opacity"
                   />
                 )}
-                
-                {/* Dark Overlay */}
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors"></div>
-                
-                {/* Play Button */}
-                <div className="relative z-10 flex flex-col items-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary transition-colors border-2 border-white/20">
-                    <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                <div className="relative z-10 flex flex-col items-center gap-2">
+                  <div className="w-11 h-11 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary transition-colors border-2 border-white/20">
+                    <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
                   </div>
-                  <span className="text-white font-semibold text-sm uppercase tracking-wide">
+                  <span className="text-white font-semibold text-xs uppercase tracking-wide">
                     Assista o Depoimento
                   </span>
                 </div>
@@ -116,7 +111,7 @@ export default function TestimonialTile({
           </div>
         )}
         
-        <div className="flex-1 mb-6" data-testid={`text-${name.toLowerCase().replace(/\s+/g, '-')}`}>
+        <div className="flex-1 mb-4" data-testid={`text-${name.toLowerCase().replace(/\s+/g, '-')}`}>
           {renderText()}
         </div>
 
@@ -125,34 +120,34 @@ export default function TestimonialTile({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="mb-4 w-full justify-center"
+            className="mb-3 w-full justify-center text-xs"
             data-testid={`button-expand-${name.toLowerCase().replace(/\s+/g, '-')}`}
           >
             {isExpanded ? (
               <>
-                <ChevronUp className="w-4 h-4 mr-2" />
+                <ChevronUp className="w-3 h-3 mr-1" />
                 Ver menos
               </>
             ) : (
               <>
-                <ChevronDown className="w-4 h-4 mr-2" />
+                <ChevronDown className="w-3 h-3 mr-1" />
                 Ler depoimento completo
               </>
             )}
           </Button>
         )}
 
-        <div className="border-t border-border pt-4 flex items-center gap-4">
-          <Avatar className="w-12 h-12">
+        <div className="border-t border-border pt-3 flex items-center gap-3">
+          <Avatar className="w-9 h-9">
             {photo && <AvatarImage src={photo} alt={name} />}
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
               {getInitials(name)}
             </AvatarFallback>
           </Avatar>
           
-          <div className="flex-1">
-            <p className="font-semibold text-foreground">{name}</p>
-            <p className="text-sm text-muted-foreground">{role}</p>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground text-sm leading-tight truncate">{name}</p>
+            <p className="text-xs text-muted-foreground truncate">{role}</p>
           </div>
 
           {linkedin && (
@@ -160,10 +155,10 @@ export default function TestimonialTile({
               href={linkedin}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:text-primary/80"
+              className="text-primary hover:text-primary/80 shrink-0"
               data-testid={`link-linkedin-${name.toLowerCase().replace(/\s+/g, '-')}`}
             >
-              <Linkedin className="w-5 h-5" />
+              <Linkedin className="w-4 h-4" />
             </a>
           )}
         </div>

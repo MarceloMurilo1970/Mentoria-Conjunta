@@ -39,15 +39,15 @@ export default function TestimonialTile({
 
   const renderText = () => {
     if (isExpanded) {
-      return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line text-sm">{text}</p>;
+      return <p className="italic text-muted-foreground leading-relaxed whitespace-pre-line text-xs">{text}</p>;
     }
 
     if (highlightPhrase && isLongText) {
       return (
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-primary italic">"{highlightPhrase}"</p>
-          <p className="text-xs text-muted-foreground italic">
-            {text.slice(0, 120)}...
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-primary italic">"{highlightPhrase}"</p>
+          <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+            {text.slice(0, 100)}...
           </p>
         </div>
       );
@@ -55,9 +55,9 @@ export default function TestimonialTile({
 
     if (highlightPhrase && !isLongText) {
       return (
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-primary italic">"{highlightPhrase}"</p>
-          <p className="text-xs italic text-muted-foreground leading-relaxed whitespace-pre-line">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-primary italic">"{highlightPhrase}"</p>
+          <p className="text-[11px] italic text-muted-foreground leading-relaxed whitespace-pre-line">
             {text}
           </p>
         </div>
@@ -66,22 +66,22 @@ export default function TestimonialTile({
 
     if (text.length > 500) {
       return (
-        <p className="text-sm italic text-muted-foreground leading-relaxed">
-          {text.slice(0, 200)}...
+        <p className="text-xs italic text-muted-foreground leading-relaxed">
+          {text.slice(0, 150)}...
         </p>
       );
     }
 
-    return <p className="text-sm italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
+    return <p className="text-xs italic text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>;
   };
 
   return (
     <Card className="border-card-border hover-elevate h-full flex flex-col" data-testid={`testimonial-${name.toLowerCase().replace(/\s+/g, '-')}`}>
-      <CardContent className="pt-4 pb-4 flex flex-col flex-1">
-        <Quote className="w-5 h-5 text-primary mb-3" />
+      <CardContent className="pt-3 pb-3 px-3 flex flex-col flex-1">
+        <Quote className="w-4 h-4 text-primary mb-2" />
         
         {videoUrl && (
-          <div className="mb-4">
+          <div className="mb-3">
             <a
               href={videoUrl}
               target="_blank"
@@ -98,12 +98,12 @@ export default function TestimonialTile({
                   />
                 )}
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors"></div>
-                <div className="relative z-10 flex flex-col items-center gap-2">
-                  <div className="w-11 h-11 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary transition-colors border-2 border-white/20">
-                    <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+                <div className="relative z-10 flex flex-col items-center gap-1">
+                  <div className="w-9 h-9 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary transition-colors border-2 border-white/20">
+                    <Play className="w-4 h-4 text-white ml-0.5" fill="white" />
                   </div>
-                  <span className="text-white font-semibold text-xs uppercase tracking-wide">
-                    Assista o Depoimento
+                  <span className="text-white font-semibold text-[10px] uppercase tracking-wide">
+                    Assista
                   </span>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export default function TestimonialTile({
           </div>
         )}
         
-        <div className="flex-1 mb-4" data-testid={`text-${name.toLowerCase().replace(/\s+/g, '-')}`}>
+        <div className="flex-1 mb-3" data-testid={`text-${name.toLowerCase().replace(/\s+/g, '-')}`}>
           {renderText()}
         </div>
 
@@ -137,17 +137,17 @@ export default function TestimonialTile({
           </Button>
         )}
 
-        <div className="border-t border-border pt-3 flex items-center gap-3">
-          <Avatar className="w-9 h-9">
+        <div className="border-t border-border pt-2 flex items-center gap-2">
+          <Avatar className="w-8 h-8">
             {photo && <AvatarImage src={photo} alt={name} />}
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-[10px]">
               {getInitials(name)}
             </AvatarFallback>
           </Avatar>
           
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-foreground text-sm leading-tight truncate">{name}</p>
-            <p className="text-xs text-muted-foreground truncate">{role}</p>
+            <p className="font-semibold text-foreground text-xs leading-tight truncate">{name}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{role}</p>
           </div>
 
           {linkedin && (

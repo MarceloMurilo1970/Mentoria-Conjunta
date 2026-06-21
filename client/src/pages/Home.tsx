@@ -85,8 +85,8 @@ const testimonials = [
     role: "Conselheiro",
     linkedin: "https://www.linkedin.com/in/marcosargachoy/",
     photo: marcosArgachoyPhoto,
-    text: "Olá Murilo, ontem mesmo estava trocando mensagens com o Marcelo Martin (turma 1) e comentando como foi e tem sido muito proveitosa a mentoria com vocês!\n\nEstou conseguindo excelentes conexões, ainda não tive frutos dessas conexões mas me surpreendi com alguns comentários bem satisfatórios de CEOs e outros conselheiros e em números já adicionados mais de 600 contatos novos e importantes!\n\nSério, fiquei muito contente e abriu um leque enorme de oportunidades na minha cabeça. Melhorou até meu relacionamento com os diretores da empresa onde estou.\n\nSó tenho a agradecer e elogiar a mentoria, vale cada centavo investido!!!! E muito mais! Grande abraço e vamos nos falando!",
-    highlightPhrase: "Vale cada centavo investido! E muito mais!",
+    text: "Olá Murilo, ontem mesmo estava trocando mensagens com o Marcelo Martin (turma 1) e comentando como foi e tem sido muito proveitosa a mentoria com vocês!\n\nEstou conseguindo excelentes conexões, ainda não tive frutos dessas conexões mas me surpreendi com alguns comentários bem satisfatórios de CEOs e outros conselheiros e em números já adicionados mais de 600 contatos novos e importantes!\n\nSó tenho a agradecer e elogiar a mentoria, vale cada centavo investido!!!! E muito mais! Grande abraço e vamos nos falando!",
+    highlightPhrase: "Só tenho a agradecer e elogiar a mentoria, vale cada centavo investido!",
   },
 ];
 

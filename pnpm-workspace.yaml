@@ -1,3 +1,0 @@
-allowBuilds:
-  bufferutil: false
-  esbuild: false

@@ -11,6 +11,10 @@ dist
 *.local
 .replit
 replit.md
+pnpm-workspace.yaml
+start-dev.bat
+start-local.bat
+scripts/
 
 # Exports de banco (desnecessários no build)
 db-export-*.json

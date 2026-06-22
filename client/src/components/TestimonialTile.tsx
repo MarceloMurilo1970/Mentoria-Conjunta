@@ -110,6 +110,18 @@ export default function TestimonialTile({
             </a>
           </div>
         )}
+
+        {!videoUrl && photo && (
+          <div className="mb-3">
+            <div className="relative aspect-video overflow-hidden rounded-lg">
+              <img
+                src={photo}
+                alt={name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        )}
         
         <div className="flex-1 mb-3" data-testid={`text-${name.toLowerCase().replace(/\s+/g, '-')}`}>
           {renderText()}

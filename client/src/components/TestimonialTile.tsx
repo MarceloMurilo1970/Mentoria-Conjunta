@@ -94,17 +94,14 @@ export default function TestimonialTile({
                   <img
                     src={videoThumbnail}
                     alt={`${name} - Vídeo Depoimento`}
-                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-70 transition-opacity"
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 )}
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors"></div>
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
                 <div className="relative z-10 flex flex-col items-center gap-1">
-                  <div className="w-9 h-9 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary transition-colors border-2 border-white/20">
+                  <div className="w-9 h-9 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary transition-colors border-2 border-white/30 shadow-lg">
                     <Play className="w-4 h-4 text-white ml-0.5" fill="white" />
                   </div>
-                  <span className="text-white font-semibold text-[10px] uppercase tracking-wide">
-                    Assista
-                  </span>
                 </div>
               </div>
             </a>

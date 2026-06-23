@@ -20,6 +20,7 @@ import ronaldoCarneiroPhoto from "@assets/image_1764434298472.png";
 import marcosArgachoyPhoto from "@assets/marcos_argachoy.jpg";
 import denysNicolosiPhoto from "@assets/denys_nicolosi.png";
 import haroldoLimaPhoto from "@assets/haroldo_lima.png";
+import katyaMangiliPhoto from "@assets/katya_mangili.jpg";
 
 const testimonials = [
   {
@@ -108,6 +109,14 @@ const testimonials = [
     videoUrl: "https://marcelomurilo-my.sharepoint.com/:v:/g/personal/contato_marcelomurilo_com_br/IQDbsUFKjzHZQ5AFGpnmYcvaAUR9u5sHeOdJxLhwVvt0RvU?e=6cC4oi",
     text: "Eu confesso que no começo eu tava bastante reticente com relação a como a mentoria conseguiria me ajudar, até porque eu tava com cinco iniciativas, algumas bastante similares, outras não. E durante todas as sessões, eu vi que independentemente das minhas iniciativas, a mentoria conseguiu me ajudar, conseguiu me colocar num outro patamar.\n\nEu fiquei bastante, bastante mesmo impressionado, não só com a qualidade das discussões que nós tínhamos às segundas-feiras, mas principalmente com os materiais que você desenvolvia antes de cada sessão e principalmente aquele que você disponibilizava pós-sessões.\n\nRealmente era algo bastante tailor made, algo bastante focado em cada um dos mentorados. Isso realmente me ajudou e vem me ajudando bastante.",
     highlightPhrase: "Com relação à mentoria, eu confesso que eu fiquei bastante, bastante mesmo impressionado, não só com a qualidade das discussões... mas principalmente com os materiais...",
+  },
+  {
+    name: "Katya Mangili",
+    role: "Conselheira, Consultora e Mentora",
+    linkedin: "https://www.linkedin.com/in/katyamangilikmconsultoria/",
+    photo: katyaMangiliPhoto,
+    text: "Sou Conselheira, consultora e Mentora especializada em Cultura Organizacional e DHO para PMEs e Empresas Familiares em profissionalização e fiz a mentoria de Conselho com o Marcelo Murilo e Hamilton Felix e foi um divisor de águas no meu posicionamento.\n\nDiagnósticos precisos — Ele vai direto na raiz. Sem rodeio, sem teoria. É um Diagnóstico que enxerga o que a gente não vê. Traz uma base estruturada em conhecimento + prática. É vivência de conselho aplicada ao meu cenário, e Atendimento personalizado pois sua Mentoria foi feita sob medida pra minhas dores e próximos passos.\n\nPra quem quer atuar em Conselho, a diferença está no detalhe. E ele acerta no detalhe.\n\nSaí com muito mais segurança e clareza do caminho correto pra trilhar em Conselho. Fortaleci meu posicionamento e ganhei roteiro pra execução.\n\nRecomendo fortemente pra quem quer parar de \"achar\" e começar a \"saber\" onde pisar em Conselho.",
+    highlightPhrase: "Ele vai direto na raiz. Sem rodeio, sem teoria é um Diagnóstico que enxerga o que a gente não vê. Pra quem quer atuar em Conselho, a diferença está no detalhe. E ele acerta no detalhe.",
   },
 ];
 

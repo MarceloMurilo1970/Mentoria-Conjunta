@@ -18,6 +18,8 @@ import luizBuenoPhoto from "@assets/image_1764117861153.png";
 import elizaCoralPhoto from "@assets/image_1764192966736.png";
 import ronaldoCarneiroPhoto from "@assets/image_1764434298472.png";
 import marcosArgachoyPhoto from "@assets/marcos_argachoy.jpg";
+import denysNicolosiPhoto from "@assets/denys_nicolosi.png";
+import haroldoLimaPhoto from "@assets/haroldo_lima.png";
 
 const testimonials = [
   {
@@ -92,6 +94,8 @@ const testimonials = [
     name: "Denys Nicolosi",
     role: "Engenheiro, Professor e Empresário",
     linkedin: "https://www.linkedin.com/in/denys-nicolosi-366b9a185/",
+    photo: denysNicolosiPhoto,
+    videoThumbnail: denysNicolosiPhoto,
     videoUrl: "https://marcelomurilo-my.sharepoint.com/:v:/g/personal/contato_marcelomurilo_com_br/IQD_X6IbZrsNSITDUrkblu7UAZRgGqqK-DkgyXBz21Daeow?e=0Jshjb",
     text: "Diferente dos outros cursos de conselheiro que focam apenas na governança, essa mentoria foca em algo mais vital hoje, que é a construção de uma figura de autoridade. Ele entrega técnicas avançadas de inteligência artificial que potencializam muito a nossa especialidade, criando esse mecanismo de autoridade, principalmente no LinkedIn, de uma forma que eu nunca tinha visto.\n\nNa segunda parte, o Hamilton traz uma clareza impressionante entre entrega de valor e a precificação estratégica das nossas atividades. O que realmente me marcou muito foi o forte embasamento em conceitos éticos e também conceito missionário dessa nossa atuação.\n\nÉ uma mentoria inovadora e extremamente eficaz pra quem busca resultados práticos, pra você se posicionar com um nível de autoridade reconhecida e com excelência no que você já sabe fazer.",
     highlightPhrase: "Ele entrega técnicas avançadas de inteligência artificial que potencializam muito a nossa especialidade, criando esse mecanismo de autoridade de uma forma que eu nunca tinha visto.",
@@ -99,6 +103,8 @@ const testimonials = [
   {
     name: "Haroldo Lima",
     role: "Conselheiro",
+    photo: haroldoLimaPhoto,
+    videoThumbnail: haroldoLimaPhoto,
     videoUrl: "https://marcelomurilo-my.sharepoint.com/:v:/g/personal/contato_marcelomurilo_com_br/IQDbsUFKjzHZQ5AFGpnmYcvaAUR9u5sHeOdJxLhwVvt0RvU?e=6cC4oi",
     text: "Eu confesso que no começo eu tava bastante reticente com relação a como a mentoria conseguiria me ajudar, até porque eu tava com cinco iniciativas, algumas bastante similares, outras não. E durante todas as sessões, eu vi que independentemente das minhas iniciativas, a mentoria conseguiu me ajudar, conseguiu me colocar num outro patamar.\n\nEu fiquei bastante, bastante mesmo impressionado, não só com a qualidade das discussões que nós tínhamos às segundas-feiras, mas principalmente com os materiais que você desenvolvia antes de cada sessão e principalmente aquele que você disponibilizava pós-sessões.\n\nRealmente era algo bastante tailor made, algo bastante focado em cada um dos mentorados. Isso realmente me ajudou e vem me ajudando bastante.",
     highlightPhrase: "Com relação à mentoria, eu confesso que eu fiquei bastante, bastante mesmo impressionado, não só com a qualidade das discussões... mas principalmente com os materiais...",

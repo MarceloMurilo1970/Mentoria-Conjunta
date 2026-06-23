@@ -89,13 +89,15 @@ export default function TestimonialTile({
               className="block relative group overflow-hidden rounded-lg"
               data-testid={`link-video-${name.toLowerCase().replace(/\s+/g, '-')}`}
             >
-              <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
-                {videoThumbnail && (
+              <div className="relative aspect-video bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center overflow-hidden">
+                {videoThumbnail ? (
                   <img
                     src={videoThumbnail}
                     alt={`${name} - Vídeo Depoimento`}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
+                ) : (
+                  <span className="absolute text-5xl font-bold text-white/20">{getInitials(name)}</span>
                 )}
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
                 <div className="relative z-10 flex flex-col items-center gap-1">

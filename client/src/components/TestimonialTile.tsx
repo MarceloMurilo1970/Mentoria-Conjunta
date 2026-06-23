@@ -116,7 +116,7 @@ export default function TestimonialTile({
               <img
                 src={photo}
                 alt={name}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover object-top"
               />
             </div>
           </div>

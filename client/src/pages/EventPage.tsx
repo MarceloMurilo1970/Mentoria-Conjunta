@@ -24,7 +24,7 @@ import {
 import promoImage from "@assets/IMG_7577_1763994066837.jpeg";
 import marceloMuriloPhoto from "@assets/image_1781300100610.png";
 import hamiltonFelixPhoto from "@assets/image_1781547519046.png";
-import bothMentorsPhoto from "@assets/image_1781547528348.png";
+import bothMentorsPhoto from "@assets/image_1781547528348.jpeg";
 import BatchPricing, { useBatchPrices, isBatchesOpen, isBatchesComingSoon } from "@/components/BatchPricing";
 import RegistrationForm from "@/components/RegistrationForm";
 import TestimonialTile from "@/components/TestimonialTile";

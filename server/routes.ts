@@ -607,7 +607,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await sendRegistrationEmail(
           registration.email,
           registration.name,
-          registration.paymentMethod as "pix" | "installments" | "installments10"
+          registration.paymentMethod as "pix" | "installments" | "installments10",
+          registration.turma,
+          registration.observations
         );
       } catch (emailError) {
         console.error("Error sending email:", emailError);

@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3 \
     pkg-config \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Instala pnpm (versão compatível com Node 20)
@@ -21,6 +22,9 @@ RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
 # Copia código fonte
 COPY . .
+
+# Permite git funcionar no diretório (necessário para commit hash no build)
+RUN git config --global --add safe.directory /app
 
 # Build: Vite (front) + esbuild (back)
 # --external:./vite exclui o módulo dev-only do bundle de produção

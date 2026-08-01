@@ -127,6 +127,59 @@ export async function sendTestEmail(toEmail: string) {
   console.log(`Test email sent to ${toEmail}`);
 }
 
+function getTurmaScheduleHtml(turma?: string): string {
+  if (turma === "turma_3") {
+    return `
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo)</h4>
+      <p style="font-size: 13px; color: #666;">Segundas-feiras, 19:00 às 20:00</p>
+      <ul style="line-height: 1.8; font-size: 14px;">
+        <li><strong>Sessão 1 - 11/ago:</strong> Definindo seu nicho e propósito</li>
+        <li><strong>Sessão 2 - 18/ago:</strong> Perfil de conselheiro que vende</li>
+        <li><strong>Sessão 3 - 25/ago:</strong> Posts que geram oportunidades</li>
+        <li><strong>Sessão 4 - 01/set:</strong> Interações que multiplicam alcance</li>
+        <li><strong>Sessão 5 - 08/set:</strong> Conectando com quem importa</li>
+        <li><strong>Sessão 6 - 15/set:</strong> Vendas e eventos estratégicos</li>
+        <li><strong>Sessão 7 - 22/set:</strong> Aspectos práticos dos conselhos</li>
+        <li><strong>Sessão 8 - 29/set:</strong> Integração e planejamento futuros</li>
+      </ul>
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix)</h4>
+      <ul style="line-height: 1.8; font-size: 14px;">
+        <li><strong>Sessão 9 - 06/out (19:00-20:00):</strong> Prospecção de empresas</li>
+        <li><strong>Sessão 10 - 06/out (20:00-21:00):</strong> Fechamento de Projetos</li>
+        <li><strong>Sessão 11 - 13/out (19:00-20:00):</strong> Implementando o Conselho</li>
+        <li><strong>Sessão 12 - 13/out (20:00-21:00):</strong> Evoluindo o Conselho</li>
+      </ul>
+    `;
+  }
+  if (turma === "turma_4") {
+    return `
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo)</h4>
+      <p style="font-size: 13px; color: #666;">Quartas-feiras, 19:00 às 20:00</p>
+      <ul style="line-height: 1.8; font-size: 14px;">
+        <li><strong>Sessão 1 - 13/ago:</strong> Definindo seu nicho e propósito</li>
+        <li><strong>Sessão 2 - 20/ago:</strong> Perfil de conselheiro que vende</li>
+        <li><strong>Sessão 3 - 27/ago:</strong> Posts que geram oportunidades</li>
+        <li><strong>Sessão 4 - 03/set:</strong> Interações que multiplicam alcance</li>
+        <li><strong>Sessão 5 - 10/set:</strong> Conectando com quem importa</li>
+        <li><strong>Sessão 6 - 17/set:</strong> Vendas e eventos estratégicos</li>
+        <li><strong>Sessão 7 - 24/set:</strong> Aspectos práticos dos conselhos</li>
+        <li><strong>Sessão 8 - 01/out:</strong> Integração e planejamento futuros</li>
+      </ul>
+      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix)</h4>
+      <ul style="line-height: 1.8; font-size: 14px;">
+        <li><strong>Sessão 9 - 08/out (19:00-20:00):</strong> Prospecção de empresas</li>
+        <li><strong>Sessão 10 - 08/out (20:00-21:00):</strong> Fechamento de Projetos</li>
+        <li><strong>Sessão 11 - 15/out (19:00-20:00):</strong> Implementando o Conselho</li>
+        <li><strong>Sessão 12 - 15/out (20:00-21:00):</strong> Evoluindo o Conselho</li>
+      </ul>
+    `;
+  }
+  // Fallback genérico
+  return `
+    <p style="font-size: 14px; color: #666;">12 sessões ao vivo — datas e horários serão comunicados via grupo de WhatsApp.</p>
+  `;
+}
+
 export async function sendRegistrationEmail(
   to: string,
   name: string,
@@ -229,28 +282,7 @@ export async function sendRegistrationEmail(
       <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
       
       <h3>Programa da Mentoria</h3>
-      
-      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo - 8 sessões)</h4>
-      <ol style="line-height: 1.8;">
-        <li>Definindo seu nicho e propósito</li>
-        <li>Perfil de conselheiro que vende</li>
-        <li>Posts que geram oportunidades</li>
-        <li>Interações que multiplicam alcance</li>
-        <li>Conectando com quem importa</li>
-        <li>Vendas e eventos estratégicos</li>
-        <li>Aspectos práticos dos conselhos</li>
-        <li>Integração e planejamento futuros</li>
-      </ol>
-
-      <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix - 4 sessões)</h4>
-      <ol start="9" style="line-height: 1.8;">
-        <li>Prospecção de empresas</li>
-        <li>Fechamento de Projetos</li>
-        <li>Implementando o Conselho</li>
-        <li>Evoluindo o Conselho</li>
-      </ol>
-
-      <p style="font-size: 14px; color: #666;">As datas e horários das sessões serão comunicadas via grupo de WhatsApp.</p>
+      ${getTurmaScheduleHtml(turma)}
 
       <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; margin-top: 20px;">
         <h4 style="color: #0070f3; margin-top: 0;">Grupo de WhatsApp</h4>

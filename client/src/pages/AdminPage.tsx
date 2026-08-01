@@ -5985,6 +5985,9 @@ export default function AdminPage() {
           <p className="text-xs text-gray-400 font-mono break-all" data-testid="db-url-footer">
             DB: {dbInfo?.dbUrl || 'Carregando...'}
           </p>
+          <p className="text-xs text-gray-400 font-mono mt-1">
+            Build: {__COMMIT_HASH__}
+          </p>
         </div>
       </div>
     </div>

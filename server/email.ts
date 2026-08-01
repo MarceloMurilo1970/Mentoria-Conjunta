@@ -133,21 +133,21 @@ function getTurmaScheduleHtml(turma?: string): string {
       <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo)</h4>
       <p style="font-size: 13px; color: #666;">Segundas-feiras, 19:00 às 20:00</p>
       <ul style="line-height: 1.8; font-size: 14px;">
-        <li><strong>Sessão 1 - 11/ago:</strong> Definindo seu nicho e propósito</li>
-        <li><strong>Sessão 2 - 18/ago:</strong> Perfil de conselheiro que vende</li>
-        <li><strong>Sessão 3 - 25/ago:</strong> Posts que geram oportunidades</li>
-        <li><strong>Sessão 4 - 01/set:</strong> Interações que multiplicam alcance</li>
-        <li><strong>Sessão 5 - 08/set:</strong> Conectando com quem importa</li>
-        <li><strong>Sessão 6 - 15/set:</strong> Vendas e eventos estratégicos</li>
-        <li><strong>Sessão 7 - 22/set:</strong> Aspectos práticos dos conselhos</li>
-        <li><strong>Sessão 8 - 29/set:</strong> Integração e planejamento futuros</li>
+        <li><strong>Sessão 1 - 10/ago:</strong> Definindo seu nicho e propósito</li>
+        <li><strong>Sessão 2 - 17/ago:</strong> Perfil de conselheiro que vende</li>
+        <li><strong>Sessão 3 - 24/ago:</strong> Posts que geram oportunidades</li>
+        <li><strong>Sessão 4 - 31/ago:</strong> Interações que multiplicam alcance</li>
+        <li><strong>Sessão 5 - 07/set:</strong> Conectando com quem importa</li>
+        <li><strong>Sessão 6 - 14/set:</strong> Vendas e eventos estratégicos</li>
+        <li><strong>Sessão 7 - 21/set:</strong> Aspectos práticos dos conselhos</li>
+        <li><strong>Sessão 8 - 28/set:</strong> Integração e planejamento futuros</li>
       </ul>
       <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix)</h4>
       <ul style="line-height: 1.8; font-size: 14px;">
-        <li><strong>Sessão 9 - 06/out (19:00-20:00):</strong> Prospecção de empresas</li>
-        <li><strong>Sessão 10 - 06/out (20:00-21:00):</strong> Fechamento de Projetos</li>
-        <li><strong>Sessão 11 - 13/out (19:00-20:00):</strong> Implementando o Conselho</li>
-        <li><strong>Sessão 12 - 13/out (20:00-21:00):</strong> Evoluindo o Conselho</li>
+        <li><strong>Sessão 9 - 05/out (19:00-20:00):</strong> Prospecção de empresas</li>
+        <li><strong>Sessão 10 - 05/out (20:00-21:00):</strong> Fechamento de Projetos</li>
+        <li><strong>Sessão 11 - 12/out (19:00-20:00):</strong> Implementando o Conselho</li>
+        <li><strong>Sessão 12 - 12/out (20:00-21:00):</strong> Evoluindo o Conselho</li>
       </ul>
     `;
   }
@@ -156,21 +156,21 @@ function getTurmaScheduleHtml(turma?: string): string {
       <h4 style="color: #0070f3; margin-top: 20px;">Módulo 1 - Transição para conselhos (Marcelo Murilo)</h4>
       <p style="font-size: 13px; color: #666;">Quartas-feiras, 19:00 às 20:00</p>
       <ul style="line-height: 1.8; font-size: 14px;">
-        <li><strong>Sessão 1 - 13/ago:</strong> Definindo seu nicho e propósito</li>
-        <li><strong>Sessão 2 - 20/ago:</strong> Perfil de conselheiro que vende</li>
-        <li><strong>Sessão 3 - 27/ago:</strong> Posts que geram oportunidades</li>
-        <li><strong>Sessão 4 - 03/set:</strong> Interações que multiplicam alcance</li>
-        <li><strong>Sessão 5 - 10/set:</strong> Conectando com quem importa</li>
-        <li><strong>Sessão 6 - 17/set:</strong> Vendas e eventos estratégicos</li>
-        <li><strong>Sessão 7 - 24/set:</strong> Aspectos práticos dos conselhos</li>
-        <li><strong>Sessão 8 - 01/out:</strong> Integração e planejamento futuros</li>
+        <li><strong>Sessão 1 - 12/ago:</strong> Definindo seu nicho e propósito</li>
+        <li><strong>Sessão 2 - 19/ago:</strong> Perfil de conselheiro que vende</li>
+        <li><strong>Sessão 3 - 26/ago:</strong> Posts que geram oportunidades</li>
+        <li><strong>Sessão 4 - 02/set:</strong> Interações que multiplicam alcance</li>
+        <li><strong>Sessão 5 - 09/set:</strong> Conectando com quem importa</li>
+        <li><strong>Sessão 6 - 16/set:</strong> Vendas e eventos estratégicos</li>
+        <li><strong>Sessão 7 - 23/set:</strong> Aspectos práticos dos conselhos</li>
+        <li><strong>Sessão 8 - 30/set:</strong> Integração e planejamento futuros</li>
       </ul>
       <h4 style="color: #0070f3; margin-top: 20px;">Módulo 2 - Criando novos conselhos (Hamilton Felix)</h4>
       <ul style="line-height: 1.8; font-size: 14px;">
-        <li><strong>Sessão 9 - 08/out (19:00-20:00):</strong> Prospecção de empresas</li>
-        <li><strong>Sessão 10 - 08/out (20:00-21:00):</strong> Fechamento de Projetos</li>
-        <li><strong>Sessão 11 - 15/out (19:00-20:00):</strong> Implementando o Conselho</li>
-        <li><strong>Sessão 12 - 15/out (20:00-21:00):</strong> Evoluindo o Conselho</li>
+        <li><strong>Sessão 9 - 07/out (19:00-20:00):</strong> Prospecção de empresas</li>
+        <li><strong>Sessão 10 - 07/out (20:00-21:00):</strong> Fechamento de Projetos</li>
+        <li><strong>Sessão 11 - 14/out (19:00-20:00):</strong> Implementando o Conselho</li>
+        <li><strong>Sessão 12 - 14/out (20:00-21:00):</strong> Evoluindo o Conselho</li>
       </ul>
     `;
   }

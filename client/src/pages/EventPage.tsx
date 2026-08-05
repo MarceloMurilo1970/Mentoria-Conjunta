@@ -631,8 +631,8 @@ export default function EventPage() {
               <div className="flex items-center gap-3 text-white">
                 <Sparkles className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm sm:text-base font-medium text-center sm:text-left">
-                  <span className="hidden sm:inline">Inscrições abertas! </span>
-                  Garanta sua vaga nas Turmas 3 e 4!
+                  <span className="hidden sm:inline">🔴 Turma 3 Esgotada! </span>
+                  Últimas vagas na Turma 4 — Aproveite!
                 </span>
               </div>
               <Button 

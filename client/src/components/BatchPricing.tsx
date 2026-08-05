@@ -184,7 +184,7 @@ export default function BatchPricing({ currentDate = new Date(), turmaId = "turm
           Investimento na Sua Carreira
         </h3>
         <p className="text-muted-foreground">
-          Garanta sua vaga na mentoria que transforma executivos em conselheiros
+          Turma 3 esgotada! Restam poucas vagas na Turma 4 — garanta a sua agora
         </p>
       </div>
 

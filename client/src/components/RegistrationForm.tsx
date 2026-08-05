@@ -335,6 +335,14 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
 
           <div className="space-y-4">
             <Label>Turma *</Label>
+
+            {/* Carimbo Turma 3 Esgotada */}
+            <div className="relative flex items-center justify-center">
+              <div className="border-3 border-red-600 rounded px-6 py-1.5 transform -rotate-2">
+                <span className="text-red-600 font-black text-lg uppercase tracking-wider">Turma 3 Esgotada!</span>
+              </div>
+            </div>
+
             <RadioGroup
               defaultValue={defaultTurma}
               onValueChange={(value) => {

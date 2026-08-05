@@ -356,7 +356,16 @@ export default function ProgramSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Carimbo ESGOTADA para Turma 3 */}
+        {turma === "segundas" && (
+          <div className="relative flex items-center justify-center my-8">
+            <div className="border-4 border-red-600 rounded-lg px-8 py-3 transform -rotate-3">
+              <span className="text-red-600 font-black text-3xl md:text-4xl uppercase tracking-wider">ESGOTADA</span>
+            </div>
+          </div>
+        )}
+
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${turma === "segundas" ? "opacity-50" : ""}`}>
           {modules.map((module) => (
             <Card key={module.number} className="border-card-border" data-testid={`card-module-${module.number}`}>
               <CardHeader className="space-y-1 pb-4">

@@ -308,7 +308,7 @@ const sessionDetails: Record<string, SessionDetail> = {
 
 export default function ProgramSection() {
   const [selectedSession, setSelectedSession] = useState<{ moduleNumber: number; sessionNumber: number } | null>(null);
-  const [turma, setTurma] = useState<"segundas" | "quartas">("segundas");
+  const [turma, setTurma] = useState<"segundas" | "quartas">("quartas");
 
   const modules = modulesByTurma[turma];
 

@@ -146,7 +146,7 @@ const testimonials = [
 export default function EventPage() {
   const [showStickyBanner, setShowStickyBanner] = useState(false);
   const registrationRef = useRef<HTMLDivElement>(null);
-  const priceInfo = useBatchPrices("turma_3");
+  const priceInfo = useBatchPrices("turma_4");
   const batchesOpen = isBatchesOpen(new Date());
   const comingSoon = isBatchesComingSoon(new Date());
 

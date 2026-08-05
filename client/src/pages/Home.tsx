@@ -138,7 +138,7 @@ export default function Home() {
     registrationRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const [selectedTurma, setSelectedTurma] = useState<"turma_3" | "turma_4">("turma_3");
+  const [selectedTurma, setSelectedTurma] = useState<"turma_3" | "turma_4">("turma_4");
 
   const batchesOpen = isBatchesOpen(new Date());
   const comingSoon = isBatchesComingSoon(new Date());

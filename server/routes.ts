@@ -1003,20 +1003,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Use provided totalAmount or existing registration totalAmount
-      const effectiveTotal = totalAmount || registration.totalAmount || 8000;
+      const effectiveTotal = totalAmount || registration.totalAmount || 0;
       let validatedPaidAmount = 0;
 
       // Validate partial payment fields
       if (paymentStatus === 'parcial') {
         const paidNum = Number(paidAmount);
-        if (isNaN(paidNum) || paidNum <= 0 || paidNum >= effectiveTotal) {
-          return res.status(400).json({ error: "Valor pago deve ser maior que 0 e menor que o total" });
+        if (isNaN(paidNum) || paidNum <= 0) {
+          return res.status(400).json({ error: "Valor pago deve ser maior que 0" });
         }
         validatedPaidAmount = paidNum;
       } else if (paymentStatus === 'pago') {
-        // When marked as 'pago', paidAmount should equal totalAmount (in centavos)
-        // effectiveTotal is in reais, convert to centavos for paidAmount
-        validatedPaidAmount = effectiveTotal * 100;
+        // When marked as 'pago', use provided paidAmount or totalAmount
+        validatedPaidAmount = paidAmount ? Number(paidAmount) : (effectiveTotal > 0 ? effectiveTotal : 0);
       }
       
       await storage.updatePaymentStatus(id, {

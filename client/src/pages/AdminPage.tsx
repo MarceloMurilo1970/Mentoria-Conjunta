@@ -3333,16 +3333,6 @@ Qualquer dúvida, estamos à disposição!`;
                                 {(reg.paymentStatus === 'pago' || reg.paymentStatus === 'parcial') && !reg.cpfCnpj && (
                                   <span className="text-xs text-gray-400">CPF/CNPJ necessário para emitir NF</span>
                                 )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => openInvoiceModal(reg)}
-                                  disabled={invoiceMutation.isPending}
-                                  className="h-6 border-green-500 text-green-700 text-xs"
-                                >
-                                  <Receipt className="w-3 h-3 mr-1" />
-                                  Registrar NF Manual
-                                </Button>
                               </div>
                             </>
                           );

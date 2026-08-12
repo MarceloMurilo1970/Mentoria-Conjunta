@@ -3,10 +3,10 @@ import { createServer, type Server } from "http";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { storage } from "./storage";
-import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema, type User } from "@shared/schema";
+import { insertRegistrationSchema, insertVendorSchema, insertLeadActivitySchema, insertLeadFollowUpSchema, type User, type Registration } from "@shared/schema";
 import { sendRegistrationEmail, sendRegistrationListEmail, sendRegistrationNotificationEmail, sendTestEmail, sendPaidConfirmationEmail, sendPartialPaymentEmail, sendPendingPaymentEmail } from "./email";
 import { addEventRegistration, getAllEventRegistrations, type EventRegistration, fetchSurveyResponses, calculateLeadScore } from "./googleSheets";
-import { emitNF, reemitNF, cancelNF } from "./nf";
+import { emitNF, emitNFPartial, reemitNF, cancelNF, getNFStatus } from "./nf";
 import path from "path";
 import { z } from "zod";
 import PDFDocument from "pdfkit";
@@ -32,7 +32,7 @@ function generateAuthToken(email: string): string {
   return Buffer.from(`${data}:${signature}`).toString('base64');
 }
 
-// Verify a signed auth token (valid for 7 days)
+// Verify a signed auth token (valid for 90 days)
 function verifyAuthToken(token: string): { email: string; valid: boolean } {
   try {
     if (!TOKEN_SECRET) {
@@ -43,8 +43,8 @@ function verifyAuthToken(token: string): { email: string; valid: boolean } {
     const [email, timestampStr, signature] = decoded.split(':');
     const timestamp = parseInt(timestampStr, 10);
     
-    // Check expiry (7 days)
-    const maxAge = 7 * 24 * 60 * 60 * 1000;
+    // Check expiry (90 days)
+    const maxAge = 90 * 24 * 60 * 60 * 1000;
     if (Date.now() - timestamp > maxAge) {
       return { email: '', valid: false };
     }
@@ -1101,6 +1101,255 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error cancelling NF:", error);
       res.status(500).json({ error: error.message || "Erro ao cancelar NF" });
+    }
+  });
+
+  // ========== Multi-NF System Routes ==========
+
+  // Helper: get invoices array from registration (with migration from old nfId fields)
+  function getInvoicesArray(registration: Registration): Array<{
+    id?: number;
+    amount: number;
+    date: string;
+    status: string;
+    number?: string;
+    pdfUrl?: string;
+    createdAt: string;
+    cancelledAt?: string;
+  }> {
+    let invoices: any[] = [];
+    if (registration.invoices) {
+      try {
+        invoices = JSON.parse(registration.invoices);
+      } catch { invoices = []; }
+    }
+    // Migrate old nfId/nfStatus fields if invoices array doesn't already contain them
+    if (registration.nfId && registration.nfId > 0 && invoices.length === 0) {
+      const migratedStatus = registration.nfStatus === 'issued' || registration.nfStatus === 'authorized' 
+        ? registration.nfStatus 
+        : registration.nfStatus || 'pending';
+      invoices.push({
+        id: registration.nfId,
+        amount: (registration.paidAmount || 0) / 100,
+        date: registration.nfEmittedAt 
+          ? new Date(registration.nfEmittedAt).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        status: migratedStatus,
+        number: registration.nfNumber || undefined,
+        pdfUrl: registration.nfPdfUrl || undefined,
+        createdAt: registration.nfEmittedAt 
+          ? new Date(registration.nfEmittedAt).toISOString() 
+          : new Date().toISOString(),
+      });
+    }
+    return invoices;
+  }
+
+  // Emit a new NF for a partial amount
+  app.post("/api/registrations/:id/emit-nf-partial", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { amount } = req.body;
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      if (!registration.cpfCnpj) {
+        return res.status(400).json({ error: "CPF/CNPJ não informado — NF não pode ser emitida" });
+      }
+
+      const amountReais = Number(amount);
+      if (isNaN(amountReais) || amountReais <= 0) {
+        return res.status(400).json({ error: "Valor deve ser maior que 0" });
+      }
+
+      const invoices = getInvoicesArray(registration);
+      const sumNonCancelled = invoices
+        .filter((inv: any) => inv.status !== 'cancelled')
+        .reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
+      
+      const paidAmountReais = (registration.paidAmount || 0) / 100;
+      if (sumNonCancelled + amountReais > paidAmountReais + 0.01) {
+        return res.status(400).json({ 
+          error: `Valor excede o pago. Pago: R$ ${paidAmountReais.toFixed(2)}, já emitido: R$ ${sumNonCancelled.toFixed(2)}, restante: R$ ${(paidAmountReais - sumNonCancelled).toFixed(2)}` 
+        });
+      }
+
+      // Emit via Faturador API
+      const nfResult = await emitNFPartial({
+        name: registration.name,
+        cpfCnpj: registration.cpfCnpj,
+        email: registration.email,
+        valueReais: amountReais,
+        turma: registration.turma,
+      });
+
+      // Append new invoice to the array
+      const newInvoice = {
+        id: nfResult.id,
+        amount: amountReais,
+        date: new Date().toISOString().split('T')[0],
+        status: nfResult.status || 'pending',
+        number: nfResult.focusNfeNumero || undefined,
+        pdfUrl: nfResult.pdfUrl || undefined,
+        createdAt: new Date().toISOString(),
+      };
+      invoices.push(newInvoice);
+
+      // Save back to DB
+      const updated = await storage.updateInvoice(id, {
+        invoiceIssued: true,
+        invoiceIssuedAt: new Date(),
+        invoices: JSON.stringify(invoices),
+      });
+
+      // Also update main NF fields for backward compat
+      await storage.updateNfStatus(id, {
+        nfId: nfResult.id,
+        nfStatus: nfResult.status,
+        nfPdfUrl: nfResult.pdfUrl ?? null,
+        nfEmittedAt: new Date(),
+        nfNumber: nfResult.focusNfeNumero ?? null,
+      });
+
+      res.json({ success: true, invoices, registration: updated });
+    } catch (error: any) {
+      console.error("Error emitting partial NF:", error);
+      res.status(500).json({ error: error.message || "Erro ao emitir NF parcial" });
+    }
+  });
+
+  // Cancel a specific NF by index in the invoices array
+  app.post("/api/registrations/:id/invoices/:invoiceIndex/cancel", async (req, res) => {
+    try {
+      const { id, invoiceIndex } = req.params;
+      const idx = parseInt(invoiceIndex, 10);
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+
+      const invoices = getInvoicesArray(registration);
+      if (idx < 0 || idx >= invoices.length) {
+        return res.status(400).json({ error: "Índice de NF inválido" });
+      }
+
+      const invoice = invoices[idx];
+      if (invoice.status === 'cancelled') {
+        return res.status(400).json({ error: "NF já está cancelada" });
+      }
+
+      // If it has a Faturador ID, cancel via API
+      if (invoice.id) {
+        const justificativa = req.body.justificativa || "Cancelamento solicitado pelo emissor";
+        const result = await cancelNF(invoice.id, justificativa);
+        invoice.status = result.status || 'cancelled';
+      } else {
+        invoice.status = 'cancelled';
+      }
+      invoice.cancelledAt = new Date().toISOString();
+
+      // Save back
+      const updated = await storage.updateInvoice(id, {
+        invoiceIssued: true,
+        invoiceIssuedAt: registration.invoiceIssuedAt ?? null,
+        invoices: JSON.stringify(invoices),
+      });
+
+      res.json({ success: true, invoices, registration: updated });
+    } catch (error: any) {
+      console.error("Error cancelling invoice:", error);
+      res.status(500).json({ error: error.message || "Erro ao cancelar NF" });
+    }
+  });
+
+  // Resend NF email for a specific invoice by index
+  app.post("/api/registrations/:id/invoices/:invoiceIndex/resend", async (req, res) => {
+    try {
+      const { id, invoiceIndex } = req.params;
+      const idx = parseInt(invoiceIndex, 10);
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+
+      const invoices = getInvoicesArray(registration);
+      if (idx < 0 || idx >= invoices.length) {
+        return res.status(400).json({ error: "Índice de NF inválido" });
+      }
+
+      const invoice = invoices[idx];
+      if (!invoice.pdfUrl) {
+        return res.status(400).json({ error: "NF não possui PDF disponível para envio" });
+      }
+
+      const { sendNfEmail } = await import("./email");
+      await sendNfEmail(
+        registration.email,
+        registration.name,
+        invoice.pdfUrl,
+        invoice.number
+      );
+
+      res.json({ success: true, message: `Email enviado para ${registration.email}` });
+    } catch (error: any) {
+      console.error("Error resending NF email:", error);
+      res.status(500).json({ error: error.message || "Erro ao reenviar email da NF" });
+    }
+  });
+
+  // Refresh NF status from Faturador for a specific invoice by index
+  app.get("/api/registrations/:id/invoices/:invoiceIndex/refresh", async (req, res) => {
+    try {
+      const { id, invoiceIndex } = req.params;
+      const idx = parseInt(invoiceIndex, 10);
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+
+      const invoices = getInvoicesArray(registration);
+      if (idx < 0 || idx >= invoices.length) {
+        return res.status(400).json({ error: "Índice de NF inválido" });
+      }
+
+      const invoice = invoices[idx];
+      if (!invoice.id) {
+        return res.status(400).json({ error: "NF manual não pode ser atualizada via Faturador" });
+      }
+
+      const nfStatus = await getNFStatus(invoice.id);
+      invoice.status = nfStatus.status;
+      if (nfStatus.pdfUrl) invoice.pdfUrl = nfStatus.pdfUrl;
+      if (nfStatus.focusNfeNumero) invoice.number = nfStatus.focusNfeNumero;
+
+      // Save back
+      const updated = await storage.updateInvoice(id, {
+        invoiceIssued: true,
+        invoiceIssuedAt: registration.invoiceIssuedAt ?? null,
+        invoices: JSON.stringify(invoices),
+      });
+
+      res.json({ success: true, invoices, registration: updated });
+    } catch (error: any) {
+      console.error("Error refreshing NF status:", error);
+      res.status(500).json({ error: error.message || "Erro ao atualizar status da NF" });
+    }
+  });
+
+  // Get invoices array for a registration (with migration support)
+  app.get("/api/registrations/:id/invoices", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+      const invoices = getInvoicesArray(registration);
+      res.json({ invoices });
+    } catch (error: any) {
+      console.error("Error getting invoices:", error);
+      res.status(500).json({ error: error.message || "Erro ao buscar NFs" });
     }
   });
 

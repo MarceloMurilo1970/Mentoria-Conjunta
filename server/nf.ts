@@ -21,6 +21,53 @@ function turmaLabel(turma: string | null): string {
   return "Turma 3";
 }
 
+export async function emitNFPartial(registration: {
+  name: string;
+  cpfCnpj: string;
+  email: string;
+  valueReais: number;
+  turma: string | null;
+}): Promise<NfResult> {
+  const apiKey = getApiKey();
+  const now = new Date();
+
+  const body = {
+    companyId: COMPANY_ID,
+    clientName: registration.name,
+    clientCnpjCpf: registration.cpfCnpj.replace(/\D/g, ""),
+    clientEmail: registration.email,
+    description: `Mentoria Conjunta — ${turmaLabel(registration.turma)} — ${registration.name}`,
+    value: registration.valueReais,
+    referenceMonth: now.getMonth() + 1,
+    referenceYear: now.getFullYear(),
+    autoEmit: true,
+  };
+
+  const response = await fetch(`${FATURADOR_API_URL}/invoices`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(`Faturador API ${response.status}: ${JSON.stringify(err)}`);
+  }
+
+  const data = await response.json();
+  const inv = data.invoice;
+  return {
+    id: inv.id,
+    status: inv.status,
+    focusNfeNumero: inv.focusNfeNumero ?? undefined,
+    pdfUrl: inv.pdfUrl ?? undefined,
+    issuedAt: inv.issuedAt ?? undefined,
+  };
+}
+
 export async function emitNF(registration: {
   name: string;
   cpfCnpj: string;

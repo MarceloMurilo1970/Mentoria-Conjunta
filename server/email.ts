@@ -762,3 +762,43 @@ export async function sendPendingPaymentEmail(
 
   await mailerSend.email.send(emailParams);
 }
+
+// Email para reenvio de Nota Fiscal
+export async function sendNfEmail(
+  to: string,
+  name: string,
+  pdfUrl: string,
+  nfNumber?: string
+) {
+  const mailerSend = getMailerSendClient();
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #0070f3;">Nota Fiscal - Mentoria Marcelo Murilo e Hamilton Felix</h2>
+      <p>Olá ${name},</p>
+      <p>Segue sua Nota Fiscal${nfNumber ? ` #${nfNumber}` : ''} referente à Mentoria.</p>
+      <p style="margin: 20px 0;">
+        <a href="${pdfUrl}" style="background-color: #0070f3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          📄 Acessar Nota Fiscal (PDF)
+        </a>
+      </p>
+      <p style="font-size: 13px; color: #666;">Caso o botão não funcione, copie e cole o link abaixo no navegador:</p>
+      <p style="font-size: 12px; color: #999; word-break: break-all;">${pdfUrl}</p>
+      <br/>
+      <p>Atenciosamente,<br/>Mentoria Marcelo Murilo & Hamilton Felix</p>
+    </div>
+  `;
+
+  const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+  const recipients = [new Recipient(to, name)];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject("Nota Fiscal - Mentoria Marcelo Murilo e Hamilton Felix")
+    .setHtml(htmlContent)
+    .setText(`Olá ${name}, segue sua Nota Fiscal referente à Mentoria. Acesse o PDF: ${pdfUrl}`);
+
+  await mailerSend.email.send(emailParams);
+  console.log(`NF email sent to ${to} (NF ${nfNumber || 'sem número'})`);
+}

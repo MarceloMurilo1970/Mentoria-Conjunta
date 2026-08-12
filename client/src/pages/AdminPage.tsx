@@ -849,6 +849,11 @@ function MentorshipRegistrationsSection() {
   const [invoiceAmount, setInvoiceAmount] = useState('');
   const [invoiceDate, setInvoiceDate] = useState('');
   
+  // Multi-NF emit modal state
+  const [emitNfModalOpen, setEmitNfModalOpen] = useState(false);
+  const [emitNfReg, setEmitNfReg] = useState<Registration | null>(null);
+  const [emitNfAmount, setEmitNfAmount] = useState('');
+  
   // Individual vendor commission edit states
   const [vendorCommissionEditModalOpen, setVendorCommissionEditModalOpen] = useState(false);
   const [editingCommissionReg, setEditingCommissionReg] = useState<Registration | null>(null);
@@ -1092,6 +1097,86 @@ function MentorshipRegistrationsSection() {
     },
   });
 
+  // Multi-NF mutations
+  const emitNfPartialMutation = useMutation({
+    mutationFn: async ({ id, amount }: { id: string; amount: number }) => {
+      return await apiRequest("POST", `/api/registrations/${id}/emit-nf-partial`, { amount });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({
+        title: "NFS-e emitida",
+        description: "A nota fiscal parcial foi emitida com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao emitir NFS-e",
+        description: error?.message || "Não foi possível emitir a nota fiscal.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const cancelInvoiceMutation = useMutation({
+    mutationFn: async ({ id, invoiceIndex, justificativa }: { id: string; invoiceIndex: number; justificativa?: string }) => {
+      return await apiRequest("POST", `/api/registrations/${id}/invoices/${invoiceIndex}/cancel`, { justificativa });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({
+        title: "NF cancelada",
+        description: "A nota fiscal foi cancelada.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao cancelar NF",
+        description: error?.message || "Não foi possível cancelar.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resendInvoiceMutation = useMutation({
+    mutationFn: async ({ id, invoiceIndex }: { id: string; invoiceIndex: number }) => {
+      return await apiRequest("POST", `/api/registrations/${id}/invoices/${invoiceIndex}/resend`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Email enviado",
+        description: "A NF foi reenviada por email.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao reenviar",
+        description: error?.message || "Não foi possível enviar o email.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const refreshInvoiceMutation = useMutation({
+    mutationFn: async ({ id, invoiceIndex }: { id: string; invoiceIndex: number }) => {
+      return await apiRequest("GET", `/api/registrations/${id}/invoices/${invoiceIndex}/refresh`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({
+        title: "Status atualizado",
+        description: "O status da NF foi atualizado.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar",
+        description: error?.message || "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const batchMutation = useMutation({
     mutationFn: async (data: { id: string; batch: number }) => {
       await apiRequest("PATCH", `/api/registrations/${data.id}/batch`, data);
@@ -1287,13 +1372,73 @@ function MentorshipRegistrationsSection() {
     setInvoiceModalOpen(true);
   };
 
+  // Helper: get unified invoices array from registration (with migration from old nfId fields)
+  const getInvoicesFromReg = (reg: Registration): Array<{
+    id?: number;
+    amount: number;
+    date: string;
+    status: string;
+    number?: string;
+    pdfUrl?: string;
+    createdAt: string;
+    cancelledAt?: string;
+  }> => {
+    let invoices: any[] = [];
+    if (reg.invoices) {
+      try {
+        invoices = JSON.parse(reg.invoices);
+      } catch { invoices = []; }
+    }
+    // Migrate old nfId/nfStatus fields if invoices array doesn't already contain them
+    if (reg.nfId && reg.nfId > 0 && invoices.length === 0) {
+      const migratedStatus = reg.nfStatus === 'issued' || reg.nfStatus === 'authorized' 
+        ? reg.nfStatus 
+        : reg.nfStatus || 'pending';
+      invoices.push({
+        id: reg.nfId,
+        amount: (reg.paidAmount || 0) / 100,
+        date: reg.nfEmittedAt 
+          ? new Date(reg.nfEmittedAt).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        status: migratedStatus,
+        number: reg.nfNumber || undefined,
+        pdfUrl: reg.nfPdfUrl || undefined,
+        createdAt: reg.nfEmittedAt 
+          ? new Date(reg.nfEmittedAt).toISOString() 
+          : new Date().toISOString(),
+      });
+    }
+    return invoices;
+  };
+
+  const openEmitNfModal = (reg: Registration) => {
+    const invoices = getInvoicesFromReg(reg);
+    const sumNonCancelled = invoices
+      .filter(inv => inv.status !== 'cancelled')
+      .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+    const paidReais = (reg.paidAmount || 0) / 100;
+    const remaining = Math.max(0, paidReais - sumNonCancelled);
+    setEmitNfReg(reg);
+    setEmitNfAmount(remaining > 0 ? remaining.toFixed(2) : '');
+    setEmitNfModalOpen(true);
+  };
+
+  const handleEmitNfPartial = () => {
+    if (!emitNfReg || !emitNfAmount) return;
+    const amount = Number(emitNfAmount);
+    if (isNaN(amount) || amount <= 0) return;
+    emitNfPartialMutation.mutate({ id: emitNfReg.id, amount });
+    setEmitNfModalOpen(false);
+  };
+
   const handleAddInvoice = () => {
     if (!selectedInvoiceReg || !invoiceAmount || !invoiceDate) return;
     
-    const existingInvoices = selectedInvoiceReg.invoices ? JSON.parse(selectedInvoiceReg.invoices) : [];
+    const existingInvoices = getInvoicesFromReg(selectedInvoiceReg);
     const newInvoice = {
       amount: Number(invoiceAmount),
       date: invoiceDate,
+      status: 'manual',
       createdAt: new Date().toISOString()
     };
     existingInvoices.push(newInvoice);
@@ -3055,127 +3200,152 @@ Qualquer dúvida, estamos à disposição!`;
                           </>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-gray-500 text-xs">NFS-e:</span>
-                        {reg.nfStatus === 'issued' || reg.nfStatus === 'authorized' ? (
-                          <>
-                            <span className="text-green-600 text-xs font-medium">
-                              Emitida{reg.nfNumber ? ` #${reg.nfNumber}` : ''}
-                            </span>
-                            {reg.nfPdfUrl && (
-                              <a
-                                href={reg.nfPdfUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 text-xs underline"
-                                data-testid={`link-nf-pdf-${index}`}
-                              >
-                                Ver PDF
-                              </a>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => emitNfMutation.mutate(reg.id)}
-                              disabled={emitNfMutation.isPending || cancelNfMutation.isPending}
-                              className="h-6 text-xs border-gray-300 text-gray-500"
-                              data-testid={`button-reemit-nf-${index}`}
-                            >
-                              Re-emitir
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                const justificativa = window.prompt(
-                                  `Cancelar NFS-e #${reg.nfNumber || reg.nfId} de ${reg.name}\n\nInforme o motivo do cancelamento (mínimo 15 caracteres):`,
-                                  "Cancelamento solicitado pelo cliente"
-                                );
-                                if (justificativa === null) return;
-                                if (justificativa.length < 15) {
-                                  alert("O motivo deve ter pelo menos 15 caracteres.");
-                                  return;
-                                }
-                                cancelNfMutation.mutate({ id: reg.id, justificativa });
-                              }}
-                              disabled={cancelNfMutation.isPending || emitNfMutation.isPending}
-                              className="h-6 text-xs border-red-300 text-red-600"
-                              data-testid={`button-cancel-nf-${index}`}
-                            >
-                              Cancelar NFS-e
-                            </Button>
-                          </>
-                        ) : reg.nfStatus === 'cancelled' ? (
-                          <>
-                            <span className="text-gray-400 text-xs font-medium">Cancelada{reg.nfNumber ? ` #${reg.nfNumber}` : ''}</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => emitNfMutation.mutate(reg.id)}
-                              disabled={emitNfMutation.isPending || !reg.cpfCnpj}
-                              className="h-6 text-xs border-blue-400 text-blue-600"
-                              data-testid={`button-emit-nf-after-cancel-${index}`}
-                            >
-                              <Receipt className="w-3 h-3 mr-1" />
-                              Nova NFS-e
-                            </Button>
-                          </>
-                        ) : reg.nfStatus === 'processing' || reg.nfStatus === 'pending' ? (
-                          <span className="text-yellow-600 text-xs font-medium">Processando...</span>
-                        ) : reg.nfStatus === 'error' ? (
-                          <>
-                            <span className="text-red-500 text-xs font-medium">Erro</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => emitNfMutation.mutate(reg.id)}
-                              disabled={emitNfMutation.isPending}
-                              className="h-6 text-xs border-red-400 text-red-600"
-                              data-testid={`button-reemit-nf-error-${index}`}
-                            >
-                              <Receipt className="w-3 h-3 mr-1" />
-                              Re-emitir NFS-e
-                            </Button>
-                          </>
-                        ) : reg.paymentStatus === 'pago' ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => emitNfMutation.mutate(reg.id)}
-                            disabled={emitNfMutation.isPending || !reg.cpfCnpj}
-                            className="h-6 text-xs border-blue-400 text-blue-600"
-                            data-testid={`button-emit-nf-${index}`}
-                            title={!reg.cpfCnpj ? 'CPF/CNPJ necessário para emitir NF' : ''}
-                          >
-                            <Receipt className="w-3 h-3 mr-1" />
-                            Emitir NFS-e
-                          </Button>
-                        ) : (
-                          <span className="text-gray-400 text-xs">Aguardando pagamento</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500 text-xs">NF manual:</span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openInvoiceModal(reg)}
-                          disabled={invoiceMutation.isPending}
-                          className="h-6 border-green-500 text-green-700 text-xs"
-                          data-testid={`button-invoice-${index}`}
-                        >
-                          <Receipt className="w-3 h-3 mr-1" />
-                          Registrar NF
-                        </Button>
-                        {reg.invoices && (() => {
-                          try {
-                            const invoiceList = JSON.parse(reg.invoices);
-                            return invoiceList.length > 0 ? (
-                              <span className="text-green-600 text-xs">
-                                {invoiceList.length} NF(s) - R$ {invoiceList.reduce((sum: number, inv: {amount: number}) => sum + inv.amount, 0).toLocaleString('pt-BR')}
-                              </span>
-                            ) : null;
-                          } catch { return null; }
+                      {/* Unified Multi-NF Section */}
+                      <div className="space-y-2">
+                        {(() => {
+                          const invoices = getInvoicesFromReg(reg);
+                          const paidReais = (reg.paidAmount || 0) / 100;
+                          const sumNonCancelled = invoices
+                            .filter(inv => inv.status !== 'cancelled')
+                            .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+                          const remaining = Math.max(0, paidReais - sumNonCancelled);
+
+                          return (
+                            <>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Receipt className="w-4 h-4 text-gray-500" />
+                                <span className="text-gray-700 text-xs font-medium">
+                                  📄 Notas Fiscais{invoices.length > 0 ? ` (${invoices.filter(i => i.status !== 'cancelled').length})` : ''} — R$ {paidReais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} pago
+                                </span>
+                              </div>
+                              
+                              {invoices.length > 0 && (
+                                <div className="ml-6 space-y-1 border-l-2 border-gray-200 pl-3">
+                                  {invoices.map((inv, idx) => {
+                                    const isCancelled = inv.status === 'cancelled';
+                                    const isAuthorized = inv.status === 'issued' || inv.status === 'authorized';
+                                    const isPending = inv.status === 'pending' || inv.status === 'processing';
+                                    const isManual = inv.status === 'manual';
+                                    const isError = inv.status === 'error';
+
+                                    return (
+                                      <div key={idx} className={`flex items-center gap-2 flex-wrap text-xs ${isCancelled ? 'opacity-50 line-through' : ''}`}>
+                                        <span className="text-gray-600 font-medium">{idx + 1}.</span>
+                                        <span className="text-gray-800">R$ {(inv.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                        <span className="text-gray-400">|</span>
+                                        <span className="text-gray-500">{inv.date ? new Date(inv.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}</span>
+                                        <span className="text-gray-400">|</span>
+                                        {isAuthorized && (
+                                          <span className="text-green-600 font-medium">✅ Emitida{inv.number ? ` #${inv.number}` : ''}</span>
+                                        )}
+                                        {isPending && (
+                                          <span className="text-yellow-600 font-medium">⏳ Pendente</span>
+                                        )}
+                                        {isCancelled && (
+                                          <span className="text-gray-400 font-medium">❌ Cancelada</span>
+                                        )}
+                                        {isManual && (
+                                          <span className="text-blue-600 font-medium">📋 Manual</span>
+                                        )}
+                                        {isError && (
+                                          <span className="text-red-500 font-medium">⚠️ Erro</span>
+                                        )}
+                                        
+                                        {/* Action buttons */}
+                                        {!isCancelled && (
+                                          <div className="flex items-center gap-1 ml-2">
+                                            {inv.pdfUrl && (
+                                              <a
+                                                href={inv.pdfUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 text-xs underline hover:text-blue-800"
+                                              >
+                                                📄 PDF
+                                              </a>
+                                            )}
+                                            {inv.pdfUrl && (
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => resendInvoiceMutation.mutate({ id: reg.id, invoiceIndex: idx })}
+                                                disabled={resendInvoiceMutation.isPending}
+                                                className="h-5 px-1 text-xs text-blue-600 hover:text-blue-800"
+                                              >
+                                                📧
+                                              </Button>
+                                            )}
+                                            {inv.id && (isPending || isError) && (
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => refreshInvoiceMutation.mutate({ id: reg.id, invoiceIndex: idx })}
+                                                disabled={refreshInvoiceMutation.isPending}
+                                                className="h-5 px-1 text-xs text-gray-500 hover:text-gray-700"
+                                              >
+                                                🔄
+                                              </Button>
+                                            )}
+                                            {(isAuthorized || isPending || isManual) && (
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                  const justificativa = window.prompt(
+                                                    `Cancelar NF ${idx + 1} de ${reg.name}\n\nMotivo (mínimo 15 caracteres):`,
+                                                    "Cancelamento solicitado pelo cliente"
+                                                  );
+                                                  if (justificativa === null) return;
+                                                  if (inv.id && justificativa.length < 15) {
+                                                    alert("O motivo deve ter pelo menos 15 caracteres.");
+                                                    return;
+                                                  }
+                                                  cancelInvoiceMutation.mutate({ id: reg.id, invoiceIndex: idx, justificativa });
+                                                }}
+                                                disabled={cancelInvoiceMutation.isPending}
+                                                className="h-5 px-1 text-xs text-red-500 hover:text-red-700"
+                                              >
+                                                ❌
+                                              </Button>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Actions row */}
+                              <div className="flex items-center gap-2 ml-6">
+                                {(reg.paymentStatus === 'pago' || reg.paymentStatus === 'parcial') && reg.cpfCnpj && remaining > 0 && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openEmitNfModal(reg)}
+                                    disabled={emitNfPartialMutation.isPending}
+                                    className="h-6 text-xs border-blue-400 text-blue-600"
+                                  >
+                                    <Receipt className="w-3 h-3 mr-1" />
+                                    + Emitir NF (R$ {remaining.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                                  </Button>
+                                )}
+                                {(reg.paymentStatus === 'pago' || reg.paymentStatus === 'parcial') && !reg.cpfCnpj && (
+                                  <span className="text-xs text-gray-400">CPF/CNPJ necessário para emitir NF</span>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openInvoiceModal(reg)}
+                                  disabled={invoiceMutation.isPending}
+                                  className="h-6 border-green-500 text-green-700 text-xs"
+                                >
+                                  <Receipt className="w-3 h-3 mr-1" />
+                                  Registrar NF Manual
+                                </Button>
+                              </div>
+                            </>
+                          );
                         })()}
                       </div>
                     </div>

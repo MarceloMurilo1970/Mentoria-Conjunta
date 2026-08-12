@@ -3735,6 +3735,48 @@ Qualquer dúvida, estamos à disposição!`;
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Emit NF via Faturador Modal */}
+      <Dialog open={emitNfModalOpen} onOpenChange={setEmitNfModalOpen}>
+        <DialogContent className="bg-white border-gray-200 text-gray-900">
+          <DialogHeader>
+            <DialogTitle>Emitir Nota Fiscal</DialogTitle>
+            <DialogDescription>
+              {emitNfReg?.name} — CPF/CNPJ: {emitNfReg?.cpfCnpj}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Valor da NF (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={emitNfAmount}
+                onChange={(e) => setEmitNfAmount(e.target.value)}
+                className="mt-1 bg-white border-gray-300"
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              A NF será emitida via Faturador (Focus NFe) e enviada ao email do inscrito.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmitNfModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleEmitNfPartial}
+              disabled={emitNfPartialMutation.isPending || !emitNfAmount}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {emitNfPartialMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Emitir NF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -892,6 +892,7 @@ function MentorshipRegistrationsSection() {
   const [transferNotes, setTransferNotes] = useState('');
   const [transferPaymentMethod, setTransferPaymentMethod] = useState('pix');
   const [transferSelectedRegIds, setTransferSelectedRegIds] = useState<Set<number>>(new Set());
+  const [transferAmounts, setTransferAmounts] = useState<Record<string, number>>({});
   const [transferPaymentDate, setTransferPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   
   // Get current user email and auth token from localStorage
@@ -2028,6 +2029,7 @@ Qualquer dúvida, estamos à disposição!`;
                     setTransferRecipient('hamilton');
                     setTransferVendorName('');
                     setTransferNotes('');
+                    setTransferAmounts({});
                     setTransferPaymentDate(new Date().toISOString().split('T')[0]);
                     const pendingIds = new Set<number>();
                     (registrations || []).forEach(r => {
@@ -2046,6 +2048,7 @@ Qualquer dúvida, estamos à disposição!`;
                     setTransferRecipient('vendor');
                     setTransferVendorName(vendorName);
                     setTransferNotes('');
+                    setTransferAmounts({});
                     setTransferPaymentDate(new Date().toISOString().split('T')[0]);
                     const pendingIds = new Set<number>();
                     (registrations || []).filter(r => r.vendor === vendorName).forEach(r => {
@@ -2103,7 +2106,7 @@ Qualquer dúvida, estamos à disposição!`;
 
             const selectedTotal = pendingRegs
               .filter(item => transferSelectedRegIds.has(item.reg.id))
-              .reduce((sum, item) => sum + item.balance, 0);
+              .reduce((sum, item) => sum + (transferAmounts[item.reg.id] ?? item.balance), 0);
 
             const allSelected = pendingRegs.length > 0 && pendingRegs.every(item => transferSelectedRegIds.has(item.reg.id));
             const noneSelected = pendingRegs.every(item => !transferSelectedRegIds.has(item.reg.id));
@@ -2158,39 +2161,56 @@ Qualquer dúvida, estamos à disposição!`;
                             </th>
                             <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
                             <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Venda</th>
-                            <th className="px-3 py-2 font-medium text-gray-600 text-right">Saldo a Pagar</th>
+                            <th className="px-3 py-2 font-medium text-gray-600 text-right">Saldo Pendente</th>
+                            <th className="px-3 py-2 font-medium text-gray-600 text-right">Pagar Agora</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                           {pendingRegs.map(({ reg, balance }) => (
                             <tr
                               key={reg.id}
-                              className={`cursor-pointer transition-colors ${transferSelectedRegIds.has(reg.id) ? bgAccent : 'hover:bg-slate-50'}`}
-                              onClick={() => toggleReg(reg.id)}
+                              className={`transition-colors ${transferSelectedRegIds.has(reg.id) ? bgAccent : 'hover:bg-slate-50'}`}
                             >
-                              <td className="px-3 py-2" onClick={e => e.stopPropagation()}>
+                              <td className="px-3 py-2">
                                 <Checkbox
                                   checked={transferSelectedRegIds.has(reg.id)}
                                   onCheckedChange={() => toggleReg(reg.id)}
                                   data-testid={`checkbox-reg-${reg.id}`}
                                 />
                               </td>
-                              <td className="px-3 py-2">
+                              <td className="px-3 py-2 cursor-pointer" onClick={() => toggleReg(reg.id)}>
                                 <p className="font-medium text-gray-900">{reg.name}</p>
                                 <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
                               </td>
-                              <td className="px-3 py-2 text-right text-gray-700">
+                              <td className="px-3 py-2 text-right text-gray-700 cursor-pointer" onClick={() => toggleReg(reg.id)}>
                                 R$ {(reg.paymentMethod === 'pix' ? (rc(reg)).pixPrice : reg.paymentMethod === 'installments10' ? (rc(reg)).installment10Total || 0 : (rc(reg)).installmentTotal).toLocaleString('pt-BR')}
                               </td>
-                              <td className={`px-3 py-2 text-right font-semibold ${accentClass}`}>
+                              <td className={`px-3 py-2 text-right font-medium ${accentClass} cursor-pointer`} onClick={() => toggleReg(reg.id)}>
                                 R$ {balance.toLocaleString('pt-BR')}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {transferSelectedRegIds.has(reg.id) && (
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max={balance}
+                                    defaultValue={balance}
+                                    className="w-24 h-7 text-xs text-right bg-white border-gray-300 ml-auto"
+                                    onClick={e => e.stopPropagation()}
+                                    onChange={e => {
+                                      const val = parseFloat(e.target.value) || 0;
+                                      setTransferAmounts(prev => ({ ...prev, [reg.id]: Math.min(val, balance) }));
+                                    }}
+                                  />
+                                )}
                               </td>
                             </tr>
                           ))}
                         </tbody>
                         <tfoot>
                           <tr className={`${bgAccent} font-semibold`}>
-                            <td className="px-3 py-2" colSpan={3}>
+                            <td className="px-3 py-2" colSpan={4}>
                               Total selecionado ({transferSelectedRegIds.size} de {pendingRegs.length})
                             </td>
                             <td className={`px-3 py-2 text-right ${accentClass}`}>
@@ -2258,21 +2278,22 @@ Qualquer dúvida, estamos à disposição!`;
                       let totalPaid = 0;
 
                       for (const { reg, balance } of selectedItems) {
+                        const payAmount = transferAmounts[reg.id] ?? balance;
                         try {
                           if (transferRecipient === 'vendor') {
-                            const newPaid = (reg.vendorCommissionPaid || 0) + balance;
+                            const newPaid = (reg.vendorCommissionPaid || 0) + payAmount;
                             await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, {
                               vendorCommissionPaid: newPaid,
                               vendorCommissionPaidAt: paymentDateISO,
                             });
                           } else {
-                            const newPaid = (reg.hamiltonPaid || 0) + balance;
+                            const newPaid = (reg.hamiltonPaid || 0) + payAmount;
                             await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, {
                               hamiltonPaid: newPaid,
                               hamiltonPaidAt: paymentDateISO,
                             });
                           }
-                          totalPaid += balance;
+                          totalPaid += payAmount;
                         } catch (error) {
                           console.error('Error updating payment:', error);
                         }

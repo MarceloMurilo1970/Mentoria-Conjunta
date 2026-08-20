@@ -2222,11 +2222,22 @@ Qualquer dúvida, estamos à disposição!`;
                                     min="0"
                                     max={balance}
                                     value={transferAmounts[reg.id] !== undefined ? transferAmounts[reg.id] : balance}
-                                    className="w-24 h-7 text-xs text-right bg-white border-gray-300 ml-auto"
+                                    className="w-28 h-7 text-xs text-right bg-white border-gray-300 ml-auto"
                                     onClick={e => e.stopPropagation()}
                                     onChange={e => {
-                                      const val = parseFloat(e.target.value) || 0;
-                                      setTransferAmounts(prev => ({ ...prev, [reg.id]: Math.min(val, balance) }));
+                                      const raw = e.target.value;
+                                      if (raw === '' || raw === '0') {
+                                        setTransferAmounts(prev => ({ ...prev, [reg.id]: 0 }));
+                                        return;
+                                      }
+                                      const val = parseFloat(raw);
+                                      if (!isNaN(val)) {
+                                        setTransferAmounts(prev => ({ ...prev, [reg.id]: Math.min(val, balance) }));
+                                      }
+                                    }}
+                                    onFocus={e => {
+                                      // Select all on focus for easy editing
+                                      e.target.select();
                                     }}
                                   />
                                 )}

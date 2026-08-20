@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { User, Banknote } from "lucide-react";
 
 interface Registration {
   id: string;
@@ -31,6 +32,8 @@ interface Props {
   calculateCommissions: (reg: Registration, batchConfig: any) => CommResult;
   rc: (reg: Registration) => any;
   turmaFilter?: string;
+  onPayMentor?: () => void;
+  onPayVendor?: (vendorName: string) => void;
 }
 
 interface PersonReport {
@@ -58,7 +61,7 @@ interface PersonReport {
   };
 }
 
-export default function UnifiedRepassesSection({ registrations, vendors, calculateCommissions, rc, turmaFilter = 'todas' }: Props) {
+export default function UnifiedRepassesSection({ registrations, vendors, calculateCommissions, rc, turmaFilter = 'todas', onPayMentor, onPayVendor }: Props) {
   const filtered = turmaFilter === 'todas' ? registrations : registrations.filter(r => r.turma === turmaFilter);
 
   // Build per-person reports
@@ -182,6 +185,22 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
               <Badge className={person.totals.balance <= 0 ? 'bg-green-600' : 'bg-orange-500'}>
                 {person.totals.balance <= 0 ? 'Quitado' : `Saldo R$ ${fmt(person.totals.balance)}`}
               </Badge>
+              {person.totals.balance > 0 && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (person.role === 'mentor' || person.role === 'mentor+vendedor') {
+                      onPayMentor?.();
+                    } else {
+                      onPayVendor?.(person.name);
+                    }
+                  }}
+                  className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                >
+                  <Banknote className="w-3 h-3 mr-1" />
+                  Registrar Pgto
+                </Button>
+              )}
             </div>
           </div>
 

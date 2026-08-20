@@ -866,10 +866,11 @@ function MentorshipRegistrationsSection() {
   const [editingTaxRate, setEditingTaxRate] = useState(false);
   const [taxRateInput, setTaxRateInput] = useState((getSavedTaxRate() * 100).toFixed(2));
 
-  // Turma filter for registration list and DRE
+  // Turma filter for entire page (single filter)
   const [turmaFilter, setTurmaFilter] = useState<'todas' | 'turma_2' | 'turma_3' | 'turma_4'>('todas');
-  const [dreTurmaFilter, setDreTurmaFilter] = useState<'todas' | 'turma_2' | 'turma_3' | 'turma_4'>('todas');
-  const [manualRegTurma, setManualRegTurma] = useState<'turma_2' | 'turma_3' | 'turma_4'>('turma_3');
+  const dreTurmaFilter = turmaFilter; // Same filter for DRE section
+  const setDreTurmaFilter = setTurmaFilter;
+  const [manualRegTurma, setManualRegTurma] = useState<'turma_2' | 'turma_3' | 'turma_4'>('turma_4');
   
   // Dynamically computed BATCH_CONFIG based on current tax rate
   const currentBatchConfig = getBatchConfig(taxRate);
@@ -2023,6 +2024,42 @@ Qualquer dúvida, estamos à disposição!`;
                   calculateCommissions={calculateCommissions}
                   rc={rc}
                   turmaFilter={dreTurmaFilter}
+                  onPayMentor={() => {
+                    setTransferRecipient('hamilton');
+                    setTransferVendorName('');
+                    setTransferNotes('');
+                    setTransferPaymentDate(new Date().toISOString().split('T')[0]);
+                    const pendingIds = new Set<number>();
+                    (registrations || []).forEach(r => {
+                      const bc = rc(r);
+                      const comms = calculateCommissions(r, bc);
+                      const paidAmountReais = (r.paidAmount || 0) / 100;
+                      const ns = (r.paymentStatus || '').toLowerCase().trim();
+                      const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' ? paidAmountReais / comms.gross : 0;
+                      const due = Math.round(comms.hfComm * paidRatio) - (r.hamiltonPaid || 0);
+                      if (due > 0) pendingIds.add(r.id as any);
+                    });
+                    setTransferSelectedRegIds(pendingIds);
+                    setTransferPaymentModalOpen(true);
+                  }}
+                  onPayVendor={(vendorName) => {
+                    setTransferRecipient('vendor');
+                    setTransferVendorName(vendorName);
+                    setTransferNotes('');
+                    setTransferPaymentDate(new Date().toISOString().split('T')[0]);
+                    const pendingIds = new Set<number>();
+                    (registrations || []).filter(r => r.vendor === vendorName).forEach(r => {
+                      const bc = rc(r);
+                      const comms = calculateCommissions(r, bc);
+                      const paidAmountReais = (r.paidAmount || 0) / 100;
+                      const ns = (r.paymentStatus || '').toLowerCase().trim();
+                      const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' ? paidAmountReais / comms.gross : 0;
+                      const due = Math.round(comms.vendorComm * paidRatio) - (r.vendorCommissionPaid || 0);
+                      if (due > 0) pendingIds.add(r.id as any);
+                    });
+                    setTransferSelectedRegIds(pendingIds);
+                    setTransferPaymentModalOpen(true);
+                  }}
                 />
               </div>
             </CardContent>

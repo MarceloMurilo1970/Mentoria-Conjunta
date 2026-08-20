@@ -2335,9 +2335,19 @@ Qualquer dúvida, estamos à disposição!`;
                         
                         {/* Detailed Analytics - All Registrations */}
                         <div className="border-t border-slate-200 pt-4 mb-4">
-                          <div className="flex items-center gap-2 mb-3">
-                            <BarChart3 className="h-4 w-4 text-purple-600" />
-                            <span className="text-sm font-medium text-gray-700">Analítico por Inscrição</span>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <BarChart3 className="h-4 w-4 text-purple-600" />
+                              <span className="text-sm font-medium text-gray-700">Analítico por Inscrição</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">Turma:</span>
+                              {(['todas', 'turma_3', 'turma_4', 'turma_2'] as const).map(t => (
+                                <Button key={t} size="sm" variant={dreTurmaFilter === t ? 'default' : 'outline'} onClick={() => setDreTurmaFilter(t)} className="h-6 text-xs px-2">
+                                  {t === 'todas' ? 'Todas' : t === 'turma_3' ? 'T3' : t === 'turma_4' ? 'T4' : 'T2'}
+                                </Button>
+                              ))}
+                            </div>
                           </div>
                           <div className="bg-slate-50 rounded-lg overflow-hidden">
                             <div className="overflow-x-auto">
@@ -2349,15 +2359,16 @@ Qualquer dúvida, estamos à disposição!`;
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Impostos</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Tarifa Cartão</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Líquido</th>
-                                    <th className="px-3 py-2 font-medium text-gray-600 text-center">Status</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Repasse Total</th>
-                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Devido Agora</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-center">Status</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Pago</th>
+                                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Repasse Devido</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Já Pago</th>
                                     <th className="px-3 py-2 font-medium text-gray-600 text-right">Saldo</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200">
-                                  {registrations?.map(reg => {
+                                  {registrations?.filter(r => dreTurmaFilter === 'todas' || r.turma === dreTurmaFilter).map(reg => {
                                     const batchConfig = rc(reg);
                                     const comms = calculateCommissions(reg, batchConfig);
                                     const paidAmountReais = (reg.paidAmount || 0) / 100;
@@ -2380,6 +2391,7 @@ Qualquer dúvida, estamos à disposição!`;
                                         <td className="px-3 py-2 text-right text-red-600">R$ {comms.taxes.toLocaleString('pt-BR')}</td>
                                         <td className="px-3 py-2 text-right text-orange-600">R$ {comms.cardFee.toLocaleString('pt-BR')}</td>
                                         <td className="px-3 py-2 text-right text-emerald-700 font-medium">R$ {comms.netAfterTax.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-purple-700 font-medium">R$ {comms.hfComm.toLocaleString('pt-BR')}</td>
                                         <td className="px-3 py-2 text-center">
                                           <Badge className={
                                             normalizedStatus === 'pago' ? 'bg-green-600' : 
@@ -2388,16 +2400,11 @@ Qualquer dúvida, estamos à disposição!`;
                                             {normalizedStatus === 'pago' ? 'Pago' : normalizedStatus === 'parcial' ? 'Parcial' : 'Pendente'}
                                           </Badge>
                                         </td>
-                                        <td className="px-3 py-2 text-right text-purple-700 font-medium">R$ {comms.hfComm.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right font-medium text-blue-600">R$ {paidAmountReais.toLocaleString('pt-BR', {minimumFractionDigits: 0})}</td>
                                         <td className="px-3 py-2 text-right text-blue-700 font-medium">R$ {hfDueNow.toLocaleString('pt-BR')}</td>
                                         <td className="px-3 py-2 text-right">
                                           {hfPaid > 0 ? (
-                                            <div>
-                                              <span className="text-green-600 font-medium">R$ {hfPaid.toLocaleString('pt-BR')}</span>
-                                              {reg.hamiltonPaidAt && (
-                                                <p className="text-xs text-gray-400">{new Date(reg.hamiltonPaidAt).toLocaleDateString('pt-BR')}</p>
-                                              )}
-                                            </div>
+                                            <span className="text-green-600 font-medium">R$ {hfPaid.toLocaleString('pt-BR')}</span>
                                           ) : (
                                             <span className="text-gray-400">-</span>
                                           )}
@@ -2412,18 +2419,41 @@ Qualquer dúvida, estamos à disposição!`;
                                   })}
                                 </tbody>
                                 <tfoot>
-                                  <tr className="bg-purple-50 font-semibold">
-                                    <td className="px-3 py-2 text-gray-700">TOTAL</td>
-                                    <td className="px-3 py-2 text-right">R$ {hamiltonStats.soldValue.toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-red-600">R$ {(registrations?.reduce((s, r) => { const bc = rc(r); return s + calculateCommissions(r, bc).taxes; }, 0) || 0).toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-orange-600">R$ {(registrations?.reduce((s, r) => { const bc = rc(r); return s + calculateCommissions(r, bc).cardFee; }, 0) || 0).toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-emerald-700">R$ {(registrations?.reduce((s, r) => { const bc = rc(r); return s + calculateCommissions(r, bc).netAfterTax; }, 0) || 0).toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2"></td>
-                                    <td className="px-3 py-2 text-right text-purple-700">R$ {hamiltonStats.hfTotal.toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-blue-700">R$ {hamiltonStats.hfDueNow.toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-green-600">R$ {hamiltonStats.hfPaid.toLocaleString('pt-BR')}</td>
-                                    <td className="px-3 py-2 text-right text-purple-700">R$ {balance.toLocaleString('pt-BR')}</td>
-                                  </tr>
+                                  {(() => {
+                                    const filtered = registrations?.filter(r => dreTurmaFilter === 'todas' || r.turma === dreTurmaFilter) || [];
+                                    const totals = filtered.reduce((acc, reg) => {
+                                      const bc = rc(reg);
+                                      const comms = calculateCommissions(reg, bc);
+                                      const paidAmountReais = (reg.paidAmount || 0) / 100;
+                                      const ns = (reg.paymentStatus || '').toLowerCase().trim();
+                                      const pr = ns === 'pago' ? 1 : ns === 'parcial' ? paidAmountReais / comms.gross : 0;
+                                      return {
+                                        gross: acc.gross + comms.gross,
+                                        taxes: acc.taxes + comms.taxes,
+                                        cardFee: acc.cardFee + comms.cardFee,
+                                        net: acc.net + comms.netAfterTax,
+                                        hfTotal: acc.hfTotal + comms.hfComm,
+                                        paidAmount: acc.paidAmount + paidAmountReais,
+                                        hfDue: acc.hfDue + Math.round(comms.hfComm * pr),
+                                        hfPaid: acc.hfPaid + (reg.hamiltonPaid || 0),
+                                      };
+                                    }, { gross: 0, taxes: 0, cardFee: 0, net: 0, hfTotal: 0, paidAmount: 0, hfDue: 0, hfPaid: 0 });
+                                    return (
+                                      <tr className="bg-purple-50 font-semibold">
+                                        <td className="px-3 py-2 text-gray-700">{dreTurmaFilter === 'todas' ? 'TOTAL' : `SUBTOTAL ${dreTurmaFilter === 'turma_3' ? 'T3' : dreTurmaFilter === 'turma_4' ? 'T4' : 'T2'}`}</td>
+                                        <td className="px-3 py-2 text-right">R$ {totals.gross.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-red-600">R$ {totals.taxes.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-orange-600">R$ {totals.cardFee.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-emerald-700">R$ {totals.net.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-purple-700">R$ {totals.hfTotal.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2"></td>
+                                        <td className="px-3 py-2 text-right text-blue-600">R$ {totals.paidAmount.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-blue-700">R$ {totals.hfDue.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-green-600">R$ {totals.hfPaid.toLocaleString('pt-BR')}</td>
+                                        <td className="px-3 py-2 text-right text-purple-700">R$ {(totals.hfDue - totals.hfPaid).toLocaleString('pt-BR')}</td>
+                                      </tr>
+                                    );
+                                  })()}
                                 </tfoot>
                               </table>
                             </div>

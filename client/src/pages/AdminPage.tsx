@@ -2221,7 +2221,7 @@ Qualquer dúvida, estamos à disposição!`;
                                     step="0.01"
                                     min="0"
                                     max={balance}
-                                    defaultValue={balance}
+                                    value={transferAmounts[reg.id] !== undefined ? transferAmounts[reg.id] : balance}
                                     className="w-24 h-7 text-xs text-right bg-white border-gray-300 ml-auto"
                                     onClick={e => e.stopPropagation()}
                                     onChange={e => {

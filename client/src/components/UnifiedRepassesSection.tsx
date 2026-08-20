@@ -41,6 +41,7 @@ interface PersonReport {
   role: 'mentor' | 'vendedor' | 'mentor+vendedor';
   entries: Array<{
     reg: Registration;
+    gross: number;
     netAfterTax: number;
     paidAmountReais: number;
     paidRatio: number;
@@ -51,6 +52,7 @@ interface PersonReport {
     balance: number;
   }>;
   totals: {
+    gross: number;
     netAfterTax: number;
     paidAmount: number;
     mentorTotal: number;
@@ -79,7 +81,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
       // Hamilton Felix as mentor (always gets hfComm)
       const HF_NAME = "Hamilton Felix";
       if (!people[HF_NAME]) {
-        people[HF_NAME] = { name: HF_NAME, role: 'mentor', entries: [], totals: { netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
+        people[HF_NAME] = { name: HF_NAME, role: 'mentor', entries: [], totals: { gross: 0, netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
       }
 
       const hfDueNow = Math.round(comms.hfComm * paidRatio);
@@ -97,6 +99,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
 
       people[HF_NAME].entries.push({
         reg,
+        gross: comms.gross,
         netAfterTax: comms.netAfterTax,
         paidAmountReais,
         paidRatio,
@@ -113,12 +116,13 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
         const vendorObj = vendors.find(v => v.name === vendorName);
         if (vendorObj && vendorObj.hasCommission !== false) {
           if (!people[vendorName]) {
-            people[vendorName] = { name: vendorName, role: 'vendedor', entries: [], totals: { netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
+            people[vendorName] = { name: vendorName, role: 'vendedor', entries: [], totals: { gross: 0, netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
           }
           const commDueNow = Math.round(comms.vendorComm * paidRatio);
           const commPaid = reg.vendorCommissionPaid || 0;
           people[vendorName].entries.push({
             reg,
+            gross: comms.gross,
             netAfterTax: comms.netAfterTax,
             paidAmountReais,
             paidRatio,
@@ -135,6 +139,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
     // Calculate totals
     for (const person of Object.values(people)) {
       person.totals = person.entries.reduce((acc, e) => ({
+        gross: acc.gross + e.gross,
         netAfterTax: acc.netAfterTax + e.netAfterTax,
         paidAmount: acc.paidAmount + e.paidAmountReais,
         mentorTotal: acc.mentorTotal + e.mentorTotal,
@@ -210,6 +215,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
               <thead>
                 <tr className="bg-slate-100 text-left">
                   <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
+                  <th className="px-3 py-2 font-medium text-gray-600 text-right">Bruto</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-right">Líquido</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-center">Status</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Pago</th>
@@ -233,6 +239,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
                         <p className="font-medium text-gray-900">{e.reg.name}</p>
                         <p className="text-[10px] text-gray-400">{e.reg.paymentMethod === 'pix' ? 'PIX' : e.reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
                       </td>
+                      <td className="px-3 py-1.5 text-right">R$ {fmt(e.gross)}</td>
                       <td className="px-3 py-1.5 text-right text-emerald-700">R$ {fmt(e.netAfterTax)}</td>
                       <td className="px-3 py-1.5 text-center">
                         <Badge className={`text-[10px] ${ns === 'pago' ? 'bg-green-600' : ns === 'parcial' ? 'bg-amber-500' : 'bg-red-500'}`}>
@@ -260,6 +267,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
               <tfoot>
                 <tr className="bg-slate-100 font-semibold text-xs">
                   <td className="px-3 py-2">{turmaFilter === 'todas' ? 'TOTAL' : 'SUBTOTAL'}</td>
+                  <td className="px-3 py-2 text-right">R$ {fmt(person.totals.gross)}</td>
                   <td className="px-3 py-2 text-right text-emerald-700">R$ {fmt(person.totals.netAfterTax)}</td>
                   <td className="px-3 py-2"></td>
                   <td className="px-3 py-2 text-right text-blue-600">R$ {fmt(person.totals.paidAmount)}</td>

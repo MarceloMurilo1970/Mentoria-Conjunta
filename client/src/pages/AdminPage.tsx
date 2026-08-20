@@ -2093,15 +2093,33 @@ Qualquer dúvida, estamos à disposição!`;
               const comms = calculateCommissions(reg, bc);
               const paidAmountReais = (reg.paidAmount || 0) / 100;
               const ns = (reg.paymentStatus || '').toLowerCase().trim();
-              const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' ? paidAmountReais / comms.gross : 0;
-              const dueNow = transferRecipient === 'vendor'
-                ? Math.round(comms.vendorComm * paidRatio)
-                : Math.round(comms.hfComm * paidRatio);
-              const alreadyPaid = transferRecipient === 'vendor'
-                ? (reg.vendorCommissionPaid || 0)
-                : (reg.hamiltonPaid || 0);
+              const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' && comms.gross > 0 ? paidAmountReais / comms.gross : 0;
+              
+              let dueNow = 0;
+              let alreadyPaid = 0;
+              let mentorDue = 0;
+              let commDue = 0;
+              
+              if (transferRecipient === 'vendor') {
+                // Pure vendor payment
+                commDue = Math.round(comms.vendorComm * paidRatio);
+                dueNow = commDue;
+                alreadyPaid = reg.vendorCommissionPaid || 0;
+              } else {
+                // Hamilton as mentor
+                mentorDue = Math.round(comms.hfComm * paidRatio);
+                dueNow = mentorDue;
+                alreadyPaid = reg.hamiltonPaid || 0;
+                // Also add vendor commission if Hamilton is the vendor
+                if (reg.vendor?.trim() === 'Hamilton Felix') {
+                  commDue = Math.round(comms.vendorComm * paidRatio);
+                  dueNow += commDue;
+                  alreadyPaid += (reg.vendorCommissionPaid || 0);
+                }
+              }
+              
               const balance = dueNow - alreadyPaid;
-              return { reg, comms, dueNow, alreadyPaid, balance };
+              return { reg, comms, dueNow, alreadyPaid, balance, mentorDue, commDue };
             }).filter(item => item.balance > 0);
 
             const selectedTotal = pendingRegs
@@ -2160,13 +2178,14 @@ Qualquer dúvida, estamos à disposição!`;
                               />
                             </th>
                             <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
-                            <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Venda</th>
+                            {transferRecipient === 'hamilton' && <th className="px-3 py-2 font-medium text-gray-600 text-right">Mentor</th>}
+                            {transferRecipient === 'hamilton' && <th className="px-3 py-2 font-medium text-gray-600 text-right">Comissão</th>}
                             <th className="px-3 py-2 font-medium text-gray-600 text-right">Saldo Pendente</th>
                             <th className="px-3 py-2 font-medium text-gray-600 text-right">Pagar Agora</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                          {pendingRegs.map(({ reg, balance }) => (
+                          {pendingRegs.map(({ reg, balance, mentorDue, commDue }) => (
                             <tr
                               key={reg.id}
                               className={`transition-colors ${transferSelectedRegIds.has(reg.id) ? bgAccent : 'hover:bg-slate-50'}`}
@@ -2182,9 +2201,16 @@ Qualquer dúvida, estamos à disposição!`;
                                 <p className="font-medium text-gray-900">{reg.name}</p>
                                 <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
                               </td>
-                              <td className="px-3 py-2 text-right text-gray-700 cursor-pointer" onClick={() => toggleReg(reg.id)}>
-                                R$ {(reg.paymentMethod === 'pix' ? (rc(reg)).pixPrice : reg.paymentMethod === 'installments10' ? (rc(reg)).installment10Total || 0 : (rc(reg)).installmentTotal).toLocaleString('pt-BR')}
-                              </td>
+                              {transferRecipient === 'hamilton' && (
+                                <td className="px-3 py-2 text-right text-purple-700 cursor-pointer" onClick={() => toggleReg(reg.id)}>
+                                  R$ {mentorDue.toLocaleString('pt-BR')}
+                                </td>
+                              )}
+                              {transferRecipient === 'hamilton' && (
+                                <td className="px-3 py-2 text-right text-amber-700 cursor-pointer" onClick={() => toggleReg(reg.id)}>
+                                  {commDue > 0 ? `R$ ${commDue.toLocaleString('pt-BR')}` : '-'}
+                                </td>
+                              )}
                               <td className={`px-3 py-2 text-right font-medium ${accentClass} cursor-pointer`} onClick={() => toggleReg(reg.id)}>
                                 R$ {balance.toLocaleString('pt-BR')}
                               </td>
@@ -2210,7 +2236,7 @@ Qualquer dúvida, estamos à disposição!`;
                         </tbody>
                         <tfoot>
                           <tr className={`${bgAccent} font-semibold`}>
-                            <td className="px-3 py-2" colSpan={4}>
+                            <td className="px-3 py-2" colSpan={transferRecipient === 'hamilton' ? 5 : 3}>
                               Total selecionado ({transferSelectedRegIds.size} de {pendingRegs.length})
                             </td>
                             <td className={`px-3 py-2 text-right ${accentClass}`}>
@@ -2277,7 +2303,7 @@ Qualquer dúvida, estamos à disposição!`;
                       const selectedItems = pendingRegs.filter(item => transferSelectedRegIds.has(item.reg.id));
                       let totalPaid = 0;
 
-                      for (const { reg, balance } of selectedItems) {
+                      for (const { reg, balance, mentorDue, commDue } of selectedItems) {
                         const payAmount = transferAmounts[reg.id] ?? balance;
                         try {
                           if (transferRecipient === 'vendor') {
@@ -2287,11 +2313,30 @@ Qualquer dúvida, estamos à disposição!`;
                               vendorCommissionPaidAt: paymentDateISO,
                             });
                           } else {
-                            const newPaid = (reg.hamiltonPaid || 0) + payAmount;
-                            await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, {
-                              hamiltonPaid: newPaid,
-                              hamiltonPaidAt: paymentDateISO,
-                            });
+                            // Hamilton: split between mentor and vendor commission if applicable
+                            const mentorAlreadyPaid = reg.hamiltonPaid || 0;
+                            const commAlreadyPaid = reg.vendor?.trim() === 'Hamilton Felix' ? (reg.vendorCommissionPaid || 0) : 0;
+                            const mentorRemaining = mentorDue - mentorAlreadyPaid;
+                            const commRemaining = commDue - commAlreadyPaid;
+                            
+                            // Allocate payment: mentor first, then commission
+                            let remaining = payAmount;
+                            const mentorPayment = Math.min(remaining, Math.max(0, mentorRemaining));
+                            remaining -= mentorPayment;
+                            const commPayment = Math.min(remaining, Math.max(0, commRemaining));
+                            
+                            if (mentorPayment > 0) {
+                              await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, {
+                                hamiltonPaid: mentorAlreadyPaid + mentorPayment,
+                                hamiltonPaidAt: paymentDateISO,
+                              });
+                            }
+                            if (commPayment > 0 && reg.vendor?.trim() === 'Hamilton Felix') {
+                              await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, {
+                                vendorCommissionPaid: commAlreadyPaid + commPayment,
+                                vendorCommissionPaidAt: paymentDateISO,
+                              });
+                            }
                           }
                           totalPaid += payAmount;
                         } catch (error) {

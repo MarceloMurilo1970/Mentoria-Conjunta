@@ -284,6 +284,40 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
               </tfoot>
             </table>
           </div>
+
+          {/* Payment History */}
+          {person.totals.alreadyPaid > 0 && (
+            <div className="px-4 py-3 border-t border-slate-200 bg-green-50/50">
+              <p className="text-xs font-medium text-gray-600 mb-2">Pagamentos realizados:</p>
+              <div className="space-y-1">
+                {person.entries.filter(e => e.alreadyPaid > 0).map((e, idx) => {
+                  const reg = e.reg;
+                  const mentorPaid = (person.role === 'mentor' || person.role === 'mentor+vendedor') ? (reg.hamiltonPaid || 0) : 0;
+                  const commPaid = (person.role === 'vendedor') ? (reg.vendorCommissionPaid || 0) 
+                    : (person.role === 'mentor+vendedor' && reg.vendor?.trim() === person.name) ? (reg.vendorCommissionPaid || 0) : 0;
+                  const paidDate = person.role === 'vendedor' 
+                    ? reg.vendorCommissionPaidAt 
+                    : reg.hamiltonPaidAt;
+                  
+                  return (
+                    <div key={idx} className="flex items-center justify-between text-xs text-gray-700">
+                      <span>{reg.name}</span>
+                      <div className="flex items-center gap-3">
+                        {mentorPaid > 0 && <span className="text-purple-600">Mentor: R$ {fmt(mentorPaid)}</span>}
+                        {commPaid > 0 && <span className="text-amber-600">Com: R$ {fmt(commPaid)}</span>}
+                        <span className="font-semibold text-green-700">R$ {fmt(e.alreadyPaid)}</span>
+                        <span className="text-gray-400">{paidDate ? new Date(paidDate).toLocaleDateString('pt-BR') : '-'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between mt-2 pt-2 border-t border-green-200 text-xs font-semibold">
+                <span className="text-gray-600">Total pago</span>
+                <span className="text-green-700">R$ {fmt(person.totals.alreadyPaid)}</span>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>

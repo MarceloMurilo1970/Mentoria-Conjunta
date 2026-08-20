@@ -1,7 +1,5 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, BarChart3 } from "lucide-react";
+import { User } from "lucide-react";
 
 interface Registration {
   id: string;
@@ -32,6 +30,7 @@ interface Props {
   vendors: Array<{ id: string; name: string; hasCommission: boolean }>;
   calculateCommissions: (reg: Registration, batchConfig: any) => CommResult;
   rc: (reg: Registration) => any;
+  turmaFilter?: string;
 }
 
 interface PersonReport {
@@ -59,20 +58,12 @@ interface PersonReport {
   };
 }
 
-export default function UnifiedRepassesSection({ registrations, vendors, calculateCommissions, rc }: Props) {
-  const [turmaFilter, setTurmaFilter] = useState<'todas' | 'turma_2' | 'turma_3' | 'turma_4'>('todas');
-
+export default function UnifiedRepassesSection({ registrations, vendors, calculateCommissions, rc, turmaFilter = 'todas' }: Props) {
   const filtered = turmaFilter === 'todas' ? registrations : registrations.filter(r => r.turma === turmaFilter);
 
   // Build per-person reports
   const buildReports = (): PersonReport[] => {
     const people: Record<string, PersonReport> = {};
-
-    // Hamilton Felix as mentor (always)
-    const HF_NAME = "Hamilton Felix";
-    if (!people[HF_NAME]) {
-      people[HF_NAME] = { name: HF_NAME, role: 'mentor', entries: [], totals: { netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
-    }
 
     // Process all registrations
     for (const reg of filtered) {
@@ -82,23 +73,39 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
       const ns = (reg.paymentStatus || '').toLowerCase().trim();
       const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' && comms.gross > 0 ? paidAmountReais / comms.gross : 0;
 
-      // Hamilton entry (mentor)
+      // Hamilton Felix as mentor (always gets hfComm)
+      const HF_NAME = "Hamilton Felix";
+      if (!people[HF_NAME]) {
+        people[HF_NAME] = { name: HF_NAME, role: 'mentor', entries: [], totals: { netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
+      }
+
       const hfDueNow = Math.round(comms.hfComm * paidRatio);
       const hfPaid = reg.hamiltonPaid || 0;
+
+      // Check if Hamilton is also the vendor for this reg
+      const isHfVendor = reg.vendor?.trim() === HF_NAME;
+      const vendorCommForHf = isHfVendor ? comms.vendorComm : 0;
+      const vendorCommDueForHf = isHfVendor ? Math.round(comms.vendorComm * paidRatio) : 0;
+      const vendorCommPaidForHf = isHfVendor ? (reg.vendorCommissionPaid || 0) : 0;
+
+      if (isHfVendor && people[HF_NAME].role === 'mentor') {
+        people[HF_NAME].role = 'mentor+vendedor';
+      }
+
       people[HF_NAME].entries.push({
         reg,
         netAfterTax: comms.netAfterTax,
         paidAmountReais,
         paidRatio,
         mentorTotal: comms.hfComm,
-        commTotal: 0,
-        dueNow: hfDueNow,
-        alreadyPaid: hfPaid,
-        balance: hfDueNow - hfPaid,
+        commTotal: vendorCommForHf,
+        dueNow: hfDueNow + vendorCommDueForHf,
+        alreadyPaid: hfPaid + vendorCommPaidForHf,
+        balance: (hfDueNow + vendorCommDueForHf) - (hfPaid + vendorCommPaidForHf),
       });
 
-      // Vendor entry (if has vendor with commission)
-      if (reg.vendor?.trim()) {
+      // Other vendors (not Hamilton)
+      if (reg.vendor?.trim() && reg.vendor.trim() !== HF_NAME) {
         const vendorName = reg.vendor.trim();
         const vendorObj = vendors.find(v => v.name === vendorName);
         if (vendorObj && vendorObj.hasCommission !== false) {
@@ -118,28 +125,6 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
             alreadyPaid: commPaid,
             balance: commDueNow - commPaid,
           });
-        }
-      }
-    }
-
-    // Check if Hamilton is also a vendor
-    if (people[HF_NAME]) {
-      const hfAsVendor = people[HF_NAME];
-      // Check if HF also appears as vendor
-      const hfVendorEntries = filtered.filter(r => r.vendor?.trim() === HF_NAME);
-      if (hfVendorEntries.length > 0) {
-        people[HF_NAME].role = 'mentor+vendedor';
-        // Merge vendor comms into HF entries
-        for (const entry of people[HF_NAME].entries) {
-          if (entry.reg.vendor?.trim() === HF_NAME) {
-            const bc = rc(entry.reg);
-            const comms = calculateCommissions(entry.reg, bc);
-            entry.commTotal = comms.vendorComm;
-            const commDueNow = Math.round(comms.vendorComm * entry.paidRatio);
-            entry.dueNow += commDueNow;
-            entry.alreadyPaid += (entry.reg.vendorCommissionPaid || 0);
-            entry.balance = entry.dueNow - entry.alreadyPaid;
-          }
         }
       }
     }
@@ -165,20 +150,10 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Repasses (Mentores e Vendedores)
-        </h3>
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-gray-500 mr-2">Turma:</span>
-          {(['todas', 'turma_3', 'turma_4', 'turma_2'] as const).map(t => (
-            <Button key={t} size="sm" variant={turmaFilter === t ? 'default' : 'outline'} onClick={() => setTurmaFilter(t)} className="h-6 text-xs px-2">
-              {t === 'todas' ? 'Todas' : t === 'turma_3' ? 'T3' : t === 'turma_4' ? 'T4' : 'T2'}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <User className="h-5 w-5" />
+        Repasses (Mentores e Vendedores)
+      </h3>
 
       {reports.map(person => (
         <div key={person.name} className="bg-white rounded-lg border border-slate-200 overflow-hidden">

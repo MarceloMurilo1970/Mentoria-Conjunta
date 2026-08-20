@@ -2022,6 +2022,7 @@ Qualquer dúvida, estamos à disposição!`;
                   vendors={vendors || []}
                   calculateCommissions={calculateCommissions}
                   rc={rc}
+                  turmaFilter={dreTurmaFilter}
                 />
               </div>
             </CardContent>

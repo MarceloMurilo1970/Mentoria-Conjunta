@@ -3180,7 +3180,7 @@ Qualquer dúvida, estamos à disposição!`;
           <DialogHeader>
             <DialogTitle>Gerenciar Pagamento PIX</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {selectedRegistration?.name} - Lote {selectedRegistration?.batch || 1} - Total: R$ {getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR')},00
+              {selectedRegistration?.name} - Lote {selectedRegistration?.batch || 1} - Total: R$ {getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </DialogDescription>
           </DialogHeader>
           
@@ -3216,15 +3216,15 @@ Qualquer dúvida, estamos à disposição!`;
                 <div className="p-3 bg-gray-800 rounded-lg space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Valor Total:</span>
-                    <span className="text-white">R$ {getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR')},00</span>
+                    <span className="text-white">R$ {getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Valor Pago:</span>
-                    <span className="text-green-400">R$ {(Number(paidAmount) || 0).toLocaleString('pt-BR')},00</span>
+                    <span className="text-green-400">R$ {(Number(paidAmount) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-sm font-semibold">
                     <span className="text-orange-400">Saldo Pendente:</span>
-                    <span className="text-orange-400">R$ {getRemainingAmount().toLocaleString('pt-BR')},00</span>
+                    <span className="text-orange-400">R$ {getRemainingAmount().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
 

@@ -1620,7 +1620,7 @@ Qualquer dúvida, estamos à disposição!`;
   const openPaymentModal = (reg: Registration) => {
     setSelectedRegistration(reg);
     setPaymentStatus((reg.paymentStatus as 'pendente' | 'pago' | 'parcial') || 'pendente');
-    setPaidAmount(reg.paidAmount ? (reg.paidAmount / 100).toString() : '');
+    setPaidAmount('');
     setRemainingPaymentDate(reg.remainingPaymentDate ? new Date(reg.remainingPaymentDate).toISOString().split('T')[0] : '');
     setPaymentModalOpen(true);
   };
@@ -1631,40 +1631,60 @@ Qualquer dúvida, estamos à disposição!`;
     const batchConfig = getSelectedBatchConfig();
     // Use correct total based on payment method
     const isPix = selectedRegistration.paymentMethod === 'pix';
-    const totalPrice = isPix ? batchConfig.pixPrice : batchConfig.installmentTotal;
+    const is10x = selectedRegistration.paymentMethod === 'installments10';
+    const totalPrice = isPix ? batchConfig.pixPrice : (is10x && batchConfig.installment10Total ? batchConfig.installment10Total : batchConfig.installmentTotal);
+    const currentPaidReais = (selectedRegistration.paidAmount || 0) / 100;
 
     // Validate partial payment fields
     if (paymentStatus === 'parcial') {
-      const paidNum = Number(paidAmount);
-      if (isNaN(paidNum) || paidNum <= 0 || paidNum >= totalPrice) {
+      const newPayment = Number(paidAmount);
+      if (isNaN(newPayment) || newPayment <= 0) {
         toast({
           title: "Valor inválido",
-          description: `O valor pago deve ser maior que 0 e menor que R$ ${totalPrice.toLocaleString('pt-BR')}`,
+          description: "O valor do novo pagamento deve ser maior que 0",
+          variant: "destructive",
+        });
+        return;
+      }
+      const newTotal = currentPaidReais + newPayment;
+      if (newTotal > totalPrice) {
+        toast({
+          title: "Valor inválido",
+          description: `O valor total pago (R$ ${newTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}) excederia o total de R$ ${totalPrice.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`,
           variant: "destructive",
         });
         return;
       }
     }
-    const paidAmountNum = paymentStatus === 'parcial' ? Number(paidAmount) : (paymentStatus === 'pago' ? totalPrice : 0);
+
+    let finalPaidAmount: number;
+    let finalStatus = paymentStatus;
+    
+    if (paymentStatus === 'parcial') {
+      finalPaidAmount = currentPaidReais + Number(paidAmount);
+      // Auto-upgrade to pago if total reached
+      if (finalPaidAmount >= totalPrice) {
+        finalStatus = 'pago';
+        finalPaidAmount = totalPrice;
+      }
+    } else if (paymentStatus === 'pago') {
+      finalPaidAmount = totalPrice;
+    } else {
+      finalPaidAmount = 0;
+    }
 
     paymentStatusMutation.mutate({
       id: selectedRegistration.id,
-      paymentStatus,
-      paidAmount: paidAmountNum,
+      paymentStatus: finalStatus,
+      paidAmount: finalPaidAmount,
       totalAmount: totalPrice,
-      remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? remainingPaymentDate : null,
+      remainingPaymentDate: finalStatus === 'parcial' && remainingPaymentDate ? remainingPaymentDate : null,
     });
   };
 
   const getSelectedBatchConfig = () => {
     if (!selectedRegistration) return currentBatchConfig[0];
     return rc(selectedRegistration);
-  };
-
-  const getRemainingAmount = () => {
-    const paid = Number(paidAmount) || 0;
-    const batchConfig = getSelectedBatchConfig();
-    return batchConfig.pixPrice - paid;
   };
 
   if (isLoading) {
@@ -3201,31 +3221,37 @@ Qualquer dúvida, estamos à disposição!`;
 
             {paymentStatus === 'parcial' && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="paidAmount">Valor Pago (R$)</Label>
-                  <Input
-                    id="paidAmount"
-                    type="number"
-                    value={paidAmount}
-                    onChange={(e) => setPaidAmount(e.target.value)}
-                    placeholder="Ex: 4000"
-                    className="bg-gray-800 border-gray-600"
-                  />
-                </div>
-
-                <div className="p-3 bg-gray-800 rounded-lg space-y-1">
+                <div className="p-3 bg-gray-800 rounded-lg space-y-1 mb-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Valor Total:</span>
                     <span className="text-white">R$ {getSelectedBatchConfig().pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Valor Pago:</span>
-                    <span className="text-green-400">R$ {(Number(paidAmount) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-gray-400">Já Pago:</span>
+                    <span className="text-green-400">R$ {((selectedRegistration?.paidAmount || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-sm font-semibold">
                     <span className="text-orange-400">Saldo Pendente:</span>
-                    <span className="text-orange-400">R$ {getRemainingAmount().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-orange-400">R$ {(getSelectedBatchConfig().pixPrice - (selectedRegistration?.paidAmount || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="paidAmount">Novo Pagamento (R$)</Label>
+                  <Input
+                    id="paidAmount"
+                    type="number"
+                    step="0.01"
+                    value={paidAmount}
+                    onChange={(e) => setPaidAmount(e.target.value)}
+                    placeholder="Ex: 5400"
+                    className="bg-gray-800 border-gray-600"
+                  />
+                  {Number(paidAmount) > 0 && (
+                    <p className="text-xs text-gray-400">
+                      Novo total pago: R$ {((selectedRegistration?.paidAmount || 0) / 100 + Number(paidAmount)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

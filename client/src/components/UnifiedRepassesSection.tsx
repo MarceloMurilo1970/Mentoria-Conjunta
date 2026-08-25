@@ -43,10 +43,14 @@ interface PersonReport {
     reg: Registration;
     gross: number;
     netAfterTax: number;
-    paidAmountReais: number;
-    paidRatio: number;
     mentorTotal: number;
     commTotal: number;
+    repasseTotal: number;
+    resultado: number;
+    paidAmountReais: number;
+    paidRatio: number;
+    mentorAtual: number;
+    commAtual: number;
     dueNow: number;
     alreadyPaid: number;
     balance: number;
@@ -54,9 +58,13 @@ interface PersonReport {
   totals: {
     gross: number;
     netAfterTax: number;
-    paidAmount: number;
     mentorTotal: number;
     commTotal: number;
+    repasseTotal: number;
+    resultado: number;
+    paidAmount: number;
+    mentorAtual: number;
+    commAtual: number;
     dueNow: number;
     alreadyPaid: number;
     balance: number;
@@ -81,33 +89,41 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
       // Hamilton Felix as mentor (always gets hfComm)
       const HF_NAME = "Hamilton Felix";
       if (!people[HF_NAME]) {
-        people[HF_NAME] = { name: HF_NAME, role: 'mentor', entries: [], totals: { gross: 0, netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
+        people[HF_NAME] = { name: HF_NAME, role: 'mentor', entries: [], totals: { gross: 0, netAfterTax: 0, mentorTotal: 0, commTotal: 0, repasseTotal: 0, resultado: 0, paidAmount: 0, mentorAtual: 0, commAtual: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
       }
 
-      const hfDueNow = Math.round(comms.hfComm * paidRatio);
       const hfPaid = reg.hamiltonPaid || 0;
 
       // Check if Hamilton is also the vendor for this reg
       const isHfVendor = reg.vendor?.trim() === HF_NAME;
       const vendorCommForHf = isHfVendor ? comms.vendorComm : 0;
-      const vendorCommDueForHf = isHfVendor ? Math.round(comms.vendorComm * paidRatio) : 0;
       const vendorCommPaidForHf = isHfVendor ? (reg.vendorCommissionPaid || 0) : 0;
 
       if (isHfVendor && people[HF_NAME].role === 'mentor') {
         people[HF_NAME].role = 'mentor+vendedor';
       }
 
+      const hfRepasseTotal = comms.hfComm + vendorCommForHf;
+      const hfResultado = comms.netAfterTax - hfRepasseTotal;
+      const hfMentorAtual = Math.round(comms.hfComm * paidRatio);
+      const hfCommAtual = isHfVendor ? Math.round(comms.vendorComm * paidRatio) : 0;
+      const hfDueNow = hfMentorAtual + hfCommAtual;
+
       people[HF_NAME].entries.push({
         reg,
         gross: comms.gross,
         netAfterTax: comms.netAfterTax,
-        paidAmountReais,
-        paidRatio,
         mentorTotal: comms.hfComm,
         commTotal: vendorCommForHf,
-        dueNow: hfDueNow + vendorCommDueForHf,
+        repasseTotal: hfRepasseTotal,
+        resultado: hfResultado,
+        paidAmountReais,
+        paidRatio,
+        mentorAtual: hfMentorAtual,
+        commAtual: hfCommAtual,
+        dueNow: hfDueNow,
         alreadyPaid: hfPaid + vendorCommPaidForHf,
-        balance: (hfDueNow + vendorCommDueForHf) - (hfPaid + vendorCommPaidForHf),
+        balance: hfDueNow - (hfPaid + vendorCommPaidForHf),
       });
 
       // Other vendors (not Hamilton)
@@ -116,21 +132,27 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
         const vendorObj = vendors.find(v => v.name === vendorName);
         if (vendorObj && vendorObj.hasCommission !== false) {
           if (!people[vendorName]) {
-            people[vendorName] = { name: vendorName, role: 'vendedor', entries: [], totals: { gross: 0, netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
+            people[vendorName] = { name: vendorName, role: 'vendedor', entries: [], totals: { gross: 0, netAfterTax: 0, mentorTotal: 0, commTotal: 0, repasseTotal: 0, resultado: 0, paidAmount: 0, mentorAtual: 0, commAtual: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
           }
-          const commDueNow = Math.round(comms.vendorComm * paidRatio);
+          const commAtual = Math.round(comms.vendorComm * paidRatio);
           const commPaid = reg.vendorCommissionPaid || 0;
+          const vendorRepasseTotal = comms.vendorComm;
+          const vendorResultado = comms.netAfterTax - vendorRepasseTotal;
           people[vendorName].entries.push({
             reg,
             gross: comms.gross,
             netAfterTax: comms.netAfterTax,
-            paidAmountReais,
-            paidRatio,
             mentorTotal: 0,
             commTotal: comms.vendorComm,
-            dueNow: commDueNow,
+            repasseTotal: vendorRepasseTotal,
+            resultado: vendorResultado,
+            paidAmountReais,
+            paidRatio,
+            mentorAtual: 0,
+            commAtual,
+            dueNow: commAtual,
             alreadyPaid: commPaid,
-            balance: commDueNow - commPaid,
+            balance: commAtual - commPaid,
           });
         }
       }
@@ -141,13 +163,17 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
       person.totals = person.entries.reduce((acc, e) => ({
         gross: acc.gross + e.gross,
         netAfterTax: acc.netAfterTax + e.netAfterTax,
-        paidAmount: acc.paidAmount + e.paidAmountReais,
         mentorTotal: acc.mentorTotal + e.mentorTotal,
         commTotal: acc.commTotal + e.commTotal,
+        repasseTotal: acc.repasseTotal + e.repasseTotal,
+        resultado: acc.resultado + e.resultado,
+        paidAmount: acc.paidAmount + e.paidAmountReais,
+        mentorAtual: acc.mentorAtual + e.mentorAtual,
+        commAtual: acc.commAtual + e.commAtual,
         dueNow: acc.dueNow + e.dueNow,
         alreadyPaid: acc.alreadyPaid + e.alreadyPaid,
         balance: acc.balance + e.balance,
-      }), { netAfterTax: 0, paidAmount: 0, mentorTotal: 0, commTotal: 0, dueNow: 0, alreadyPaid: 0, balance: 0 });
+      }), { gross: 0, netAfterTax: 0, mentorTotal: 0, commTotal: 0, repasseTotal: 0, resultado: 0, paidAmount: 0, mentorAtual: 0, commAtual: 0, dueNow: 0, alreadyPaid: 0, balance: 0 });
     }
 
     return Object.values(people).filter(p => p.entries.length > 0);
@@ -217,15 +243,23 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
                   <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-right">Bruto</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-right">Líquido</th>
+                  {(person.role === 'mentor' || person.role === 'mentor+vendedor') && (
+                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Repasse Mentor</th>
+                  )}
+                  {(person.role === 'vendedor' || person.role === 'mentor+vendedor') && (
+                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Comissão</th>
+                  )}
+                  <th className="px-3 py-2 font-medium text-gray-600 text-right">Repasse Total</th>
+                  <th className="px-3 py-2 font-medium text-gray-600 text-right">Resultado</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-center">Status</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Pago</th>
                   {(person.role === 'mentor' || person.role === 'mentor+vendedor') && (
-                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Mentor (total)</th>
+                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Repasse Mentor Atual</th>
                   )}
                   {(person.role === 'vendedor' || person.role === 'mentor+vendedor') && (
-                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Comissão (total)</th>
+                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Comissão Atual</th>
                   )}
-                  <th className="px-3 py-2 font-medium text-gray-600 text-right">Devido</th>
+                  <th className="px-3 py-2 font-medium text-gray-600 text-right">Total Atual Devido</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-right">Já Paguei</th>
                   <th className="px-3 py-2 font-medium text-gray-600 text-right">Saldo</th>
                 </tr>
@@ -241,6 +275,14 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
                       </td>
                       <td className="px-3 py-1.5 text-right">R$ {fmt(e.gross)}</td>
                       <td className="px-3 py-1.5 text-right text-emerald-700">R$ {fmt(e.netAfterTax)}</td>
+                      {(person.role === 'mentor' || person.role === 'mentor+vendedor') && (
+                        <td className="px-3 py-1.5 text-right text-purple-700">R$ {fmt(e.mentorTotal)}</td>
+                      )}
+                      {(person.role === 'vendedor' || person.role === 'mentor+vendedor') && (
+                        <td className="px-3 py-1.5 text-right text-amber-700">R$ {fmt(e.commTotal)}</td>
+                      )}
+                      <td className="px-3 py-1.5 text-right text-indigo-700 font-medium">R$ {fmt(e.repasseTotal)}</td>
+                      <td className="px-3 py-1.5 text-right text-gray-700">R$ {fmt(e.resultado)}</td>
                       <td className="px-3 py-1.5 text-center">
                         <Badge className={`text-[10px] ${ns === 'pago' ? 'bg-green-600' : ns === 'parcial' ? 'bg-amber-500' : 'bg-red-500'}`}>
                           {ns === 'pago' ? 'Pago' : ns === 'parcial' ? 'Parcial' : 'Pend'}
@@ -248,10 +290,10 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
                       </td>
                       <td className="px-3 py-1.5 text-right text-blue-600 font-medium">R$ {fmt(e.paidAmountReais)}</td>
                       {(person.role === 'mentor' || person.role === 'mentor+vendedor') && (
-                        <td className="px-3 py-1.5 text-right text-purple-700">R$ {fmt(e.mentorTotal)}</td>
+                        <td className="px-3 py-1.5 text-right text-purple-600">R$ {fmt(e.mentorAtual)}</td>
                       )}
                       {(person.role === 'vendedor' || person.role === 'mentor+vendedor') && (
-                        <td className="px-3 py-1.5 text-right text-amber-700">R$ {fmt(e.commTotal)}</td>
+                        <td className="px-3 py-1.5 text-right text-amber-600">R$ {fmt(e.commAtual)}</td>
                       )}
                       <td className="px-3 py-1.5 text-right text-blue-700 font-medium">R$ {fmt(e.dueNow)}</td>
                       <td className="px-3 py-1.5 text-right text-green-600">{e.alreadyPaid > 0 ? `R$ ${fmt(e.alreadyPaid)}` : '-'}</td>
@@ -269,13 +311,21 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
                   <td className="px-3 py-2">{turmaFilter === 'todas' ? 'TOTAL' : 'SUBTOTAL'}</td>
                   <td className="px-3 py-2 text-right">R$ {fmt(person.totals.gross)}</td>
                   <td className="px-3 py-2 text-right text-emerald-700">R$ {fmt(person.totals.netAfterTax)}</td>
-                  <td className="px-3 py-2"></td>
-                  <td className="px-3 py-2 text-right text-blue-600">R$ {fmt(person.totals.paidAmount)}</td>
                   {(person.role === 'mentor' || person.role === 'mentor+vendedor') && (
                     <td className="px-3 py-2 text-right text-purple-700">R$ {fmt(person.totals.mentorTotal)}</td>
                   )}
                   {(person.role === 'vendedor' || person.role === 'mentor+vendedor') && (
                     <td className="px-3 py-2 text-right text-amber-700">R$ {fmt(person.totals.commTotal)}</td>
+                  )}
+                  <td className="px-3 py-2 text-right text-indigo-700">R$ {fmt(person.totals.repasseTotal)}</td>
+                  <td className="px-3 py-2 text-right text-gray-700">R$ {fmt(person.totals.resultado)}</td>
+                  <td className="px-3 py-2"></td>
+                  <td className="px-3 py-2 text-right text-blue-600">R$ {fmt(person.totals.paidAmount)}</td>
+                  {(person.role === 'mentor' || person.role === 'mentor+vendedor') && (
+                    <td className="px-3 py-2 text-right text-purple-600">R$ {fmt(person.totals.mentorAtual)}</td>
+                  )}
+                  {(person.role === 'vendedor' || person.role === 'mentor+vendedor') && (
+                    <td className="px-3 py-2 text-right text-amber-600">R$ {fmt(person.totals.commAtual)}</td>
                   )}
                   <td className="px-3 py-2 text-right text-blue-700">R$ {fmt(person.totals.dueNow)}</td>
                   <td className="px-3 py-2 text-right text-green-600">R$ {fmt(person.totals.alreadyPaid)}</td>

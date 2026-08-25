@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Banknote } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { User, Banknote, ChevronDown, ChevronRight, Pencil, Trash2, Check, X } from "lucide-react";
+import { useState } from "react";
 
 interface Registration {
   id: string;
@@ -34,6 +36,8 @@ interface Props {
   turmaFilter?: string;
   onPayMentor?: () => void;
   onPayVendor?: (vendorName: string) => void;
+  onDeletePaymentEntry?: (regId: string, entryId: string, type: 'mentor' | 'vendor') => void;
+  onEditPaymentEntry?: (regId: string, entryId: string, type: 'mentor' | 'vendor', amount: number, date: string) => void;
 }
 
 interface PersonReport {
@@ -71,8 +75,18 @@ interface PersonReport {
   };
 }
 
-export default function UnifiedRepassesSection({ registrations, vendors, calculateCommissions, rc, turmaFilter = 'todas', onPayMentor, onPayVendor }: Props) {
+export default function UnifiedRepassesSection({ registrations, vendors, calculateCommissions, rc, turmaFilter = 'todas', onPayMentor, onPayVendor, onDeletePaymentEntry, onEditPaymentEntry }: Props) {
   const filtered = turmaFilter === 'todas' ? registrations : registrations.filter(r => r.turma === turmaFilter);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [editingEntry, setEditingEntry] = useState<{ regId: string; entryId: string; type: 'mentor' | 'vendor'; amount: string; date: string } | null>(null);
+
+  const toggleExpand = (key: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   // Build per-person reports
   const buildReports = (): PersonReport[] => {
@@ -180,7 +194,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
   };
 
   const reports = buildReports();
-  const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="space-y-6">
@@ -267,11 +281,46 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
               <tbody className="divide-y divide-slate-100">
                 {person.entries.map((e, idx) => {
                   const ns = (e.reg.paymentStatus || '').toLowerCase().trim();
+                  const rowKey = `${person.name}-${e.reg.id}`;
+                  const isExpanded = expandedRows.has(rowKey);
+                  
+                  // Parse payment entries
+                  let mentorPaymentEntries: any[] = [];
+                  let vendorPaymentEntries: any[] = [];
+                  try { mentorPaymentEntries = e.reg.mentorPayments ? JSON.parse(e.reg.mentorPayments) : []; } catch { mentorPaymentEntries = []; }
+                  try { vendorPaymentEntries = e.reg.vendorPayments ? JSON.parse(e.reg.vendorPayments) : []; } catch { vendorPaymentEntries = []; }
+                  
+                  const hasPaymentHistory = (person.role === 'mentor' || person.role === 'mentor+vendedor') 
+                    ? (mentorPaymentEntries.length > 0 || vendorPaymentEntries.length > 0)
+                    : vendorPaymentEntries.length > 0;
+                  
+                  // Compute total columns for colspan
+                  let totalCols = 9; // base: Aluno, Bruto, Líquido, Repasse Total, Resultado, Status, Valor Pago, Total Devido, Já Paguei, Saldo = but count conditional ones
+                  totalCols = 7; // Aluno + Bruto + Líquido + RepasseTotal + Resultado + Status + ValorPago
+                  if (person.role === 'mentor' || person.role === 'mentor+vendedor') totalCols += 1; // Repasse Mentor
+                  if (person.role === 'vendedor' || person.role === 'mentor+vendedor') totalCols += 1; // Comissão
+                  if (person.role === 'mentor' || person.role === 'mentor+vendedor') totalCols += 1; // Mentor Atual
+                  if (person.role === 'vendedor' || person.role === 'mentor+vendedor') totalCols += 1; // Comissão Atual
+                  totalCols += 3; // Total Devido + Já Paguei + Saldo
+
                   return (
-                    <tr key={idx} className="hover:bg-slate-50">
+                    <>
+                    <tr key={idx} className={`hover:bg-slate-50 ${isExpanded ? 'bg-slate-50' : ''}`}>
                       <td className="px-3 py-1.5">
-                        <p className="font-medium text-gray-900">{e.reg.name}</p>
-                        <p className="text-[10px] text-gray-400">{e.reg.paymentMethod === 'pix' ? 'PIX' : e.reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
+                        <div className="flex items-center gap-1">
+                          {hasPaymentHistory && (
+                            <button
+                              onClick={() => toggleExpand(rowKey)}
+                              className="p-0.5 rounded hover:bg-slate-200 text-gray-400 hover:text-gray-600"
+                            >
+                              {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                            </button>
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900">{e.reg.name}</p>
+                            <p className="text-[10px] text-gray-400">{e.reg.paymentMethod === 'pix' ? 'PIX' : e.reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-3 py-1.5 text-right">R$ {fmt(e.gross)}</td>
                       <td className="px-3 py-1.5 text-right text-emerald-700">R$ {fmt(e.netAfterTax)}</td>
@@ -303,6 +352,157 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
                         </span>
                       </td>
                     </tr>
+                    {/* Payment detail sub-table */}
+                    {isExpanded && hasPaymentHistory && (
+                      <tr key={`${idx}-detail`} className="bg-green-50/60">
+                        <td colSpan={totalCols} className="px-6 py-2">
+                          <div className="text-[11px]">
+                            <p className="font-medium text-gray-600 mb-1">Pagamentos realizados:</p>
+                            <table className="w-full">
+                              <thead>
+                                <tr className="text-left text-gray-500">
+                                  <th className="pr-3 py-0.5 font-medium">Tipo</th>
+                                  <th className="pr-3 py-0.5 font-medium text-right">Valor</th>
+                                  <th className="pr-3 py-0.5 font-medium">Data</th>
+                                  <th className="pr-3 py-0.5 font-medium">Forma</th>
+                                  <th className="pr-3 py-0.5 font-medium">Obs</th>
+                                  <th className="pr-3 py-0.5 font-medium text-right">Ações</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {mentorPaymentEntries.map((p: any) => {
+                                  const isEditing = editingEntry?.regId === e.reg.id && editingEntry?.entryId === p.id && editingEntry?.type === 'mentor';
+                                  return (
+                                    <tr key={p.id} className="border-t border-green-100">
+                                      <td className="pr-3 py-0.5 text-purple-600">Mentor</td>
+                                      <td className="pr-3 py-0.5 text-right font-medium">
+                                        {isEditing ? (
+                                          <Input
+                                            type="number"
+                                            step="0.01"
+                                            value={editingEntry.amount}
+                                            onChange={(ev) => setEditingEntry({ ...editingEntry!, amount: ev.target.value })}
+                                            className="h-5 w-24 text-[11px] px-1"
+                                          />
+                                        ) : (
+                                          `R$ ${fmt(p.amount)}`
+                                        )}
+                                      </td>
+                                      <td className="pr-3 py-0.5">
+                                        {isEditing ? (
+                                          <Input
+                                            type="date"
+                                            value={editingEntry.date}
+                                            onChange={(ev) => setEditingEntry({ ...editingEntry!, date: ev.target.value })}
+                                            className="h-5 w-28 text-[11px] px-1"
+                                          />
+                                        ) : (
+                                          p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'
+                                        )}
+                                      </td>
+                                      <td className="pr-3 py-0.5 text-gray-500">{p.method || 'pix'}</td>
+                                      <td className="pr-3 py-0.5 text-gray-400 max-w-[100px] truncate">{p.notes || '-'}</td>
+                                      <td className="pr-3 py-0.5 text-right">
+                                        {isEditing ? (
+                                          <div className="flex gap-1 justify-end">
+                                            <button
+                                              onClick={() => {
+                                                onEditPaymentEntry?.(e.reg.id, p.id, 'mentor', parseFloat(editingEntry!.amount), editingEntry!.date);
+                                                setEditingEntry(null);
+                                              }}
+                                              className="p-0.5 rounded text-green-600 hover:bg-green-100"
+                                            ><Check className="w-3 h-3" /></button>
+                                            <button
+                                              onClick={() => setEditingEntry(null)}
+                                              className="p-0.5 rounded text-gray-400 hover:bg-gray-100"
+                                            ><X className="w-3 h-3" /></button>
+                                          </div>
+                                        ) : (
+                                          <div className="flex gap-1 justify-end">
+                                            <button
+                                              onClick={() => setEditingEntry({ regId: e.reg.id, entryId: p.id, type: 'mentor', amount: p.amount.toString(), date: p.date || '' })}
+                                              className="p-0.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                            ><Pencil className="w-3 h-3" /></button>
+                                            <button
+                                              onClick={() => onDeletePaymentEntry?.(e.reg.id, p.id, 'mentor')}
+                                              className="p-0.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                            ><Trash2 className="w-3 h-3" /></button>
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                                {vendorPaymentEntries.map((p: any) => {
+                                  const isEditing = editingEntry?.regId === e.reg.id && editingEntry?.entryId === p.id && editingEntry?.type === 'vendor';
+                                  return (
+                                    <tr key={p.id} className="border-t border-green-100">
+                                      <td className="pr-3 py-0.5 text-amber-600">Comissão</td>
+                                      <td className="pr-3 py-0.5 text-right font-medium">
+                                        {isEditing ? (
+                                          <Input
+                                            type="number"
+                                            step="0.01"
+                                            value={editingEntry.amount}
+                                            onChange={(ev) => setEditingEntry({ ...editingEntry!, amount: ev.target.value })}
+                                            className="h-5 w-24 text-[11px] px-1"
+                                          />
+                                        ) : (
+                                          `R$ ${fmt(p.amount)}`
+                                        )}
+                                      </td>
+                                      <td className="pr-3 py-0.5">
+                                        {isEditing ? (
+                                          <Input
+                                            type="date"
+                                            value={editingEntry.date}
+                                            onChange={(ev) => setEditingEntry({ ...editingEntry!, date: ev.target.value })}
+                                            className="h-5 w-28 text-[11px] px-1"
+                                          />
+                                        ) : (
+                                          p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'
+                                        )}
+                                      </td>
+                                      <td className="pr-3 py-0.5 text-gray-500">{p.method || 'pix'}</td>
+                                      <td className="pr-3 py-0.5 text-gray-400 max-w-[100px] truncate">{p.notes || '-'}</td>
+                                      <td className="pr-3 py-0.5 text-right">
+                                        {isEditing ? (
+                                          <div className="flex gap-1 justify-end">
+                                            <button
+                                              onClick={() => {
+                                                onEditPaymentEntry?.(e.reg.id, p.id, 'vendor', parseFloat(editingEntry!.amount), editingEntry!.date);
+                                                setEditingEntry(null);
+                                              }}
+                                              className="p-0.5 rounded text-green-600 hover:bg-green-100"
+                                            ><Check className="w-3 h-3" /></button>
+                                            <button
+                                              onClick={() => setEditingEntry(null)}
+                                              className="p-0.5 rounded text-gray-400 hover:bg-gray-100"
+                                            ><X className="w-3 h-3" /></button>
+                                          </div>
+                                        ) : (
+                                          <div className="flex gap-1 justify-end">
+                                            <button
+                                              onClick={() => setEditingEntry({ regId: e.reg.id, entryId: p.id, type: 'vendor', amount: p.amount.toString(), date: p.date || '' })}
+                                              className="p-0.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                            ><Pencil className="w-3 h-3" /></button>
+                                            <button
+                                              onClick={() => onDeletePaymentEntry?.(e.reg.id, p.id, 'vendor')}
+                                              className="p-0.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                            ><Trash2 className="w-3 h-3" /></button>
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </>
                   );
                 })}
               </tbody>
@@ -335,39 +535,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
             </table>
           </div>
 
-          {/* Payment History */}
-          {person.totals.alreadyPaid > 0 && (
-            <div className="px-4 py-3 border-t border-slate-200 bg-green-50/50">
-              <p className="text-xs font-medium text-gray-600 mb-2">Pagamentos realizados:</p>
-              <div className="space-y-1">
-                {person.entries.filter(e => e.alreadyPaid > 0).map((e, idx) => {
-                  const reg = e.reg;
-                  const mentorPaid = (person.role === 'mentor' || person.role === 'mentor+vendedor') ? (reg.hamiltonPaid || 0) : 0;
-                  const commPaid = (person.role === 'vendedor') ? (reg.vendorCommissionPaid || 0) 
-                    : (person.role === 'mentor+vendedor' && reg.vendor?.trim() === person.name) ? (reg.vendorCommissionPaid || 0) : 0;
-                  const paidDate = person.role === 'vendedor' 
-                    ? reg.vendorCommissionPaidAt 
-                    : reg.hamiltonPaidAt;
-                  
-                  return (
-                    <div key={idx} className="flex items-center justify-between text-xs text-gray-700">
-                      <span>{reg.name}</span>
-                      <div className="flex items-center gap-3">
-                        {mentorPaid > 0 && <span className="text-purple-600">Mentor: R$ {fmt(mentorPaid)}</span>}
-                        {commPaid > 0 && <span className="text-amber-600">Com: R$ {fmt(commPaid)}</span>}
-                        <span className="font-semibold text-green-700">R$ {fmt(e.alreadyPaid)}</span>
-                        <span className="text-gray-400">{paidDate ? new Date(paidDate).toLocaleDateString('pt-BR') : '-'}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex justify-between mt-2 pt-2 border-t border-green-200 text-xs font-semibold">
-                <span className="text-gray-600">Total pago</span>
-                <span className="text-green-700">R$ {fmt(person.totals.alreadyPaid)}</span>
-              </div>
-            </div>
-          )}
+          {/* Payment History - now shown in expandable rows */}
         </div>
       ))}
     </div>

@@ -38,11 +38,13 @@ export interface InvoiceUpdate {
 export interface VendorCommissionUpdate {
   vendorCommissionPaid: number;
   vendorCommissionPaidAt: Date | null;
+  vendorPayments?: string;
 }
 
 export interface HamiltonPaymentUpdate {
   hamiltonPaid: number;
   hamiltonPaidAt: Date | null;
+  mentorPayments?: string;
 }
 
 export interface BatchUpdate {
@@ -199,22 +201,30 @@ export class DbStorage implements IStorage {
   }
 
   async updateVendorCommission(id: string, update: VendorCommissionUpdate): Promise<Registration | undefined> {
+    const setData: any = {
+      vendorCommissionPaid: update.vendorCommissionPaid,
+      vendorCommissionPaidAt: update.vendorCommissionPaidAt
+    };
+    if (update.vendorPayments !== undefined) {
+      setData.vendorPayments = update.vendorPayments;
+    }
     const result = await db.update(registrations)
-      .set({ 
-        vendorCommissionPaid: update.vendorCommissionPaid,
-        vendorCommissionPaidAt: update.vendorCommissionPaidAt
-      })
+      .set(setData)
       .where(eq(registrations.id, id))
       .returning();
     return result[0];
   }
 
   async updateHamiltonPayment(id: string, update: HamiltonPaymentUpdate): Promise<Registration | undefined> {
+    const setData: any = {
+      hamiltonPaid: update.hamiltonPaid,
+      hamiltonPaidAt: update.hamiltonPaidAt
+    };
+    if (update.mentorPayments !== undefined) {
+      setData.mentorPayments = update.mentorPayments;
+    }
     const result = await db.update(registrations)
-      .set({ 
-        hamiltonPaid: update.hamiltonPaid,
-        hamiltonPaidAt: update.hamiltonPaidAt
-      })
+      .set(setData)
       .where(eq(registrations.id, id))
       .returning();
     return result[0];

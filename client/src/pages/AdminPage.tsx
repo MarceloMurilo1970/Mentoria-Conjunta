@@ -1620,7 +1620,7 @@ Qualquer dúvida, estamos à disposição!`;
   const openPaymentModal = (reg: Registration) => {
     setSelectedRegistration(reg);
     setPaymentStatus((reg.paymentStatus as 'pendente' | 'pago' | 'parcial') || 'pendente');
-    setPaidAmount(reg.paidAmount?.toString() || '');
+    setPaidAmount(reg.paidAmount ? (reg.paidAmount / 100).toString() : '');
     setRemainingPaymentDate(reg.remainingPaymentDate ? new Date(reg.remainingPaymentDate).toISOString().split('T')[0] : '');
     setPaymentModalOpen(true);
   };
@@ -2025,6 +2025,31 @@ Qualquer dúvida, estamos à disposição!`;
                   calculateCommissions={calculateCommissions}
                   rc={rc}
                   turmaFilter={dreTurmaFilter}
+                  onDeletePaymentEntry={async (regId, entryId, type) => {
+                    if (!window.confirm('Tem certeza que deseja excluir este pagamento?')) return;
+                    try {
+                      const endpoint = type === 'mentor'
+                        ? `/api/registrations/${regId}/mentor-payment-entry/${entryId}`
+                        : `/api/registrations/${regId}/vendor-payment-entry/${entryId}`;
+                      await apiRequest('DELETE', endpoint);
+                      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                      toast({ title: 'Pagamento excluído', description: 'Registro removido com sucesso.' });
+                    } catch (error) {
+                      toast({ title: 'Erro', description: 'Não foi possível excluir o pagamento.', variant: 'destructive' });
+                    }
+                  }}
+                  onEditPaymentEntry={async (regId, entryId, type, amount, date) => {
+                    try {
+                      const endpoint = type === 'mentor'
+                        ? `/api/registrations/${regId}/mentor-payment-entry/${entryId}`
+                        : `/api/registrations/${regId}/vendor-payment-entry/${entryId}`;
+                      await apiRequest('PATCH', endpoint, { amount, date });
+                      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                      toast({ title: 'Pagamento atualizado', description: 'Valor alterado com sucesso.' });
+                    } catch (error) {
+                      toast({ title: 'Erro', description: 'Não foi possível editar o pagamento.', variant: 'destructive' });
+                    }
+                  }}
                   onPayMentor={() => {
                     setTransferRecipient('hamilton');
                     setTransferVendorName('');
@@ -2230,9 +2255,11 @@ Qualquer dúvida, estamos à disposição!`;
                                         setTransferAmounts(prev => ({ ...prev, [reg.id]: 0 }));
                                         return;
                                       }
-                                      const val = parseFloat(raw);
+                                      // Normalize: replace comma with dot for locale safety
+                                      const normalized = raw.replace(',', '.');
+                                      const val = parseFloat(normalized);
                                       if (!isNaN(val)) {
-                                        setTransferAmounts(prev => ({ ...prev, [reg.id]: Math.min(val, balance) }));
+                                        setTransferAmounts(prev => ({ ...prev, [reg.id]: Math.min(Math.round(val * 100) / 100, balance) }));
                                       }
                                     }}
                                     onFocus={e => {
@@ -2316,12 +2343,19 @@ Qualquer dúvida, estamos à disposição!`;
 
                       for (const { reg, balance, mentorDue, commDue } of selectedItems) {
                         const payAmount = transferAmounts[reg.id] ?? balance;
+                        const paymentDate = transferPaymentDate || new Date().toISOString().split('T')[0];
                         try {
                           if (transferRecipient === 'vendor') {
                             const newPaid = (reg.vendorCommissionPaid || 0) + payAmount;
                             await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, {
                               vendorCommissionPaid: newPaid,
                               vendorCommissionPaidAt: paymentDateISO,
+                              paymentEntry: {
+                                amount: payAmount,
+                                date: paymentDate,
+                                method: transferPaymentMethod,
+                                notes: transferNotes || '',
+                              },
                             });
                           } else {
                             // Hamilton: split between mentor and vendor commission if applicable
@@ -2340,12 +2374,24 @@ Qualquer dúvida, estamos à disposição!`;
                               await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, {
                                 hamiltonPaid: mentorAlreadyPaid + mentorPayment,
                                 hamiltonPaidAt: paymentDateISO,
+                                paymentEntry: {
+                                  amount: mentorPayment,
+                                  date: paymentDate,
+                                  method: transferPaymentMethod,
+                                  notes: transferNotes || '',
+                                },
                               });
                             }
                             if (commPayment > 0 && reg.vendor?.trim() === 'Hamilton Felix') {
                               await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, {
                                 vendorCommissionPaid: commAlreadyPaid + commPayment,
                                 vendorCommissionPaidAt: paymentDateISO,
+                                paymentEntry: {
+                                  amount: commPayment,
+                                  date: paymentDate,
+                                  method: transferPaymentMethod,
+                                  notes: transferNotes || '',
+                                },
                               });
                             }
                           }

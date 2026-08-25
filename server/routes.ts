@@ -1019,11 +1019,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedPaidAmountCentavos = paidAmount ? Math.round(Number(paidAmount) * 100) : effectiveTotalCentavos;
       }
       
+      // Auto-upgrade to 'pago' when paid amount reaches or exceeds total
+      let finalStatus = paymentStatus;
+      if (finalStatus === 'parcial' && validatedPaidAmountCentavos >= effectiveTotalCentavos && effectiveTotalCentavos > 0) {
+        finalStatus = 'pago';
+      }
+
       await storage.updatePaymentStatus(id, {
-        paymentStatus,
+        paymentStatus: finalStatus,
         paidAmount: validatedPaidAmountCentavos,
         totalAmount: effectiveTotalCentavos,
-        remainingPaymentDate: paymentStatus === 'parcial' && remainingPaymentDate ? new Date(remainingPaymentDate) : null,
+        remainingPaymentDate: finalStatus === 'parcial' && remainingPaymentDate ? new Date(remainingPaymentDate) : null,
       });
 
       const updated = await storage.getRegistration(id);
@@ -1426,16 +1432,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/registrations/:id/vendor-commission", async (req, res) => {
     try {
       const { id } = req.params;
-      const { vendorCommissionPaid, vendorCommissionPaidAt } = req.body;
+      const { vendorCommissionPaid, vendorCommissionPaidAt, paymentEntry } = req.body;
       
       const registration = await storage.getRegistration(id);
       if (!registration) {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
       
+      // Append payment entry to vendorPayments JSON log
+      let vendorPayments: any[] = [];
+      try {
+        vendorPayments = registration.vendorPayments ? JSON.parse(registration.vendorPayments) : [];
+      } catch { vendorPayments = []; }
+      
+      if (paymentEntry) {
+        vendorPayments.push({
+          id: crypto.randomUUID(),
+          amount: paymentEntry.amount,
+          date: paymentEntry.date,
+          method: paymentEntry.method || 'pix',
+          notes: paymentEntry.notes || '',
+          createdAt: new Date().toISOString(),
+        });
+      }
+      
       const updated = await storage.updateVendorCommission(id, {
         vendorCommissionPaid: Number(vendorCommissionPaid) || 0,
         vendorCommissionPaidAt: vendorCommissionPaid > 0 && vendorCommissionPaidAt ? new Date(vendorCommissionPaidAt) : null,
+        vendorPayments: JSON.stringify(vendorPayments),
       });
       
       res.json({ success: true, registration: updated });
@@ -1449,22 +1473,190 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/registrations/:id/hamilton-payment", async (req, res) => {
     try {
       const { id } = req.params;
-      const { hamiltonPaid, hamiltonPaidAt } = req.body;
+      const { hamiltonPaid, hamiltonPaidAt, paymentEntry } = req.body;
       
       const registration = await storage.getRegistration(id);
       if (!registration) {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
       
+      // Append payment entry to mentorPayments JSON log
+      let mentorPayments: any[] = [];
+      try {
+        mentorPayments = registration.mentorPayments ? JSON.parse(registration.mentorPayments) : [];
+      } catch { mentorPayments = []; }
+      
+      if (paymentEntry) {
+        mentorPayments.push({
+          id: crypto.randomUUID(),
+          amount: paymentEntry.amount,
+          date: paymentEntry.date,
+          method: paymentEntry.method || 'pix',
+          notes: paymentEntry.notes || '',
+          createdAt: new Date().toISOString(),
+        });
+      }
+      
       const updated = await storage.updateHamiltonPayment(id, {
         hamiltonPaid: Number(hamiltonPaid) || 0,
         hamiltonPaidAt: hamiltonPaid > 0 && hamiltonPaidAt ? new Date(hamiltonPaidAt) : null,
+        mentorPayments: JSON.stringify(mentorPayments),
       });
       
       res.json({ success: true, registration: updated });
     } catch (error) {
       console.error("Error updating Hamilton payment:", error);
       res.status(500).json({ error: "Erro ao atualizar repasse de Hamilton" });
+    }
+  });
+
+  // Delete a specific mentor payment entry
+  app.delete("/api/registrations/:id/mentor-payment-entry/:entryId", async (req, res) => {
+    try {
+      const { id, entryId } = req.params;
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+
+      let mentorPayments: any[] = [];
+      try {
+        mentorPayments = registration.mentorPayments ? JSON.parse(registration.mentorPayments) : [];
+      } catch { mentorPayments = []; }
+
+      const entry = mentorPayments.find((p: any) => p.id === entryId);
+      if (!entry) {
+        return res.status(404).json({ error: "Pagamento não encontrado" });
+      }
+
+      mentorPayments = mentorPayments.filter((p: any) => p.id !== entryId);
+      const newTotal = mentorPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+
+      const updated = await storage.updateHamiltonPayment(id, {
+        hamiltonPaid: newTotal,
+        hamiltonPaidAt: newTotal > 0 ? (registration.hamiltonPaidAt || new Date()) : null,
+        mentorPayments: JSON.stringify(mentorPayments),
+      });
+
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error deleting mentor payment entry:", error);
+      res.status(500).json({ error: "Erro ao excluir pagamento" });
+    }
+  });
+
+  // Edit a specific mentor payment entry
+  app.patch("/api/registrations/:id/mentor-payment-entry/:entryId", async (req, res) => {
+    try {
+      const { id, entryId } = req.params;
+      const { amount, date, method, notes } = req.body;
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+
+      let mentorPayments: any[] = [];
+      try {
+        mentorPayments = registration.mentorPayments ? JSON.parse(registration.mentorPayments) : [];
+      } catch { mentorPayments = []; }
+
+      const idx = mentorPayments.findIndex((p: any) => p.id === entryId);
+      if (idx === -1) {
+        return res.status(404).json({ error: "Pagamento não encontrado" });
+      }
+
+      if (amount !== undefined) mentorPayments[idx].amount = Number(amount);
+      if (date !== undefined) mentorPayments[idx].date = date;
+      if (method !== undefined) mentorPayments[idx].method = method;
+      if (notes !== undefined) mentorPayments[idx].notes = notes;
+
+      const newTotal = mentorPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+
+      const updated = await storage.updateHamiltonPayment(id, {
+        hamiltonPaid: newTotal,
+        hamiltonPaidAt: newTotal > 0 ? (registration.hamiltonPaidAt || new Date()) : null,
+        mentorPayments: JSON.stringify(mentorPayments),
+      });
+
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error editing mentor payment entry:", error);
+      res.status(500).json({ error: "Erro ao editar pagamento" });
+    }
+  });
+
+  // Delete a specific vendor payment entry
+  app.delete("/api/registrations/:id/vendor-payment-entry/:entryId", async (req, res) => {
+    try {
+      const { id, entryId } = req.params;
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+
+      let vendorPayments: any[] = [];
+      try {
+        vendorPayments = registration.vendorPayments ? JSON.parse(registration.vendorPayments) : [];
+      } catch { vendorPayments = []; }
+
+      const entry = vendorPayments.find((p: any) => p.id === entryId);
+      if (!entry) {
+        return res.status(404).json({ error: "Pagamento não encontrado" });
+      }
+
+      vendorPayments = vendorPayments.filter((p: any) => p.id !== entryId);
+      const newTotal = vendorPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+
+      const updated = await storage.updateVendorCommission(id, {
+        vendorCommissionPaid: newTotal,
+        vendorCommissionPaidAt: newTotal > 0 ? (registration.vendorCommissionPaidAt || new Date()) : null,
+        vendorPayments: JSON.stringify(vendorPayments),
+      });
+
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error deleting vendor payment entry:", error);
+      res.status(500).json({ error: "Erro ao excluir pagamento" });
+    }
+  });
+
+  // Edit a specific vendor payment entry
+  app.patch("/api/registrations/:id/vendor-payment-entry/:entryId", async (req, res) => {
+    try {
+      const { id, entryId } = req.params;
+      const { amount, date, method, notes } = req.body;
+      const registration = await storage.getRegistration(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Inscrição não encontrada" });
+      }
+
+      let vendorPayments: any[] = [];
+      try {
+        vendorPayments = registration.vendorPayments ? JSON.parse(registration.vendorPayments) : [];
+      } catch { vendorPayments = []; }
+
+      const idx = vendorPayments.findIndex((p: any) => p.id === entryId);
+      if (idx === -1) {
+        return res.status(404).json({ error: "Pagamento não encontrado" });
+      }
+
+      if (amount !== undefined) vendorPayments[idx].amount = Number(amount);
+      if (date !== undefined) vendorPayments[idx].date = date;
+      if (method !== undefined) vendorPayments[idx].method = method;
+      if (notes !== undefined) vendorPayments[idx].notes = notes;
+
+      const newTotal = vendorPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+
+      const updated = await storage.updateVendorCommission(id, {
+        vendorCommissionPaid: newTotal,
+        vendorCommissionPaidAt: newTotal > 0 ? (registration.vendorCommissionPaidAt || new Date()) : null,
+        vendorPayments: JSON.stringify(vendorPayments),
+      });
+
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error editing vendor payment entry:", error);
+      res.status(500).json({ error: "Erro ao editar pagamento" });
     }
   });
 

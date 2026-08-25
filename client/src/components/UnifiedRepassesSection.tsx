@@ -284,11 +284,11 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
                   const rowKey = `${person.name}-${e.reg.id}`;
                   const isExpanded = expandedRows.has(rowKey);
                   
-                  // Parse payment entries
-                  let mentorPaymentEntries: any[] = [];
-                  let vendorPaymentEntries: any[] = [];
-                  try { mentorPaymentEntries = e.reg.mentorPayments ? JSON.parse(e.reg.mentorPayments) : []; } catch { mentorPaymentEntries = []; }
-                  try { vendorPaymentEntries = e.reg.vendorPayments ? JSON.parse(e.reg.vendorPayments) : []; } catch { vendorPaymentEntries = []; }
+                  // Parse payment entries from unified vendorPayments JSON field
+                  let allPaymentEntries: any[] = [];
+                  try { allPaymentEntries = e.reg.vendorPayments ? JSON.parse(e.reg.vendorPayments) : []; } catch { allPaymentEntries = []; }
+                  const mentorPaymentEntries = allPaymentEntries.filter((p: any) => p.type === 'mentor');
+                  const vendorPaymentEntries = allPaymentEntries.filter((p: any) => p.type === 'vendor' || !p.type);
                   
                   const hasPaymentHistory = (person.role === 'mentor' || person.role === 'mentor+vendedor') 
                     ? (mentorPaymentEntries.length > 0 || vendorPaymentEntries.length > 0)

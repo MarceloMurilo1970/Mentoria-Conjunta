@@ -44,7 +44,7 @@ export interface VendorCommissionUpdate {
 export interface HamiltonPaymentUpdate {
   hamiltonPaid: number;
   hamiltonPaidAt: Date | null;
-  mentorPayments?: string;
+  vendorPayments?: string;
 }
 
 export interface BatchUpdate {
@@ -220,8 +220,8 @@ export class DbStorage implements IStorage {
       hamiltonPaid: update.hamiltonPaid,
       hamiltonPaidAt: update.hamiltonPaidAt
     };
-    if (update.mentorPayments !== undefined) {
-      setData.mentorPayments = update.mentorPayments;
+    if (update.vendorPayments !== undefined) {
+      setData.vendorPayments = update.vendorPayments;
     }
     const result = await db.update(registrations)
       .set(setData)

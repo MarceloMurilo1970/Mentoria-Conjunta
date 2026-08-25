@@ -1439,15 +1439,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
       
-      // Append payment entry to vendorPayments JSON log
-      let vendorPayments: any[] = [];
+      // Append payment entry to vendorPayments JSON log (unified field, type='vendor')
+      let allPayments: any[] = [];
       try {
-        vendorPayments = registration.vendorPayments ? JSON.parse(registration.vendorPayments) : [];
-      } catch { vendorPayments = []; }
+        allPayments = registration.vendorPayments ? JSON.parse(registration.vendorPayments) : [];
+      } catch { allPayments = []; }
       
       if (paymentEntry) {
-        vendorPayments.push({
+        allPayments.push({
           id: crypto.randomUUID(),
+          type: 'vendor',
           amount: paymentEntry.amount,
           date: paymentEntry.date,
           method: paymentEntry.method || 'pix',
@@ -1459,7 +1460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateVendorCommission(id, {
         vendorCommissionPaid: Number(vendorCommissionPaid) || 0,
         vendorCommissionPaidAt: vendorCommissionPaid > 0 && vendorCommissionPaidAt ? new Date(vendorCommissionPaidAt) : null,
-        vendorPayments: JSON.stringify(vendorPayments),
+        vendorPayments: JSON.stringify(allPayments),
       });
       
       res.json({ success: true, registration: updated });
@@ -1480,15 +1481,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
       
-      // Append payment entry to mentorPayments JSON log
-      let mentorPayments: any[] = [];
+      // Append payment entry to vendorPayments JSON log (unified field, type='mentor')
+      let allPayments: any[] = [];
       try {
-        mentorPayments = registration.mentorPayments ? JSON.parse(registration.mentorPayments) : [];
-      } catch { mentorPayments = []; }
+        allPayments = registration.vendorPayments ? JSON.parse(registration.vendorPayments) : [];
+      } catch { allPayments = []; }
       
       if (paymentEntry) {
-        mentorPayments.push({
+        allPayments.push({
           id: crypto.randomUUID(),
+          type: 'mentor',
           amount: paymentEntry.amount,
           date: paymentEntry.date,
           method: paymentEntry.method || 'pix',
@@ -1500,7 +1502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateHamiltonPayment(id, {
         hamiltonPaid: Number(hamiltonPaid) || 0,
         hamiltonPaidAt: hamiltonPaid > 0 && hamiltonPaidAt ? new Date(hamiltonPaidAt) : null,
-        mentorPayments: JSON.stringify(mentorPayments),
+        vendorPayments: JSON.stringify(allPayments),
       });
       
       res.json({ success: true, registration: updated });
@@ -1519,23 +1521,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
 
-      let mentorPayments: any[] = [];
+      let allPayments: any[] = [];
       try {
-        mentorPayments = registration.mentorPayments ? JSON.parse(registration.mentorPayments) : [];
-      } catch { mentorPayments = []; }
+        allPayments = registration.vendorPayments ? JSON.parse(registration.vendorPayments) : [];
+      } catch { allPayments = []; }
 
-      const entry = mentorPayments.find((p: any) => p.id === entryId);
+      const entry = allPayments.find((p: any) => p.id === entryId);
       if (!entry) {
         return res.status(404).json({ error: "Pagamento não encontrado" });
       }
 
-      mentorPayments = mentorPayments.filter((p: any) => p.id !== entryId);
-      const newTotal = mentorPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+      allPayments = allPayments.filter((p: any) => p.id !== entryId);
+      const newTotal = allPayments.filter((p: any) => p.type === 'mentor').reduce((sum: number, p: any) => sum + p.amount, 0);
 
       const updated = await storage.updateHamiltonPayment(id, {
         hamiltonPaid: newTotal,
         hamiltonPaidAt: newTotal > 0 ? (registration.hamiltonPaidAt || new Date()) : null,
-        mentorPayments: JSON.stringify(mentorPayments),
+        vendorPayments: JSON.stringify(allPayments),
       });
 
       res.json({ success: true, registration: updated });
@@ -1555,27 +1557,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Inscrição não encontrada" });
       }
 
-      let mentorPayments: any[] = [];
+      let allPayments: any[] = [];
       try {
-        mentorPayments = registration.mentorPayments ? JSON.parse(registration.mentorPayments) : [];
-      } catch { mentorPayments = []; }
+        allPayments = registration.vendorPayments ? JSON.parse(registration.vendorPayments) : [];
+      } catch { allPayments = []; }
 
-      const idx = mentorPayments.findIndex((p: any) => p.id === entryId);
+      const idx = allPayments.findIndex((p: any) => p.id === entryId);
       if (idx === -1) {
         return res.status(404).json({ error: "Pagamento não encontrado" });
       }
 
-      if (amount !== undefined) mentorPayments[idx].amount = Number(amount);
-      if (date !== undefined) mentorPayments[idx].date = date;
-      if (method !== undefined) mentorPayments[idx].method = method;
-      if (notes !== undefined) mentorPayments[idx].notes = notes;
+      if (amount !== undefined) allPayments[idx].amount = Number(amount);
+      if (date !== undefined) allPayments[idx].date = date;
+      if (method !== undefined) allPayments[idx].method = method;
+      if (notes !== undefined) allPayments[idx].notes = notes;
 
-      const newTotal = mentorPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+      const newTotal = allPayments.filter((p: any) => p.type === 'mentor').reduce((sum: number, p: any) => sum + p.amount, 0);
 
       const updated = await storage.updateHamiltonPayment(id, {
         hamiltonPaid: newTotal,
         hamiltonPaidAt: newTotal > 0 ? (registration.hamiltonPaidAt || new Date()) : null,
-        mentorPayments: JSON.stringify(mentorPayments),
+        vendorPayments: JSON.stringify(allPayments),
       });
 
       res.json({ success: true, registration: updated });
@@ -1605,7 +1607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       vendorPayments = vendorPayments.filter((p: any) => p.id !== entryId);
-      const newTotal = vendorPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+      const newTotal = vendorPayments.filter((p: any) => p.type === 'vendor' || !p.type).reduce((sum: number, p: any) => sum + p.amount, 0);
 
       const updated = await storage.updateVendorCommission(id, {
         vendorCommissionPaid: newTotal,
@@ -1645,7 +1647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (method !== undefined) vendorPayments[idx].method = method;
       if (notes !== undefined) vendorPayments[idx].notes = notes;
 
-      const newTotal = vendorPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+      const newTotal = vendorPayments.filter((p: any) => p.type === 'vendor' || !p.type).reduce((sum: number, p: any) => sum + p.amount, 0);
 
       const updated = await storage.updateVendorCommission(id, {
         vendorCommissionPaid: newTotal,

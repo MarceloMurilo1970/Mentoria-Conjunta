@@ -2559,18 +2559,27 @@ Qualquer dúvida, estamos à disposição!`;
                                             className="h-7 px-2 bg-green-600 hover:bg-green-700"
                                             onClick={async () => {
                                               const newAmt = parseFloat(transferEditingEntry!.amount.replace(',', '.'));
-                                              if (legacy) {
-                                                const dateISO = transferEditingEntry!.date ? new Date(transferEditingEntry!.date + 'T12:00:00').toISOString() : new Date().toISOString();
-                                                if (entryType === 'mentor') await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, { hamiltonPaid: newAmt, hamiltonPaidAt: dateISO });
-                                                else await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, { vendorCommissionPaid: newAmt, vendorCommissionPaidAt: dateISO });
-                                                queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
-                                                toast({ title: 'Pagamento atualizado', description: 'Valor alterado com sucesso.' });
-                                              } else {
-                                                await handleEditTransferEntry(reg.id, entry.id, entryType, newAmt, transferEditingEntry!.date);
+                                              if (isNaN(newAmt) || newAmt < 0) {
+                                                toast({ title: 'Valor inválido', description: 'Informe um valor válido.', variant: 'destructive' });
+                                                return;
                                               }
-                                              setTransferEditingEntry(null);
-                                              // If this was the last entry of the group and its date changed, go back to list
-                                              if (transferEditingEntry!.date !== transferSelectedDate) { setTransferView('list'); setTransferSelectedDate(null); }
+                                              const dateChanged = transferEditingEntry!.date !== transferSelectedDate;
+                                              try {
+                                                if (legacy) {
+                                                  const dateISO = transferEditingEntry!.date ? new Date(transferEditingEntry!.date + 'T12:00:00').toISOString() : new Date().toISOString();
+                                                  if (entryType === 'mentor') await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, { hamiltonPaid: newAmt, hamiltonPaidAt: dateISO });
+                                                  else await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, { vendorCommissionPaid: newAmt, vendorCommissionPaidAt: dateISO });
+                                                  queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                                                  toast({ title: 'Pagamento atualizado', description: 'Valor alterado com sucesso.' });
+                                                } else {
+                                                  await handleEditTransferEntry(reg.id, entry.id, entryType, newAmt, transferEditingEntry!.date);
+                                                }
+                                                setTransferEditingEntry(null);
+                                                // If the date changed, the group key changed — go back to the list
+                                                if (dateChanged) { setTransferView('list'); setTransferSelectedDate(null); }
+                                              } catch (err: any) {
+                                                toast({ title: 'Erro ao salvar', description: err?.message || 'Não foi possível salvar o pagamento.', variant: 'destructive' });
+                                              }
                                             }}
                                           >Salvar</Button>
                                           <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setTransferEditingEntry(null)}>Cancelar</Button>

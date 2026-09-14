@@ -882,6 +882,9 @@ export class DbStorage implements IStorage {
     try {
       await db.execute(sql`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS student_payments TEXT`);
       await db.execute(sql`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS mentor_payments TEXT`);
+      // Allow centavos in repasse totals (were integer, need decimals)
+      await db.execute(sql`ALTER TABLE registrations ALTER COLUMN hamilton_paid TYPE real`);
+      await db.execute(sql`ALTER TABLE registrations ALTER COLUMN vendor_commission_paid TYPE real`);
     } catch (e) {
       console.error("[migrate] ensureSchemaColumns error:", e);
     }

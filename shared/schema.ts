@@ -206,10 +206,10 @@ export const registrations = pgTable("registrations", {
   invoiceIssued: boolean("invoice_issued").default(false),
   invoiceIssuedAt: timestamp("invoice_issued_at"),
   invoices: text("invoices"),
-  vendorCommissionPaid: integer("vendor_commission_paid").default(0),
+  vendorCommissionPaid: real("vendor_commission_paid").default(0), // reais (allows centavos)
   vendorCommissionPaidAt: timestamp("vendor_commission_paid_at"),
   vendorPayments: text("vendor_payments"),
-  hamiltonPaid: integer("hamilton_paid").default(0),
+  hamiltonPaid: real("hamilton_paid").default(0), // reais (allows centavos)
   hamiltonPaidAt: timestamp("hamilton_paid_at"),
   nfId: integer("nf_id"),
   nfStatus: text("nf_status"),

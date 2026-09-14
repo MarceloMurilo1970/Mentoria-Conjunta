@@ -19,6 +19,7 @@ export interface PaymentUpdate {
   paidAmount?: number;
   totalAmount?: number;
   remainingPaymentDate?: Date | null;
+  studentPayments?: string;
 }
 
 export interface VendorUpdate {
@@ -98,6 +99,7 @@ export interface IStorage {
   createTurmaConfig(data: InsertTurmaConfig): Promise<TurmaConfig>;
   updateTurmaConfig(id: number, data: Partial<InsertTurmaConfig>): Promise<TurmaConfig | undefined>;
   seedTurmaConfigsIfEmpty(): Promise<void>;
+  ensureSchemaColumns(): Promise<void>;
 }
 
 export class DbStorage implements IStorage {
@@ -161,6 +163,9 @@ export class DbStorage implements IStorage {
       totalAmount: update.totalAmount ?? 8000,
       remainingPaymentDate: update.remainingPaymentDate ?? null,
     };
+    if (update.studentPayments !== undefined) {
+      updateData.studentPayments = update.studentPayments;
+    }
 
     const result = await db.update(registrations)
       .set(updateData)
@@ -869,6 +874,17 @@ export class DbStorage implements IStorage {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await db.update(turmaConfigs).set(data as any).where(eq(turmaConfigs.id, id)).returning();
     return result[0];
+  }
+
+  // Idempotent startup migration: ensure newly-added columns exist even if db:push
+  // hasn't been run yet. Prevents SELECT * from failing on a missing column.
+  async ensureSchemaColumns(): Promise<void> {
+    try {
+      await db.execute(sql`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS student_payments TEXT`);
+      await db.execute(sql`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS mentor_payments TEXT`);
+    } catch (e) {
+      console.error("[migrate] ensureSchemaColumns error:", e);
+    }
   }
 
   async seedTurmaConfigsIfEmpty(): Promise<void> {

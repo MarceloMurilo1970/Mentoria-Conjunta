@@ -832,7 +832,10 @@ function MentorshipRegistrationsSection() {
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pendente' | 'pago' | 'parcial'>('pendente');
   const [paidAmount, setPaidAmount] = useState('');
+  const [newPaymentDate, setNewPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [remainingPaymentDate, setRemainingPaymentDate] = useState('');
+  // Editing an individual student payment entry within the payment modal
+  const [editingStudentEntry, setEditingStudentEntry] = useState<{ entryId: string; amount: string; date: string } | null>(null);
   const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
   const [vendorValue, setVendorValue] = useState('');
   const [editingObsId, setEditingObsId] = useState<string | null>(null);
@@ -984,7 +987,7 @@ function MentorshipRegistrationsSection() {
   });
 
   const paymentStatusMutation = useMutation({
-    mutationFn: async (data: { id: string; paymentStatus: string; paidAmount?: number; totalAmount?: number; remainingPaymentDate?: string | null }) => {
+    mutationFn: async (data: { id: string; paymentStatus: string; paidAmount?: number; totalAmount?: number; remainingPaymentDate?: string | null; paymentEntry?: { amount: number; date: string; method?: string; notes?: string } }) => {
       await apiRequest("PATCH", `/api/registrations/${data.id}/payment-status`, data);
     },
     onSuccess: () => {
@@ -1656,6 +1659,8 @@ Qualquer dúvida, estamos à disposição!`;
     setSelectedRegistration(reg);
     setPaymentStatus((reg.paymentStatus as 'pendente' | 'pago' | 'parcial') || 'pendente');
     setPaidAmount('');
+    setNewPaymentDate(new Date().toISOString().split('T')[0]);
+    setEditingStudentEntry(null);
     setRemainingPaymentDate(reg.remainingPaymentDate ? new Date(reg.remainingPaymentDate).toISOString().split('T')[0] : '');
     setPaymentModalOpen(true);
   };
@@ -1694,18 +1699,24 @@ Qualquer dúvida, estamos à disposição!`;
 
     let finalPaidAmount: number;
     let finalStatus = paymentStatus;
+    let increment = 0; // the amount of THIS payment (to log with its date)
     
     if (paymentStatus === 'parcial') {
-      finalPaidAmount = currentPaidReais + Number(paidAmount);
+      increment = Number(paidAmount);
+      finalPaidAmount = currentPaidReais + increment;
       // Auto-upgrade to pago if total reached
       if (finalPaidAmount >= totalPrice) {
         finalStatus = 'pago';
         finalPaidAmount = totalPrice;
+        increment = finalPaidAmount - currentPaidReais;
       }
     } else if (paymentStatus === 'pago') {
       finalPaidAmount = totalPrice;
+      // Log the remaining balance as this payment (what was still owed)
+      increment = totalPrice - currentPaidReais;
     } else {
       finalPaidAmount = 0;
+      increment = 0;
     }
 
     paymentStatusMutation.mutate({
@@ -1714,6 +1725,12 @@ Qualquer dúvida, estamos à disposição!`;
       paidAmount: finalPaidAmount,
       totalAmount: totalPrice,
       remainingPaymentDate: finalStatus === 'parcial' && remainingPaymentDate ? remainingPaymentDate : null,
+      paymentEntry: increment > 0 ? {
+        amount: increment,
+        date: newPaymentDate,
+        method: selectedRegistration.paymentMethod || 'pix',
+        notes: '',
+      } : undefined,
     });
   };
 
@@ -2400,16 +2417,35 @@ Qualquer dúvida, estamos à disposição!`;
                 {(transferView === 'list' || transferView === 'detail') && (() => {
                   // Build the flat list of payment entries for this recipient across all source regs.
                   // Legacy payments (no individual entries) fall back to a synthetic entry from the total.
+                  // "due" for each entry = repasse owed based on how much the STUDENT had paid up to that entry's date.
                   type PayItem = { reg: Registration; entry: any; entryType: 'mentor' | 'vendor'; legacy: boolean; due: number };
+
+                  // How much the student had paid (in reais) up to and including a given date.
+                  const studentPaidUpTo = (reg: Registration, uptoDate: string): number => {
+                    let sp: any[] = [];
+                    try { sp = reg.studentPayments ? JSON.parse(reg.studentPayments) : []; } catch { sp = []; }
+                    if (sp.length === 0) {
+                      // No dated history: fall back to current total paid (best available).
+                      return (reg.paidAmount || 0) / 100;
+                    }
+                    if (!uptoDate) return sp.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+                    return sp.filter((p: any) => (p.date || '') <= uptoDate).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+                  };
+
                   const items: PayItem[] = [];
                   for (const reg of sourceRegs) {
                     const bc = rc(reg);
                     const comms = calculateCommissions(reg, bc);
-                    const paidAmountReais = (reg.paidAmount || 0) / 100;
-                    const ns = (reg.paymentStatus || '').toLowerCase().trim();
-                    const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' && comms.gross > 0 ? paidAmountReais / comms.gross : 0;
-                    const mentorDue = Math.round(comms.hfComm * paidRatio);
-                    const vendorDue = Math.round(comms.vendorComm * paidRatio);
+
+                    // due at a given repasse date, considering student payments up to that date
+                    const mentorDueAt = (date: string) => {
+                      const ratio = comms.gross > 0 ? Math.min(1, studentPaidUpTo(reg, date) / comms.gross) : 0;
+                      return Math.round(comms.hfComm * ratio);
+                    };
+                    const vendorDueAt = (date: string) => {
+                      const ratio = comms.gross > 0 ? Math.min(1, studentPaidUpTo(reg, date) / comms.gross) : 0;
+                      return Math.round(comms.vendorComm * ratio);
+                    };
 
                     let payments: any[] = [];
                     try { payments = reg.vendorPayments ? JSON.parse(reg.vendorPayments) : []; } catch { payments = []; }
@@ -2417,14 +2453,14 @@ Qualquer dúvida, estamos à disposição!`;
                     const vendorEntries = payments.filter((p: any) => p.type === 'vendor' || !p.type);
 
                     if (transferRecipient === 'vendor') {
-                      if (vendorEntries.length > 0) vendorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'vendor', legacy: false, due: vendorDue }));
-                      else if ((reg.vendorCommissionPaid || 0) > 0) items.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'vendor', legacy: true, due: vendorDue });
+                      if (vendorEntries.length > 0) vendorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'vendor', legacy: false, due: vendorDueAt(p.date) }));
+                      else if ((reg.vendorCommissionPaid || 0) > 0) { const d = reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : ''; items.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: d, method: '—' }, entryType: 'vendor', legacy: true, due: vendorDueAt(d) }); }
                     } else {
-                      if (mentorEntries.length > 0) mentorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'mentor', legacy: false, due: mentorDue }));
-                      else if ((reg.hamiltonPaid || 0) > 0) items.push({ reg, entry: { id: 'legacy-mentor', amount: reg.hamiltonPaid, date: reg.hamiltonPaidAt ? new Date(reg.hamiltonPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'mentor', legacy: true, due: mentorDue });
+                      if (mentorEntries.length > 0) mentorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'mentor', legacy: false, due: mentorDueAt(p.date) }));
+                      else if ((reg.hamiltonPaid || 0) > 0) { const d = reg.hamiltonPaidAt ? new Date(reg.hamiltonPaidAt).toISOString().split('T')[0] : ''; items.push({ reg, entry: { id: 'legacy-mentor', amount: reg.hamiltonPaid, date: d, method: '—' }, entryType: 'mentor', legacy: true, due: mentorDueAt(d) }); }
                       if (reg.vendor?.trim() === 'Hamilton Felix') {
-                        if (vendorEntries.length > 0) vendorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'vendor', legacy: false, due: vendorDue }));
-                        else if ((reg.vendorCommissionPaid || 0) > 0) items.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'vendor', legacy: true, due: vendorDue });
+                        if (vendorEntries.length > 0) vendorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'vendor', legacy: false, due: vendorDueAt(p.date) }));
+                        else if ((reg.vendorCommissionPaid || 0) > 0) { const d = reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : ''; items.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: d, method: '—' }, entryType: 'vendor', legacy: true, due: vendorDueAt(d) }); }
                       }
                     }
                   }
@@ -2464,7 +2500,7 @@ Qualquer dúvida, estamos à disposição!`;
                               <tr className="bg-slate-100 text-left">
                                 <th className="px-3 py-2 font-medium text-gray-600">Mentorado</th>
                                 <th className="px-3 py-2 font-medium text-gray-600">Tipo</th>
-                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Devido</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Devido até a data</th>
                                 <th className="px-3 py-2 font-medium text-gray-600 text-right">Pago</th>
                                 <th className="px-3 py-2 font-medium text-gray-600">Data</th>
                                 <th className="px-3 py-2 font-medium text-gray-600 text-right">Ações</th>
@@ -3557,23 +3593,35 @@ Qualquer dúvida, estamos à disposição!`;
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="paidAmount">Novo Pagamento (R$)</Label>
-                  <Input
-                    id="paidAmount"
-                    type="number"
-                    step="0.01"
-                    value={paidAmount}
-                    onChange={(e) => setPaidAmount(e.target.value)}
-                    placeholder="Ex: 5400"
-                    className="bg-gray-800 border-gray-600"
-                  />
-                  {Number(paidAmount) > 0 && (
-                    <p className="text-xs text-gray-400">
-                      Novo total pago: R$ {((selectedRegistration?.paidAmount || 0) / 100 + Number(paidAmount)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                  )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="paidAmount">Novo Pagamento (R$)</Label>
+                    <Input
+                      id="paidAmount"
+                      type="number"
+                      step="0.01"
+                      value={paidAmount}
+                      onChange={(e) => setPaidAmount(e.target.value)}
+                      placeholder="Ex: 5400"
+                      className="bg-gray-800 border-gray-600"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPaymentDate">Data deste Pagamento</Label>
+                    <Input
+                      id="newPaymentDate"
+                      type="date"
+                      value={newPaymentDate}
+                      onChange={(e) => setNewPaymentDate(e.target.value)}
+                      className="bg-gray-800 border-gray-600"
+                    />
+                  </div>
                 </div>
+                {Number(paidAmount) > 0 && (
+                  <p className="text-xs text-gray-400 -mt-2">
+                    Novo total pago: R$ {((selectedRegistration?.paidAmount || 0) / 100 + Number(paidAmount)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="remainingPaymentDate">Data Prevista do Pagamento do Saldo</Label>
@@ -3587,6 +3635,95 @@ Qualquer dúvida, estamos à disposição!`;
                 </div>
               </>
             )}
+
+            {/* Histórico de pagamentos do mentorado (parcelas registradas) */}
+            {(() => {
+              let sp: any[] = [];
+              try { sp = selectedRegistration?.studentPayments ? JSON.parse(selectedRegistration.studentPayments) : []; } catch { sp = []; }
+              if (sp.length === 0) return null;
+              sp = [...sp].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+              const total = sp.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+              return (
+                <div className="space-y-2">
+                  <Label className="text-gray-300">Parcelas pagas pelo mentorado</Label>
+                  <div className="border border-gray-700 rounded-lg overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-gray-800 text-left text-gray-400">
+                          <th className="px-2 py-1.5 font-medium">Data</th>
+                          <th className="px-2 py-1.5 font-medium text-right">Valor</th>
+                          <th className="px-2 py-1.5 font-medium">Forma</th>
+                          <th className="px-2 py-1.5 font-medium text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-800">
+                        {sp.map((p) => {
+                          const isEditing = editingStudentEntry?.entryId === p.id;
+                          return (
+                            <tr key={p.id} className="text-gray-200">
+                              <td className="px-2 py-1.5">
+                                {isEditing ? (
+                                  <Input type="date" value={editingStudentEntry!.date} onChange={(e) => setEditingStudentEntry({ ...editingStudentEntry!, date: e.target.value })} className="h-6 w-32 text-xs bg-gray-800 border-gray-600" />
+                                ) : (p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-')}
+                              </td>
+                              <td className="px-2 py-1.5 text-right">
+                                {isEditing ? (
+                                  <Input type="number" step="0.01" value={editingStudentEntry!.amount} onChange={(e) => setEditingStudentEntry({ ...editingStudentEntry!, amount: e.target.value })} className="h-6 w-24 text-xs text-right bg-gray-800 border-gray-600 ml-auto" />
+                                ) : (`R$ ${(Number(p.amount) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)}
+                              </td>
+                              <td className="px-2 py-1.5 text-gray-400">{p.method || 'pix'}</td>
+                              <td className="px-2 py-1.5 text-right">
+                                {isEditing ? (
+                                  <div className="flex gap-1 justify-end">
+                                    <button
+                                      className="text-green-400 hover:text-green-300 text-xs"
+                                      onClick={async () => {
+                                        if (!selectedRegistration) return;
+                                        await apiRequest('PATCH', `/api/registrations/${selectedRegistration.id}/student-payment-entry/${p.id}`, {
+                                          amount: parseFloat(editingStudentEntry!.amount.replace(',', '.')),
+                                          date: editingStudentEntry!.date,
+                                        });
+                                        queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                                        setEditingStudentEntry(null);
+                                        setPaymentModalOpen(false);
+                                        toast({ title: 'Parcela atualizada' });
+                                      }}
+                                    >Salvar</button>
+                                    <button className="text-gray-400 hover:text-gray-300 text-xs" onClick={() => setEditingStudentEntry(null)}>Cancelar</button>
+                                  </div>
+                                ) : (
+                                  <div className="flex gap-2 justify-end">
+                                    <button className="text-blue-400 hover:text-blue-300 text-xs" onClick={() => setEditingStudentEntry({ entryId: p.id, amount: (Number(p.amount) || 0).toString(), date: p.date || '' })}>Editar</button>
+                                    <button
+                                      className="text-red-400 hover:text-red-300 text-xs"
+                                      onClick={async () => {
+                                        if (!selectedRegistration) return;
+                                        if (!window.confirm('Excluir esta parcela?')) return;
+                                        await apiRequest('DELETE', `/api/registrations/${selectedRegistration.id}/student-payment-entry/${p.id}`);
+                                        queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                                        setPaymentModalOpen(false);
+                                        toast({ title: 'Parcela excluída' });
+                                      }}
+                                    >Excluir</button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-gray-800 font-semibold text-gray-200">
+                          <td className="px-2 py-1.5">Total pago</td>
+                          <td className="px-2 py-1.5 text-right text-green-400">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td colSpan={2}></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           <DialogFooter>

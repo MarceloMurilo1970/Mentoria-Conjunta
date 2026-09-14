@@ -197,6 +197,7 @@ export const registrations = pgTable("registrations", {
   paymentStatus: text("payment_status").default("pendente").notNull(),
   paidAmount: integer("paid_amount").default(0),
   totalAmount: integer("total_amount").default(0),
+  studentPayments: text("student_payments"), // JSON array of dated student payments: [{id, amount, date, method, notes}] (amounts in reais)
   remainingPaymentDate: timestamp("remaining_payment_date"),
   vendor: text("vendor"),
   batch: integer("batch").default(3),

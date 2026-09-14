@@ -862,8 +862,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ---- Turma Configs API ----
-  // Seed on startup
-  storage.seedTurmaConfigsIfEmpty().catch(e => console.error("[seed] turma_configs error:", e));
+  // Ensure schema columns exist, then seed on startup
+  storage.ensureSchemaColumns()
+    .then(() => storage.seedTurmaConfigsIfEmpty())
+    .catch(e => console.error("[seed] turma_configs error:", e));
 
   app.get("/api/turma-configs", async (_req, res) => {
     try {
@@ -990,7 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/registrations/:id/payment-status", async (req, res) => {
     try {
       const { id } = req.params;
-      const { paymentStatus, paidAmount, totalAmount, remainingPaymentDate } = req.body;
+      const { paymentStatus, paidAmount, totalAmount, remainingPaymentDate, paymentEntry } = req.body;
       
       // Validate payment status
       if (!['pendente', 'pago', 'parcial'].includes(paymentStatus)) {
@@ -1025,11 +1027,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         finalStatus = 'pago';
       }
 
+      // Maintain a dated log of individual student payments (in reais)
+      let studentPayments: any[] = [];
+      try {
+        studentPayments = registration.studentPayments ? JSON.parse(registration.studentPayments) : [];
+      } catch { studentPayments = []; }
+
+      if (paymentEntry && Number(paymentEntry.amount) > 0) {
+        // Append a new dated payment increment
+        studentPayments.push({
+          id: crypto.randomUUID(),
+          amount: Number(paymentEntry.amount),
+          date: paymentEntry.date,
+          method: paymentEntry.method || registration.paymentMethod || 'pix',
+          notes: paymentEntry.notes || '',
+          createdAt: new Date().toISOString(),
+        });
+      } else if (finalStatus === 'pendente') {
+        // Reset: clear the payment log
+        studentPayments = [];
+      } else if (studentPayments.length === 0 && validatedPaidAmountCentavos > 0) {
+        // No prior log but there is a paid amount (e.g. marked 'pago' directly):
+        // seed a single dated entry so history exists going forward.
+        studentPayments.push({
+          id: crypto.randomUUID(),
+          amount: validatedPaidAmountCentavos / 100,
+          date: (remainingPaymentDate || new Date().toISOString().split('T')[0]),
+          method: registration.paymentMethod || 'pix',
+          notes: '',
+          createdAt: new Date().toISOString(),
+        });
+      }
+
       await storage.updatePaymentStatus(id, {
         paymentStatus: finalStatus,
         paidAmount: validatedPaidAmountCentavos,
         totalAmount: effectiveTotalCentavos,
         remainingPaymentDate: finalStatus === 'parcial' && remainingPaymentDate ? new Date(remainingPaymentDate) : null,
+        studentPayments: JSON.stringify(studentPayments),
       });
 
       const updated = await storage.getRegistration(id);
@@ -1037,6 +1072,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating payment status:", error);
       res.status(500).json({ error: "Erro ao atualizar status de pagamento" });
+    }
+  });
+
+  // Edit an individual student payment entry (recomputes paidAmount from the log)
+  app.patch("/api/registrations/:id/student-payment-entry/:entryId", async (req, res) => {
+    try {
+      const { id, entryId } = req.params;
+      const { amount, date, method, notes } = req.body;
+      const registration = await storage.getRegistration(id);
+      if (!registration) return res.status(404).json({ error: "Inscrição não encontrada" });
+
+      let studentPayments: any[] = [];
+      try { studentPayments = registration.studentPayments ? JSON.parse(registration.studentPayments) : []; } catch { studentPayments = []; }
+
+      const idx = studentPayments.findIndex((p: any) => p.id === entryId);
+      if (idx === -1) return res.status(404).json({ error: "Pagamento não encontrado" });
+
+      if (amount !== undefined) studentPayments[idx].amount = Number(amount);
+      if (date !== undefined) studentPayments[idx].date = date;
+      if (method !== undefined) studentPayments[idx].method = method;
+      if (notes !== undefined) studentPayments[idx].notes = notes;
+
+      const newTotalReais = studentPayments.reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+      const totalCentavos = registration.totalAmount || 0;
+      const newPaidCentavos = Math.round(newTotalReais * 100);
+      const newStatus = totalCentavos > 0 && newPaidCentavos >= totalCentavos ? 'pago' : (newPaidCentavos > 0 ? 'parcial' : 'pendente');
+
+      await storage.updatePaymentStatus(id, {
+        paymentStatus: newStatus,
+        paidAmount: newPaidCentavos,
+        totalAmount: totalCentavos,
+        remainingPaymentDate: registration.remainingPaymentDate ?? null,
+        studentPayments: JSON.stringify(studentPayments),
+      });
+
+      const updated = await storage.getRegistration(id);
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error editing student payment entry:", error);
+      res.status(500).json({ error: "Erro ao editar pagamento" });
+    }
+  });
+
+  // Delete an individual student payment entry (recomputes paidAmount from the log)
+  app.delete("/api/registrations/:id/student-payment-entry/:entryId", async (req, res) => {
+    try {
+      const { id, entryId } = req.params;
+      const registration = await storage.getRegistration(id);
+      if (!registration) return res.status(404).json({ error: "Inscrição não encontrada" });
+
+      let studentPayments: any[] = [];
+      try { studentPayments = registration.studentPayments ? JSON.parse(registration.studentPayments) : []; } catch { studentPayments = []; }
+
+      const entry = studentPayments.find((p: any) => p.id === entryId);
+      if (!entry) return res.status(404).json({ error: "Pagamento não encontrado" });
+
+      studentPayments = studentPayments.filter((p: any) => p.id !== entryId);
+
+      const newTotalReais = studentPayments.reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+      const totalCentavos = registration.totalAmount || 0;
+      const newPaidCentavos = Math.round(newTotalReais * 100);
+      const newStatus = totalCentavos > 0 && newPaidCentavos >= totalCentavos ? 'pago' : (newPaidCentavos > 0 ? 'parcial' : 'pendente');
+
+      await storage.updatePaymentStatus(id, {
+        paymentStatus: newStatus,
+        paidAmount: newPaidCentavos,
+        totalAmount: totalCentavos,
+        remainingPaymentDate: registration.remainingPaymentDate ?? null,
+        studentPayments: JSON.stringify(studentPayments),
+      });
+
+      const updated = await storage.getRegistration(id);
+      res.json({ success: true, registration: updated });
+    } catch (error) {
+      console.error("Error deleting student payment entry:", error);
+      res.status(500).json({ error: "Erro ao excluir pagamento" });
     }
   });
 

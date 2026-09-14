@@ -894,6 +894,8 @@ function MentorshipRegistrationsSection() {
   const [transferSelectedRegIds, setTransferSelectedRegIds] = useState<Set<number>>(new Set());
   const [transferAmounts, setTransferAmounts] = useState<Record<string, number>>({});
   const [transferPaymentDate, setTransferPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  // Editing a previously registered payment entry within the transfer modal
+  const [transferEditingEntry, setTransferEditingEntry] = useState<{ regId: string; entryId: string; amount: string; date: string } | null>(null);
   
   // Get current user email and auth token from localStorage
   const currentUserEmail = localStorage.getItem('crm_vendor_email');
@@ -1566,6 +1568,35 @@ Qualquer dúvida, estamos à disposição!`;
       title: "Repasse apagado",
       description: `O repasse do vendedor ${reg.vendor} foi zerado com sucesso`,
     });
+  };
+
+  // Delete an individual registered payment entry (mentor or vendor) from within the transfer modal
+  const handleDeleteTransferEntry = async (regId: string, entryId: string, type: 'mentor' | 'vendor') => {
+    if (!window.confirm('Tem certeza que deseja excluir este pagamento?')) return;
+    try {
+      const endpoint = type === 'mentor'
+        ? `/api/registrations/${regId}/mentor-payment-entry/${entryId}`
+        : `/api/registrations/${regId}/vendor-payment-entry/${entryId}`;
+      await apiRequest('DELETE', endpoint);
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({ title: 'Pagamento excluído', description: 'Registro removido com sucesso.' });
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível excluir o pagamento.', variant: 'destructive' });
+    }
+  };
+
+  // Edit an individual registered payment entry (mentor or vendor) from within the transfer modal
+  const handleEditTransferEntry = async (regId: string, entryId: string, type: 'mentor' | 'vendor', amount: number, date: string) => {
+    try {
+      const endpoint = type === 'mentor'
+        ? `/api/registrations/${regId}/mentor-payment-entry/${entryId}`
+        : `/api/registrations/${regId}/vendor-payment-entry/${entryId}`;
+      await apiRequest('PATCH', endpoint, { amount, date });
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({ title: 'Pagamento atualizado', description: 'Valor alterado com sucesso.' });
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível editar o pagamento.', variant: 'destructive' });
+    }
   };
 
   const handleVendorPayment = () => {
@@ -2306,6 +2337,141 @@ Qualquer dúvida, estamos à disposição!`;
                     </div>
                   </div>
                 )}
+
+                {/* Already registered payments (editable/deletable) */}
+                {(() => {
+                  // Collect registered payment entries for this recipient across all source regs
+                  const registeredEntries: Array<{ reg: Registration; entry: any; entryType: 'mentor' | 'vendor' }> = [];
+                  for (const reg of sourceRegs) {
+                    let payments: any[] = [];
+                    try { payments = reg.vendorPayments ? JSON.parse(reg.vendorPayments) : []; } catch { payments = []; }
+                    for (const p of payments) {
+                      const pType = (p.type === 'mentor') ? 'mentor' : 'vendor';
+                      if (transferRecipient === 'vendor') {
+                        // Vendor payment view: only show vendor-type entries
+                        if (pType === 'vendor') registeredEntries.push({ reg, entry: p, entryType: 'vendor' });
+                      } else {
+                        // Hamilton view: show mentor entries + vendor entries when Hamilton is the vendor
+                        if (pType === 'mentor') registeredEntries.push({ reg, entry: p, entryType: 'mentor' });
+                        else if (reg.vendor?.trim() === 'Hamilton Felix') registeredEntries.push({ reg, entry: p, entryType: 'vendor' });
+                      }
+                    }
+                  }
+                  // Sort by date descending
+                  registeredEntries.sort((a, b) => (b.entry.date || '').localeCompare(a.entry.date || ''));
+
+                  if (registeredEntries.length === 0) return null;
+
+                  const totalRegistered = registeredEntries.reduce((sum, x) => sum + (x.entry.amount || 0), 0);
+
+                  return (
+                    <div>
+                      <Label className="text-gray-700 font-medium">Pagamentos já registrados</Label>
+                      <div className="border border-slate-200 rounded-lg overflow-hidden mt-2">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-slate-100 text-left">
+                              <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
+                              <th className="px-3 py-2 font-medium text-gray-600">Tipo</th>
+                              <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor</th>
+                              <th className="px-3 py-2 font-medium text-gray-600">Data</th>
+                              <th className="px-3 py-2 font-medium text-gray-600">Forma</th>
+                              <th className="px-3 py-2 font-medium text-gray-600 text-right">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {registeredEntries.map(({ reg, entry, entryType }) => {
+                              const isEditing = transferEditingEntry?.regId === reg.id && transferEditingEntry?.entryId === entry.id;
+                              return (
+                                <tr key={entry.id} className="hover:bg-slate-50">
+                                  <td className="px-3 py-2">
+                                    <p className="font-medium text-gray-900">{reg.name}</p>
+                                    <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className={`text-xs font-medium ${entryType === 'mentor' ? 'text-purple-700' : 'text-amber-700'}`}>
+                                      {entryType === 'mentor' ? 'Mentor' : 'Comissão'}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-right">
+                                    {isEditing ? (
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={transferEditingEntry!.amount}
+                                        onChange={(e) => setTransferEditingEntry({ ...transferEditingEntry!, amount: e.target.value })}
+                                        className="w-24 h-7 text-xs text-right bg-white border-gray-300 ml-auto"
+                                      />
+                                    ) : (
+                                      `R$ ${(entry.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    {isEditing ? (
+                                      <Input
+                                        type="date"
+                                        value={transferEditingEntry!.date}
+                                        onChange={(e) => setTransferEditingEntry({ ...transferEditingEntry!, date: e.target.value })}
+                                        className="w-32 h-7 text-xs bg-white border-gray-300"
+                                      />
+                                    ) : (
+                                      entry.date ? new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2 text-xs text-gray-500">{entry.method || 'pix'}</td>
+                                  <td className="px-3 py-2 text-right">
+                                    {isEditing ? (
+                                      <div className="flex gap-1 justify-end">
+                                        <Button
+                                          size="sm"
+                                          className="h-7 px-2 bg-green-600 hover:bg-green-700"
+                                          onClick={async () => {
+                                            await handleEditTransferEntry(reg.id, entry.id, entryType, parseFloat(transferEditingEntry!.amount.replace(',', '.')), transferEditingEntry!.date);
+                                            setTransferEditingEntry(null);
+                                          }}
+                                        >Salvar</Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 px-2"
+                                          onClick={() => setTransferEditingEntry(null)}
+                                        >Cancelar</Button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex gap-1 justify-end">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 px-2"
+                                          onClick={() => setTransferEditingEntry({ regId: reg.id, entryId: entry.id, amount: (entry.amount || 0).toString(), date: entry.date || '' })}
+                                        >Editar</Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                          onClick={() => handleDeleteTransferEntry(reg.id, entry.id, entryType)}
+                                        >Excluir</Button>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          <tfoot>
+                            <tr className={`${bgAccent} font-semibold`}>
+                              <td className="px-3 py-2" colSpan={2}>Total já registrado</td>
+                              <td className={`px-3 py-2 text-right ${accentClass}`}>
+                                R$ {totalRegistered.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td colSpan={3}></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Date field */}
                 <div>

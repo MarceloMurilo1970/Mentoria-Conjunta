@@ -797,21 +797,24 @@ function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFI
   }
   
   // Tax is calculated on GROSS amount (total)
-  const taxes = Math.round(total * batchConfig.taxRate);
+  // Round to 2 decimals (centavos) — keep precision instead of whole reais
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+
+  const taxes = r2(total * batchConfig.taxRate);
   
   // Net after deducting tax and card fee
-  const netAfterTax = total - taxes - cardFee;
+  const netAfterTax = r2(total - taxes - cardFee);
   
   const hasVendor = !!reg.vendor?.trim();
   // Vendor commission is 5% of net after tax (not gross)
-  const vendorComm = hasVendor ? Math.round(netAfterTax * batchConfig.vendorRate) : 0;
+  const vendorComm = hasVendor ? r2(netAfterTax * batchConfig.vendorRate) : 0;
   
   // Distributable amount after vendor commission
-  const distributableAmount = netAfterTax - vendorComm;
+  const distributableAmount = r2(netAfterTax - vendorComm);
   
   // Split using turma-level rates (default 2/3 MM, 1/3 HF)
-  const mmComm = Math.round(distributableAmount * (batchConfig.mmRate ?? (2/3)));
-  const hfComm = Math.round(distributableAmount * (batchConfig.hfRate ?? (1/3)));
+  const mmComm = r2(distributableAmount * (batchConfig.mmRate ?? (2/3)));
+  const hfComm = r2(distributableAmount * (batchConfig.hfRate ?? (1/3)));
   
   return {
     gross: total,
@@ -1563,7 +1566,7 @@ Qualquer dúvida, estamos à disposição!`;
   };
 
   const handleDeleteVendorPayment = (reg: Registration) => {
-    if (!window.confirm(`Tem certeza que deseja apagar o repasse de R$ ${(reg.vendorCommissionPaid || 0).toLocaleString('pt-BR')} para o vendedor ${reg.vendor}?`)) {
+    if (!window.confirm(`Tem certeza que deseja apagar o repasse de R$ ${(reg.vendorCommissionPaid || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} para o vendedor ${reg.vendor}?`)) {
       return;
     }
     
@@ -1669,7 +1672,7 @@ Qualquer dúvida, estamos à disposição!`;
     if (amount <= 0 || amount > vendorMaxPayment) {
       toast({
         title: "Erro",
-        description: `O valor deve estar entre R$ 1 e R$ ${vendorMaxPayment.toLocaleString('pt-BR')}`,
+        description: `O valor deve estar entre R$ 1 e R$ ${vendorMaxPayment.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         variant: "destructive",
       });
       return;
@@ -1934,7 +1937,7 @@ Qualquer dúvida, estamos à disposição!`;
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-green-600">R$ {totalCommissions.gross.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-green-600">R$ {totalCommissions.gross.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </CardContent>
         </Card>
         
@@ -1944,7 +1947,7 @@ Qualquer dúvida, estamos à disposição!`;
             <DollarSign className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-gray-900">R$ {totalCommissions.net.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-gray-900">R$ {totalCommissions.net.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </CardContent>
         </Card>
         
@@ -1954,16 +1957,16 @@ Qualquer dúvida, estamos à disposição!`;
             <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-blue-700">R$ {totalCommissions.mm.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-blue-700">R$ {totalCommissions.mm.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             {financialSummary && (
               <div className="mt-1 text-xs text-blue-600 space-y-0.5">
                 <div className="flex justify-between">
                   <span>Recebido:</span>
-                  <span className="font-medium">R$ {(financialSummary.marceloReceived / 100).toLocaleString('pt-BR')}</span>
+                  <span className="font-medium">R$ {(financialSummary.marceloReceived / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-blue-500">
                   <span>Pendente:</span>
-                  <span className="font-medium">R$ {((financialSummary.marceloTotal - financialSummary.marceloReceived) / 100).toLocaleString('pt-BR')}</span>
+                  <span className="font-medium">R$ {((financialSummary.marceloTotal - financialSummary.marceloReceived) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             )}
@@ -1976,16 +1979,16 @@ Qualquer dúvida, estamos à disposição!`;
             <User className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-purple-700">R$ {totalCommissions.hf.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-purple-700">R$ {totalCommissions.hf.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             {financialSummary && (
               <div className="mt-1 text-xs text-purple-600 space-y-0.5">
                 <div className="flex justify-between">
                   <span>Recebido:</span>
-                  <span className="font-medium">R$ {(financialSummary.hamiltonReceived / 100).toLocaleString('pt-BR')}</span>
+                  <span className="font-medium">R$ {(financialSummary.hamiltonReceived / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-purple-500">
                   <span>Pendente:</span>
-                  <span className="font-medium">R$ {((financialSummary.hamiltonTotal - financialSummary.hamiltonReceived) / 100).toLocaleString('pt-BR')}</span>
+                  <span className="font-medium">R$ {((financialSummary.hamiltonTotal - financialSummary.hamiltonReceived) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             )}
@@ -1998,7 +2001,7 @@ Qualquer dúvida, estamos à disposição!`;
             <UserCheck className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-amber-700">R$ {totalCommissions.vendor.toLocaleString('pt-BR')}</div>
+            <div className="text-xl font-bold text-amber-700">R$ {totalCommissions.vendor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </CardContent>
         </Card>
       </div>
@@ -2065,7 +2068,7 @@ Qualquer dúvida, estamos à disposição!`;
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <div className="bg-white rounded-lg border border-slate-200 p-4 text-center">
                       <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Faturamento Bruto</div>
-                      <div className="text-xl font-bold text-gray-900">R$ {dreData.grossRevenue.toLocaleString('pt-BR')}</div>
+                      <div className="text-xl font-bold text-gray-900">R$ {dreData.grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                     </div>
                     <div className="bg-red-50 rounded-lg border border-red-200 p-4 text-center">
                       <div className="text-xs text-red-600 uppercase tracking-wide mb-1 flex items-center justify-center gap-1">
@@ -2123,23 +2126,23 @@ Qualquer dúvida, estamos à disposição!`;
                           </button>
                         )}
                       </div>
-                      <div className="text-xl font-bold text-red-700">R$ {dreData.taxes.toLocaleString('pt-BR')}</div>
+                      <div className="text-xl font-bold text-red-700">R$ {dreData.taxes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                     </div>
                     <div className="bg-white rounded-lg border border-slate-200 p-4 text-center">
                       <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Receita Líquida</div>
-                      <div className="text-xl font-bold text-gray-900">R$ {receitaLiquida.toLocaleString('pt-BR')}</div>
+                      <div className="text-xl font-bold text-gray-900">R$ {receitaLiquida.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                     </div>
                     <div className="bg-red-50 rounded-lg border border-red-200 p-4 text-center">
                       <div className="text-xs text-red-600 uppercase tracking-wide mb-1">(-) Taxas Cartão</div>
-                      <div className="text-xl font-bold text-red-700">R$ {dreData.cardFees.toLocaleString('pt-BR')}</div>
+                      <div className="text-xl font-bold text-red-700">R$ {dreData.cardFees.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                     </div>
                     <div className="bg-green-50 rounded-lg border border-green-300 p-4 text-center">
                       <div className="text-xs text-green-600 uppercase tracking-wide mb-1">Resultado Final</div>
-                      <div className="text-xl font-bold text-green-700">R$ {resultadoFinal.toLocaleString('pt-BR')}</div>
+                      <div className="text-xl font-bold text-green-700">R$ {resultadoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                     </div>
                     <div className="bg-blue-50 rounded-lg border border-blue-300 p-4 text-center">
                       <div className="text-xs text-blue-600 uppercase tracking-wide mb-1">Recebido (Líq.)</div>
-                      <div className="text-xl font-bold text-blue-700">R$ {dreData.receivedNet.toLocaleString('pt-BR')}</div>
+                      <div className="text-xl font-bold text-blue-700">R$ {dreData.receivedNet.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                     </div>
                   </div>
                 );
@@ -2260,6 +2263,7 @@ Qualquer dúvida, estamos à disposição!`;
               const ns = (reg.paymentStatus || '').toLowerCase().trim();
               const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' && comms.gross > 0 ? paidAmountReais / comms.gross : 0;
               
+              const r2 = (v: number) => Math.round(v * 100) / 100;
               let dueNow = 0;
               let alreadyPaid = 0;
               let mentorDue = 0;
@@ -2267,23 +2271,23 @@ Qualquer dúvida, estamos à disposição!`;
               
               if (transferRecipient === 'vendor') {
                 // Pure vendor payment
-                commDue = Math.round(comms.vendorComm * paidRatio);
+                commDue = r2(comms.vendorComm * paidRatio);
                 dueNow = commDue;
                 alreadyPaid = reg.vendorCommissionPaid || 0;
               } else {
                 // Hamilton as mentor
-                mentorDue = Math.round(comms.hfComm * paidRatio);
+                mentorDue = r2(comms.hfComm * paidRatio);
                 dueNow = mentorDue;
                 alreadyPaid = reg.hamiltonPaid || 0;
                 // Also add vendor commission if Hamilton is the vendor
                 if (reg.vendor?.trim() === 'Hamilton Felix') {
-                  commDue = Math.round(comms.vendorComm * paidRatio);
-                  dueNow += commDue;
+                  commDue = r2(comms.vendorComm * paidRatio);
+                  dueNow = r2(dueNow + commDue);
                   alreadyPaid += (reg.vendorCommissionPaid || 0);
                 }
               }
               
-              const balance = dueNow - alreadyPaid;
+              const balance = r2(dueNow - alreadyPaid);
               return { reg, comms, dueNow, alreadyPaid, balance, mentorDue, commDue };
             }).filter(item => item.balance > 0);
 
@@ -2371,16 +2375,16 @@ Qualquer dúvida, estamos à disposição!`;
                               </td>
                               {transferRecipient === 'hamilton' && (
                                 <td className="px-3 py-2 text-right text-purple-700 cursor-pointer" onClick={() => toggleReg(reg.id)}>
-                                  R$ {mentorDue.toLocaleString('pt-BR')}
+                                  R$ {mentorDue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                               )}
                               {transferRecipient === 'hamilton' && (
                                 <td className="px-3 py-2 text-right text-amber-700 cursor-pointer" onClick={() => toggleReg(reg.id)}>
-                                  {commDue > 0 ? `R$ ${commDue.toLocaleString('pt-BR')}` : '-'}
+                                  {commDue > 0 ? `R$ ${commDue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
                                 </td>
                               )}
                               <td className={`px-3 py-2 text-right font-medium ${accentClass} cursor-pointer`} onClick={() => toggleReg(reg.id)}>
-                                R$ {balance.toLocaleString('pt-BR')}
+                                R$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </td>
                               <td className="px-3 py-2 text-right">
                                 {transferSelectedRegIds.has(reg.id) && (
@@ -2421,7 +2425,7 @@ Qualquer dúvida, estamos à disposição!`;
                               Total selecionado ({transferSelectedRegIds.size} de {pendingRegs.length})
                             </td>
                             <td className={`px-3 py-2 text-right ${accentClass}`}>
-                              R$ {selectedTotal.toLocaleString('pt-BR')}
+                              R$ {selectedTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                           </tr>
                         </tfoot>
@@ -2498,11 +2502,11 @@ Qualquer dúvida, estamos à disposição!`;
                     // due at a given repasse date, considering student payments up to that date
                     const mentorDueAt = (date: string) => {
                       const ratio = comms.gross > 0 ? Math.min(1, studentPaidUpTo(reg, date) / comms.gross) : 0;
-                      return Math.round(comms.hfComm * ratio);
+                      return Math.round(comms.hfComm * ratio * 100) / 100;
                     };
                     const vendorDueAt = (date: string) => {
                       const ratio = comms.gross > 0 ? Math.min(1, studentPaidUpTo(reg, date) / comms.gross) : 0;
-                      return Math.round(comms.vendorComm * ratio);
+                      return Math.round(comms.vendorComm * ratio * 100) / 100;
                     };
 
                     let payments: any[] = [];
@@ -2894,7 +2898,7 @@ Qualquer dúvida, estamos à disposição!`;
                       queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
                       toast({
                         title: transferRecipient === 'hamilton' ? 'Repasse registrado' : 'Pagamento registrado',
-                        description: `R$ ${totalPaid.toLocaleString('pt-BR')} registrado para ${selectedItems.length} inscrição(ões) em ${new Date(paymentDateISO).toLocaleDateString('pt-BR')}.`,
+                        description: `R$ ${totalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} registrado para ${selectedItems.length} inscrição(ões) em ${new Date(paymentDateISO).toLocaleDateString('pt-BR')}.`,
                       });
                       // Return to the payment list so the new payment appears alongside the others
                       setTransferAmounts({});
@@ -2907,7 +2911,7 @@ Qualquer dúvida, estamos à disposição!`;
                     Confirmar Pagamento
                     {transferSelectedRegIds.size > 0 && (
                       <span className="ml-1 opacity-75">
-                        (R$ {selectedTotal.toLocaleString('pt-BR')})
+                        (R$ {selectedTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                       </span>
                     )}
                   </Button>
@@ -3159,10 +3163,10 @@ Qualquer dúvida, estamos à disposição!`;
                         data-testid={`badge-payment-${index}`}
                       >
                         {reg.paymentMethod === 'pix' 
-                          ? `PIX R$ ${batchConfig.pixPrice.toLocaleString('pt-BR')}` 
+                          ? `PIX R$ ${batchConfig.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                           : reg.paymentMethod === 'installments10'
-                          ? `10x R$ ${(batchConfig.installment10Price || 1100).toLocaleString('pt-BR')}`
-                          : `5x R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR')}`}
+                          ? `10x R$ ${(batchConfig.installment10Price || 1100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : `5x R$ ${batchConfig.installmentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </Badge>
                       <Button
                         variant="outline"
@@ -3314,19 +3318,19 @@ Qualquer dúvida, estamos à disposição!`;
                       
                       {/* Financial Breakdown */}
                       <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="text-gray-700 font-medium">Bruto: R$ {commissions.gross.toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-700 font-medium">Bruto: R$ {commissions.gross.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         <span className="text-gray-400">|</span>
-                        <span className="text-red-500">Imp: R$ {commissions.taxes.toLocaleString('pt-BR')}</span>
+                        <span className="text-red-500">Imp: R$ {commissions.taxes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         <span className="text-gray-400">|</span>
-                        <span className="text-orange-500">Taxa: R$ {commissions.cardFee.toLocaleString('pt-BR')}</span>
+                        <span className="text-orange-500">Taxa: R$ {commissions.cardFee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         <span className="text-gray-400">|</span>
-                        <span className="text-blue-600">MM: R$ {commissions.mmComm.toLocaleString('pt-BR')}</span>
+                        <span className="text-blue-600">MM: R$ {commissions.mmComm.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         <span className="text-gray-400">|</span>
-                        <span className="text-purple-600">HF: R$ {commissions.hfComm.toLocaleString('pt-BR')}</span>
+                        <span className="text-purple-600">HF: R$ {commissions.hfComm.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         {commissions.vendorComm > 0 && (
                           <>
                             <span className="text-gray-400">|</span>
-                            <span className="text-yellow-600">Vend: R$ {commissions.vendorComm.toLocaleString('pt-BR')}</span>
+                            <span className="text-yellow-600">Vend: R$ {commissions.vendorComm.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </>
                         )}
                       </div>
@@ -3342,7 +3346,7 @@ Qualquer dúvida, estamos à disposição!`;
                         return (
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="text-green-700 font-medium bg-green-50 px-2 py-0.5 rounded">
-                              Líquido: R$ {commissions.netAfterTax.toLocaleString('pt-BR')}
+                              Líquido: R$ {commissions.netAfterTax.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                             <span className="text-gray-400">|</span>
                             <span className={`font-medium px-2 py-0.5 rounded ${
@@ -3352,7 +3356,7 @@ Qualquer dúvida, estamos à disposição!`;
                                   ? 'text-orange-700 bg-orange-50'
                                   : 'text-gray-500 bg-gray-100'
                             }`}>
-                              Recebido: R$ {receivedValue.toLocaleString('pt-BR')}
+                              Recebido: R$ {receivedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                         );
@@ -3361,8 +3365,8 @@ Qualquer dúvida, estamos à disposição!`;
                       {/* Partial Payment Info */}
                       {reg.paymentStatus === 'parcial' && (
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-green-400">Pago: R$ {((reg.paidAmount || 0) / 100).toLocaleString('pt-BR')}</span>
-                          <span className="text-orange-400">Saldo: R$ {(batchConfig.pixPrice - ((reg.paidAmount || 0) / 100)).toLocaleString('pt-BR')}</span>
+                          <span className="text-green-400">Pago: R$ {((reg.paidAmount || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span className="text-orange-400">Saldo: R$ {(batchConfig.pixPrice - ((reg.paidAmount || 0) / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           {reg.remainingPaymentDate && (
                             <span className="text-blue-400">
                               Prev: {new Date(reg.remainingPaymentDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
@@ -3634,30 +3638,30 @@ Qualquer dúvida, estamos à disposição!`;
                           <TableCell className="text-gray-300">{batch.deadline}</TableCell>
                           <TableCell><Badge className="bg-blue-600">PIX</Badge></TableCell>
                           <TableCell className="text-gray-300">1</TableCell>
-                          <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-white font-medium">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-white font-medium">R$ {batch.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                           <TableCell className="text-gray-500">-</TableCell>
-                          <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-red-400">- R$ {Math.round(batch.pixPrice * batch.taxRate).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-green-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate)).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-blue-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-purple-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-yellow-400">R$ {Math.round(batch.pixPrice * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-red-400">- R$ {Math.round(batch.pixPrice * batch.taxRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-green-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-blue-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-purple-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-yellow-400">R$ {Math.round(batch.pixPrice * batch.vendorRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                         </TableRow>
                         <TableRow key={`${batch.batch}-card`} className="border-gray-800">
                           <TableCell className="text-white font-medium">{batch.batch}</TableCell>
                           <TableCell className="text-gray-300">{batch.deadline}</TableCell>
                           <TableCell><Badge className="bg-gray-600">Cartão</Badge></TableCell>
                           <TableCell className="text-gray-300">5</TableCell>
-                          <TableCell className="text-gray-300">R$ {batch.installmentPrice.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-white font-medium">R$ {batch.installmentTotal.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-red-400">- R$ {batch.cardFee.toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-gray-300">R$ {(batch.installmentTotal - batch.cardFee).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-red-400">- R$ {Math.round((batch.installmentTotal - batch.cardFee) * batch.taxRate).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-green-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate)).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-blue-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-purple-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell className="text-yellow-400">R$ {Math.round(batch.installmentTotal * batch.vendorRate).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-gray-300">R$ {batch.installmentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-white font-medium">R$ {batch.installmentTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-red-400">- R$ {batch.cardFee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-gray-300">R$ {(batch.installmentTotal - batch.cardFee).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-red-400">- R$ {Math.round((batch.installmentTotal - batch.cardFee) * batch.taxRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-green-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-blue-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-purple-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="text-yellow-400">R$ {Math.round(batch.installmentTotal * batch.vendorRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                         </TableRow>
                       </Fragment>
                     ))}
@@ -3883,7 +3887,7 @@ Qualquer dúvida, estamos à disposição!`;
           <DialogHeader>
             <DialogTitle>Registrar Pagamento ao Vendedor</DialogTitle>
             <DialogDescription className="text-gray-600">
-              Vendedor: {selectedVendor} - Saldo pendente: R$ {vendorMaxPayment.toLocaleString('pt-BR')}
+              Vendedor: {selectedVendor} - Saldo pendente: R$ {vendorMaxPayment.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </DialogDescription>
           </DialogHeader>
           
@@ -3937,7 +3941,7 @@ Qualquer dúvida, estamos à disposição!`;
           <DialogHeader>
             <DialogTitle>Editar Comissão Paga</DialogTitle>
             <DialogDescription className="text-gray-600">
-              {editingCommissionReg?.name} - Comissão total: R$ {editingCommissionMax.toLocaleString('pt-BR')}
+              {editingCommissionReg?.name} - Comissão total: R$ {editingCommissionMax.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </DialogDescription>
           </DialogHeader>
           
@@ -4019,7 +4023,7 @@ Qualquer dúvida, estamos à disposição!`;
                 {JSON.parse(selectedInvoiceReg.invoices).map((inv: {amount: number, date: string}, idx: number) => (
                   <div key={idx} className="flex justify-between text-sm">
                     <span className="text-gray-600">NF {idx + 1}:</span>
-                    <span className="text-gray-900">R$ {inv.amount.toLocaleString('pt-BR')} - {new Date(inv.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                    <span className="text-gray-900">R$ {inv.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - {new Date(inv.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
                   </div>
                 ))}
               </div>
@@ -5808,7 +5812,7 @@ function AnalyticsSection() {
           <CardHeader className="pb-2">
             <CardDescription className="text-gray-500">Total de Visitas</CardDescription>
             <CardTitle className="text-3xl text-gray-900" data-testid="text-total-views">
-              {analytics?.totalViews?.toLocaleString('pt-BR') || 0}
+              {analytics?.totalViews?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 0}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -5816,7 +5820,7 @@ function AnalyticsSection() {
           <CardHeader className="pb-2">
             <CardDescription className="text-gray-500">Visitantes Únicos (30 dias)</CardDescription>
             <CardTitle className="text-3xl text-gray-900" data-testid="text-unique-visitors">
-              {analytics?.uniqueVisitors?.toLocaleString('pt-BR') || 0}
+              {analytics?.uniqueVisitors?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 0}
             </CardTitle>
           </CardHeader>
         </Card>

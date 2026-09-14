@@ -903,6 +903,8 @@ function MentorshipRegistrationsSection() {
   const [transferView, setTransferView] = useState<'list' | 'detail' | 'new'>('list');
   // Which payment date group is opened in the detail view (YYYY-MM-DD)
   const [transferSelectedDate, setTransferSelectedDate] = useState<string | null>(null);
+  // Editing a whole date group's date from the list view: { oldDate, newDate }
+  const [transferEditingGroupDate, setTransferEditingGroupDate] = useState<{ oldDate: string; newDate: string } | null>(null);
   
   // Get current user email and auth token from localStorage
   const currentUserEmail = localStorage.getItem('crm_vendor_email');
@@ -1606,6 +1608,60 @@ Qualquer dúvida, estamos à disposição!`;
     }
   };
 
+  // Change the date of every payment entry in a date group (from the repasse list view)
+  const handleEditTransferGroupDate = async (
+    groupItems: Array<{ reg: Registration; entry: any; entryType: 'mentor' | 'vendor'; legacy: boolean }>,
+    newDate: string,
+  ) => {
+    try {
+      for (const it of groupItems) {
+        if (it.legacy) {
+          const dateISO = newDate ? new Date(newDate + 'T12:00:00').toISOString() : new Date().toISOString();
+          if (it.entryType === 'mentor') {
+            await apiRequest('PATCH', `/api/registrations/${it.reg.id}/hamilton-payment`, { hamiltonPaid: it.entry.amount, hamiltonPaidAt: dateISO });
+          } else {
+            await apiRequest('PATCH', `/api/registrations/${it.reg.id}/vendor-commission`, { vendorCommissionPaid: it.entry.amount, vendorCommissionPaidAt: dateISO });
+          }
+        } else {
+          const endpoint = it.entryType === 'mentor'
+            ? `/api/registrations/${it.reg.id}/mentor-payment-entry/${it.entry.id}`
+            : `/api/registrations/${it.reg.id}/vendor-payment-entry/${it.entry.id}`;
+          await apiRequest('PATCH', endpoint, { amount: it.entry.amount, date: newDate });
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({ title: 'Data atualizada', description: 'A data do pagamento foi alterada.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err?.message || 'Não foi possível alterar a data.', variant: 'destructive' });
+    }
+  };
+
+  // Delete every payment entry in a date group (from the repasse list view)
+  const handleDeleteTransferGroup = async (
+    groupItems: Array<{ reg: Registration; entry: any; entryType: 'mentor' | 'vendor'; legacy: boolean }>,
+  ) => {
+    try {
+      for (const it of groupItems) {
+        if (it.legacy) {
+          if (it.entryType === 'mentor') {
+            await apiRequest('PATCH', `/api/registrations/${it.reg.id}/hamilton-payment`, { hamiltonPaid: 0, hamiltonPaidAt: null });
+          } else {
+            await apiRequest('PATCH', `/api/registrations/${it.reg.id}/vendor-commission`, { vendorCommissionPaid: 0, vendorCommissionPaidAt: null });
+          }
+        } else {
+          const endpoint = it.entryType === 'mentor'
+            ? `/api/registrations/${it.reg.id}/mentor-payment-entry/${it.entry.id}`
+            : `/api/registrations/${it.reg.id}/vendor-payment-entry/${it.entry.id}`;
+          await apiRequest('DELETE', endpoint);
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+      toast({ title: 'Pagamento excluído', description: 'Os pagamentos dessa data foram removidos.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err?.message || 'Não foi possível excluir os pagamentos.', variant: 'destructive' });
+    }
+  };
+
   const handleVendorPayment = () => {
     if (!selectedVendor || !vendorPaymentAmount || !vendorPaymentDate) return;
     
@@ -2128,6 +2184,7 @@ Qualquer dúvida, estamos à disposição!`;
                     setTransferNotes('');
                     setTransferAmounts({});
                     setTransferEditingEntry(null);
+                    setTransferEditingGroupDate(null);
                     setTransferView('list');
                     setTransferSelectedDate(null);
                     setTransferPaymentDate(new Date().toISOString().split('T')[0]);
@@ -2150,6 +2207,7 @@ Qualquer dúvida, estamos à disposição!`;
                     setTransferNotes('');
                     setTransferAmounts({});
                     setTransferEditingEntry(null);
+                    setTransferEditingGroupDate(null);
                     setTransferView('list');
                     setTransferSelectedDate(null);
                     setTransferPaymentDate(new Date().toISOString().split('T')[0]);
@@ -2653,7 +2711,7 @@ Qualquer dúvida, estamos à disposição!`;
                                 <th className="px-3 py-2 font-medium text-gray-600">Data do Pagamento</th>
                                 <th className="px-3 py-2 font-medium text-gray-600">Mentorados</th>
                                 <th className="px-3 py-2 font-medium text-gray-600 text-right">Total Pago</th>
-                                <th className="px-3 py-2 font-medium text-gray-600 text-right"></th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Ações</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -2661,18 +2719,68 @@ Qualquer dúvida, estamos à disposição!`;
                                 const grp = groups.get(dateKey)!;
                                 const grpTotal = grp.reduce((s, x) => s + (x.entry.amount || 0), 0);
                                 const dateLabel = dateKey !== 'sem-data' ? new Date(dateKey + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data';
+                                const isEditingDate = transferEditingGroupDate?.oldDate === dateKey;
                                 return (
                                   <tr
                                     key={dateKey}
-                                    className="hover:bg-slate-50 cursor-pointer"
-                                    onClick={() => { setTransferEditingEntry(null); setTransferSelectedDate(dateKey); setTransferView('detail'); }}
+                                    className={`${isEditingDate ? 'bg-slate-50' : 'hover:bg-slate-50 cursor-pointer'}`}
+                                    onClick={() => { if (!isEditingDate) { setTransferEditingEntry(null); setTransferSelectedDate(dateKey); setTransferView('detail'); } }}
                                   >
-                                    <td className="px-3 py-2 font-medium text-gray-900">{dateLabel}</td>
+                                    <td className="px-3 py-2 font-medium text-gray-900">
+                                      {isEditingDate ? (
+                                        <Input
+                                          type="date"
+                                          value={transferEditingGroupDate!.newDate}
+                                          onClick={(e) => e.stopPropagation()}
+                                          onChange={(e) => setTransferEditingGroupDate({ ...transferEditingGroupDate!, newDate: e.target.value })}
+                                          className="w-36 h-7 text-xs bg-white border-gray-300"
+                                        />
+                                      ) : dateLabel}
+                                    </td>
                                     <td className="px-3 py-2 text-gray-600">{grp.length} {grp.length === 1 ? 'mentorado' : 'mentorados'}</td>
                                     <td className={`px-3 py-2 text-right font-medium ${accentClass}`}>
                                       R$ {grpTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
-                                    <td className="px-3 py-2 text-right text-xs text-blue-600">Ver detalhes →</td>
+                                    <td className="px-3 py-2 text-right">
+                                      {isEditingDate ? (
+                                        <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                                          <Button
+                                            size="sm"
+                                            className="h-7 px-2 bg-green-600 hover:bg-green-700"
+                                            onClick={async () => {
+                                              if (!transferEditingGroupDate!.newDate) { toast({ title: 'Informe a data', variant: 'destructive' }); return; }
+                                              await handleEditTransferGroupDate(grp, transferEditingGroupDate!.newDate);
+                                              setTransferEditingGroupDate(null);
+                                            }}
+                                          >Salvar</Button>
+                                          <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setTransferEditingGroupDate(null)}>Cancelar</Button>
+                                        </div>
+                                      ) : (
+                                        <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2"
+                                            onClick={() => { setTransferSelectedDate(dateKey); setTransferView('detail'); }}
+                                          >Detalhes</Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2"
+                                            onClick={() => setTransferEditingGroupDate({ oldDate: dateKey, newDate: dateKey !== 'sem-data' ? dateKey : new Date().toISOString().split('T')[0] })}
+                                          >Editar data</Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            onClick={async () => {
+                                              if (!window.confirm(`Excluir todos os pagamentos de ${dateLabel}?`)) return;
+                                              await handleDeleteTransferGroup(grp);
+                                            }}
+                                          >Excluir</Button>
+                                        </div>
+                                      )}
+                                    </td>
                                   </tr>
                                 );
                               })}

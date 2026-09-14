@@ -3679,14 +3679,25 @@ Qualquer dúvida, estamos à disposição!`;
                                       className="text-green-400 hover:text-green-300 text-xs"
                                       onClick={async () => {
                                         if (!selectedRegistration) return;
-                                        await apiRequest('PATCH', `/api/registrations/${selectedRegistration.id}/student-payment-entry/${p.id}`, {
-                                          amount: parseFloat(editingStudentEntry!.amount.replace(',', '.')),
-                                          date: editingStudentEntry!.date,
-                                        });
-                                        queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
-                                        setEditingStudentEntry(null);
-                                        setPaymentModalOpen(false);
-                                        toast({ title: 'Parcela atualizada' });
+                                        const newAmt = parseFloat(editingStudentEntry!.amount.replace(',', '.'));
+                                        if (isNaN(newAmt) || newAmt <= 0) {
+                                          toast({ title: 'Valor inválido', description: 'Informe um valor maior que zero.', variant: 'destructive' });
+                                          return;
+                                        }
+                                        try {
+                                          const res = await apiRequest('PATCH', `/api/registrations/${selectedRegistration.id}/student-payment-entry/${p.id}`, {
+                                            amount: newAmt,
+                                            date: editingStudentEntry!.date,
+                                          });
+                                          const json = await res.json();
+                                          // Keep the modal open and refresh selectedRegistration so the table updates
+                                          if (json?.registration) setSelectedRegistration(json.registration);
+                                          queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                                          setEditingStudentEntry(null);
+                                          toast({ title: 'Parcela atualizada' });
+                                        } catch (err: any) {
+                                          toast({ title: 'Erro ao salvar', description: err?.message || 'Não foi possível salvar a parcela.', variant: 'destructive' });
+                                        }
                                       }}
                                     >Salvar</button>
                                     <button className="text-gray-400 hover:text-gray-300 text-xs" onClick={() => setEditingStudentEntry(null)}>Cancelar</button>
@@ -3699,10 +3710,15 @@ Qualquer dúvida, estamos à disposição!`;
                                       onClick={async () => {
                                         if (!selectedRegistration) return;
                                         if (!window.confirm('Excluir esta parcela?')) return;
-                                        await apiRequest('DELETE', `/api/registrations/${selectedRegistration.id}/student-payment-entry/${p.id}`);
-                                        queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
-                                        setPaymentModalOpen(false);
-                                        toast({ title: 'Parcela excluída' });
+                                        try {
+                                          const res = await apiRequest('DELETE', `/api/registrations/${selectedRegistration.id}/student-payment-entry/${p.id}`);
+                                          const json = await res.json();
+                                          if (json?.registration) setSelectedRegistration(json.registration);
+                                          queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                                          toast({ title: 'Parcela excluída' });
+                                        } catch (err: any) {
+                                          toast({ title: 'Erro ao excluir', description: err?.message || 'Não foi possível excluir a parcela.', variant: 'destructive' });
+                                        }
                                       }}
                                     >Excluir</button>
                                   </div>

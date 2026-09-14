@@ -91,6 +91,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
   // Build per-person reports
   const buildReports = (): PersonReport[] => {
     const people: Record<string, PersonReport> = {};
+    const r2 = (v: number) => Math.round(v * 100) / 100; // keep centavos
 
     // Process all registrations
     for (const reg of filtered) {
@@ -117,11 +118,11 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
         people[HF_NAME].role = 'mentor+vendedor';
       }
 
-      const hfRepasseTotal = comms.hfComm + vendorCommForHf;
-      const hfResultado = comms.netAfterTax - hfRepasseTotal;
-      const hfMentorAtual = Math.round(comms.hfComm * paidRatio);
-      const hfCommAtual = isHfVendor ? Math.round(comms.vendorComm * paidRatio) : 0;
-      const hfDueNow = hfMentorAtual + hfCommAtual;
+      const hfRepasseTotal = r2(comms.hfComm + vendorCommForHf);
+      const hfResultado = r2(comms.netAfterTax - hfRepasseTotal);
+      const hfMentorAtual = r2(comms.hfComm * paidRatio);
+      const hfCommAtual = isHfVendor ? r2(comms.vendorComm * paidRatio) : 0;
+      const hfDueNow = r2(hfMentorAtual + hfCommAtual);
 
       people[HF_NAME].entries.push({
         reg,
@@ -136,8 +137,8 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
         mentorAtual: hfMentorAtual,
         commAtual: hfCommAtual,
         dueNow: hfDueNow,
-        alreadyPaid: hfPaid + vendorCommPaidForHf,
-        balance: hfDueNow - (hfPaid + vendorCommPaidForHf),
+        alreadyPaid: r2(hfPaid + vendorCommPaidForHf),
+        balance: r2(hfDueNow - (hfPaid + vendorCommPaidForHf)),
       });
 
       // Other vendors (not Hamilton)
@@ -148,10 +149,10 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
           if (!people[vendorName]) {
             people[vendorName] = { name: vendorName, role: 'vendedor', entries: [], totals: { gross: 0, netAfterTax: 0, mentorTotal: 0, commTotal: 0, repasseTotal: 0, resultado: 0, paidAmount: 0, mentorAtual: 0, commAtual: 0, dueNow: 0, alreadyPaid: 0, balance: 0 } };
           }
-          const commAtual = Math.round(comms.vendorComm * paidRatio);
+          const commAtual = r2(comms.vendorComm * paidRatio);
           const commPaid = reg.vendorCommissionPaid || 0;
-          const vendorRepasseTotal = comms.vendorComm;
-          const vendorResultado = comms.netAfterTax - vendorRepasseTotal;
+          const vendorRepasseTotal = r2(comms.vendorComm);
+          const vendorResultado = r2(comms.netAfterTax - vendorRepasseTotal);
           people[vendorName].entries.push({
             reg,
             gross: comms.gross,
@@ -166,7 +167,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
             commAtual,
             dueNow: commAtual,
             alreadyPaid: commPaid,
-            balance: commAtual - commPaid,
+            balance: r2(commAtual - commPaid),
           });
         }
       }
@@ -174,7 +175,7 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
 
     // Calculate totals
     for (const person of Object.values(people)) {
-      person.totals = person.entries.reduce((acc, e) => ({
+      const t = person.entries.reduce((acc, e) => ({
         gross: acc.gross + e.gross,
         netAfterTax: acc.netAfterTax + e.netAfterTax,
         mentorTotal: acc.mentorTotal + e.mentorTotal,
@@ -188,6 +189,8 @@ export default function UnifiedRepassesSection({ registrations, vendors, calcula
         alreadyPaid: acc.alreadyPaid + e.alreadyPaid,
         balance: acc.balance + e.balance,
       }), { gross: 0, netAfterTax: 0, mentorTotal: 0, commTotal: 0, repasseTotal: 0, resultado: 0, paidAmount: 0, mentorAtual: 0, commAtual: 0, dueNow: 0, alreadyPaid: 0, balance: 0 });
+      // Round every accumulated total to 2 decimals to avoid floating-point noise
+      person.totals = Object.fromEntries(Object.entries(t).map(([k, v]) => [k, r2(v as number)])) as typeof t;
     }
 
     return Object.values(people).filter(p => p.entries.length > 0);

@@ -896,6 +896,8 @@ function MentorshipRegistrationsSection() {
   const [transferPaymentDate, setTransferPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   // Editing a previously registered payment entry within the transfer modal
   const [transferEditingEntry, setTransferEditingEntry] = useState<{ regId: string; entryId: string; amount: string; date: string } | null>(null);
+  // Modal view: 'list' shows past payments (editable), 'new' shows the new-payment form
+  const [transferView, setTransferView] = useState<'list' | 'new'>('list');
   
   // Get current user email and auth token from localStorage
   const currentUserEmail = localStorage.getItem('crm_vendor_email');
@@ -2106,6 +2108,8 @@ Qualquer dúvida, estamos à disposição!`;
                     setTransferVendorName('');
                     setTransferNotes('');
                     setTransferAmounts({});
+                    setTransferEditingEntry(null);
+                    setTransferView('list');
                     setTransferPaymentDate(new Date().toISOString().split('T')[0]);
                     const pendingIds = new Set<number>();
                     (registrations || []).forEach(r => {
@@ -2125,6 +2129,8 @@ Qualquer dúvida, estamos à disposição!`;
                     setTransferVendorName(vendorName);
                     setTransferNotes('');
                     setTransferAmounts({});
+                    setTransferEditingEntry(null);
+                    setTransferView('list');
                     setTransferPaymentDate(new Date().toISOString().split('T')[0]);
                     const pendingIds = new Set<number>();
                     (registrations || []).filter(r => r.vendor === vendorName).forEach(r => {
@@ -2151,10 +2157,12 @@ Qualquer dúvida, estamos à disposição!`;
         <DialogContent className="bg-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-gray-900">
-              {transferRecipient === 'hamilton' ? 'Registrar Repasse - Hamilton Felix' : `Pagar Comissão - ${transferVendorName}`}
+              {transferRecipient === 'hamilton' ? 'Pagamentos - Hamilton Felix' : `Pagamentos - ${transferVendorName}`}
             </DialogTitle>
             <DialogDescription className="text-gray-600">
-              Selecione as inscrições que deseja quitar e confirme a data do pagamento.
+              {transferView === 'list'
+                ? 'Pagamentos já realizados. Clique em Editar para alterar o valor de cada mentorado ou inclua um novo pagamento.'
+                : 'Selecione as inscrições que deseja quitar e confirme a data do pagamento.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -2225,6 +2233,9 @@ Qualquer dúvida, estamos à disposição!`;
 
             return (
               <div className="space-y-4 py-2">
+                {/* NEW PAYMENT VIEW */}
+                {transferView === 'new' && (
+                <>
                 {/* Pending registrations selector */}
                 {pendingRegs.length === 0 ? (
                   <div className="text-center py-6 text-gray-500 bg-slate-50 rounded-lg">
@@ -2338,141 +2349,6 @@ Qualquer dúvida, estamos à disposição!`;
                   </div>
                 )}
 
-                {/* Already registered payments (editable/deletable) */}
-                {(() => {
-                  // Collect registered payment entries for this recipient across all source regs
-                  const registeredEntries: Array<{ reg: Registration; entry: any; entryType: 'mentor' | 'vendor' }> = [];
-                  for (const reg of sourceRegs) {
-                    let payments: any[] = [];
-                    try { payments = reg.vendorPayments ? JSON.parse(reg.vendorPayments) : []; } catch { payments = []; }
-                    for (const p of payments) {
-                      const pType = (p.type === 'mentor') ? 'mentor' : 'vendor';
-                      if (transferRecipient === 'vendor') {
-                        // Vendor payment view: only show vendor-type entries
-                        if (pType === 'vendor') registeredEntries.push({ reg, entry: p, entryType: 'vendor' });
-                      } else {
-                        // Hamilton view: show mentor entries + vendor entries when Hamilton is the vendor
-                        if (pType === 'mentor') registeredEntries.push({ reg, entry: p, entryType: 'mentor' });
-                        else if (reg.vendor?.trim() === 'Hamilton Felix') registeredEntries.push({ reg, entry: p, entryType: 'vendor' });
-                      }
-                    }
-                  }
-                  // Sort by date descending
-                  registeredEntries.sort((a, b) => (b.entry.date || '').localeCompare(a.entry.date || ''));
-
-                  if (registeredEntries.length === 0) return null;
-
-                  const totalRegistered = registeredEntries.reduce((sum, x) => sum + (x.entry.amount || 0), 0);
-
-                  return (
-                    <div>
-                      <Label className="text-gray-700 font-medium">Pagamentos já registrados</Label>
-                      <div className="border border-slate-200 rounded-lg overflow-hidden mt-2">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="bg-slate-100 text-left">
-                              <th className="px-3 py-2 font-medium text-gray-600">Aluno</th>
-                              <th className="px-3 py-2 font-medium text-gray-600">Tipo</th>
-                              <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor</th>
-                              <th className="px-3 py-2 font-medium text-gray-600">Data</th>
-                              <th className="px-3 py-2 font-medium text-gray-600">Forma</th>
-                              <th className="px-3 py-2 font-medium text-gray-600 text-right">Ações</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {registeredEntries.map(({ reg, entry, entryType }) => {
-                              const isEditing = transferEditingEntry?.regId === reg.id && transferEditingEntry?.entryId === entry.id;
-                              return (
-                                <tr key={entry.id} className="hover:bg-slate-50">
-                                  <td className="px-3 py-2">
-                                    <p className="font-medium text-gray-900">{reg.name}</p>
-                                    <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <span className={`text-xs font-medium ${entryType === 'mentor' ? 'text-purple-700' : 'text-amber-700'}`}>
-                                      {entryType === 'mentor' ? 'Mentor' : 'Comissão'}
-                                    </span>
-                                  </td>
-                                  <td className="px-3 py-2 text-right">
-                                    {isEditing ? (
-                                      <Input
-                                        type="number"
-                                        step="0.01"
-                                        value={transferEditingEntry!.amount}
-                                        onChange={(e) => setTransferEditingEntry({ ...transferEditingEntry!, amount: e.target.value })}
-                                        className="w-24 h-7 text-xs text-right bg-white border-gray-300 ml-auto"
-                                      />
-                                    ) : (
-                                      `R$ ${(entry.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    )}
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    {isEditing ? (
-                                      <Input
-                                        type="date"
-                                        value={transferEditingEntry!.date}
-                                        onChange={(e) => setTransferEditingEntry({ ...transferEditingEntry!, date: e.target.value })}
-                                        className="w-32 h-7 text-xs bg-white border-gray-300"
-                                      />
-                                    ) : (
-                                      entry.date ? new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'
-                                    )}
-                                  </td>
-                                  <td className="px-3 py-2 text-xs text-gray-500">{entry.method || 'pix'}</td>
-                                  <td className="px-3 py-2 text-right">
-                                    {isEditing ? (
-                                      <div className="flex gap-1 justify-end">
-                                        <Button
-                                          size="sm"
-                                          className="h-7 px-2 bg-green-600 hover:bg-green-700"
-                                          onClick={async () => {
-                                            await handleEditTransferEntry(reg.id, entry.id, entryType, parseFloat(transferEditingEntry!.amount.replace(',', '.')), transferEditingEntry!.date);
-                                            setTransferEditingEntry(null);
-                                          }}
-                                        >Salvar</Button>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="h-7 px-2"
-                                          onClick={() => setTransferEditingEntry(null)}
-                                        >Cancelar</Button>
-                                      </div>
-                                    ) : (
-                                      <div className="flex gap-1 justify-end">
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="h-7 px-2"
-                                          onClick={() => setTransferEditingEntry({ regId: reg.id, entryId: entry.id, amount: (entry.amount || 0).toString(), date: entry.date || '' })}
-                                        >Editar</Button>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                          onClick={() => handleDeleteTransferEntry(reg.id, entry.id, entryType)}
-                                        >Excluir</Button>
-                                      </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                          <tfoot>
-                            <tr className={`${bgAccent} font-semibold`}>
-                              <td className="px-3 py-2" colSpan={2}>Total já registrado</td>
-                              <td className={`px-3 py-2 text-right ${accentClass}`}>
-                                R$ {totalRegistered.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </td>
-                              <td colSpan={3}></td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                      </div>
-                    </div>
-                  );
-                })()}
-
                 {/* Date field */}
                 <div>
                   <Label className="text-gray-700">Data do Pagamento</Label>
@@ -2511,10 +2387,200 @@ Qualquer dúvida, estamos à disposição!`;
                     data-testid="input-transfer-notes"
                   />
                 </div>
+                </>
+                )}
 
+                {/* PAYMENT LIST VIEW (default) — shows all payments made, editable */}
+                {transferView === 'list' && (() => {
+                  // Collect registered payment entries for this recipient across all source regs.
+                  // Falls back to a synthetic entry derived from the cumulative total for
+                  // legacy payments that predate individual entry tracking.
+                  const listEntries: Array<{ reg: Registration; entry: any; entryType: 'mentor' | 'vendor'; legacy: boolean }> = [];
+                  for (const reg of sourceRegs) {
+                    let payments: any[] = [];
+                    try { payments = reg.vendorPayments ? JSON.parse(reg.vendorPayments) : []; } catch { payments = []; }
+                    const mentorEntries = payments.filter((p: any) => p.type === 'mentor');
+                    const vendorEntries = payments.filter((p: any) => p.type === 'vendor' || !p.type);
+
+                    if (transferRecipient === 'vendor') {
+                      // Pure vendor: show vendor entries; legacy fallback from vendorCommissionPaid
+                      if (vendorEntries.length > 0) {
+                        vendorEntries.forEach((p: any) => listEntries.push({ reg, entry: p, entryType: 'vendor', legacy: false }));
+                      } else if ((reg.vendorCommissionPaid || 0) > 0) {
+                        listEntries.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'vendor', legacy: true });
+                      }
+                    } else {
+                      // Hamilton: mentor entries + vendor entries when Hamilton is the vendor
+                      if (mentorEntries.length > 0) {
+                        mentorEntries.forEach((p: any) => listEntries.push({ reg, entry: p, entryType: 'mentor', legacy: false }));
+                      } else if ((reg.hamiltonPaid || 0) > 0) {
+                        listEntries.push({ reg, entry: { id: 'legacy-mentor', amount: reg.hamiltonPaid, date: reg.hamiltonPaidAt ? new Date(reg.hamiltonPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'mentor', legacy: true });
+                      }
+                      if (reg.vendor?.trim() === 'Hamilton Felix') {
+                        if (vendorEntries.length > 0) {
+                          vendorEntries.forEach((p: any) => listEntries.push({ reg, entry: p, entryType: 'vendor', legacy: false }));
+                        } else if ((reg.vendorCommissionPaid || 0) > 0) {
+                          listEntries.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'vendor', legacy: true });
+                        }
+                      }
+                    }
+                  }
+                  listEntries.sort((a, b) => (b.entry.date || '').localeCompare(a.entry.date || ''));
+                  const totalRegistered = listEntries.reduce((sum, x) => sum + (x.entry.amount || 0), 0);
+
+                  return (
+                    <div className="space-y-3">
+                      {listEntries.length === 0 ? (
+                        <div className="text-center py-6 text-gray-500 bg-slate-50 rounded-lg">
+                          Nenhum pagamento registrado ainda.
+                        </div>
+                      ) : (
+                        <div className="border border-slate-200 rounded-lg overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-slate-100 text-left">
+                                <th className="px-3 py-2 font-medium text-gray-600">Mentorado</th>
+                                <th className="px-3 py-2 font-medium text-gray-600">Tipo</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Pago</th>
+                                <th className="px-3 py-2 font-medium text-gray-600">Data</th>
+                                <th className="px-3 py-2 font-medium text-gray-600">Forma</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Ações</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {listEntries.map(({ reg, entry, entryType, legacy }) => {
+                                const isEditing = transferEditingEntry?.regId === reg.id && transferEditingEntry?.entryId === entry.id;
+                                return (
+                                  <tr key={`${reg.id}-${entry.id}`} className="hover:bg-slate-50">
+                                    <td className="px-3 py-2">
+                                      <p className="font-medium text-gray-900">{reg.name}</p>
+                                      <p className="text-xs text-gray-500">Lote {reg.batch || 1} • {reg.paymentMethod === 'pix' ? 'PIX' : reg.paymentMethod === 'installments10' ? '10x' : '5x'}</p>
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <span className={`text-xs font-medium ${entryType === 'mentor' ? 'text-purple-700' : 'text-amber-700'}`}>
+                                        {entryType === 'mentor' ? 'Mentor' : 'Comissão'}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-2 text-right">
+                                      {isEditing ? (
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          value={transferEditingEntry!.amount}
+                                          onChange={(e) => setTransferEditingEntry({ ...transferEditingEntry!, amount: e.target.value })}
+                                          className="w-24 h-7 text-xs text-right bg-white border-gray-300 ml-auto"
+                                        />
+                                      ) : (
+                                        `R$ ${(entry.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      {isEditing ? (
+                                        <Input
+                                          type="date"
+                                          value={transferEditingEntry!.date}
+                                          onChange={(e) => setTransferEditingEntry({ ...transferEditingEntry!, date: e.target.value })}
+                                          className="w-32 h-7 text-xs bg-white border-gray-300"
+                                        />
+                                      ) : (
+                                        entry.date ? new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 text-xs text-gray-500">{entry.method || 'pix'}{legacy && <span className="ml-1 text-[10px] text-gray-400">(antigo)</span>}</td>
+                                    <td className="px-3 py-2 text-right">
+                                      {isEditing ? (
+                                        <div className="flex gap-1 justify-end">
+                                          <Button
+                                            size="sm"
+                                            className="h-7 px-2 bg-green-600 hover:bg-green-700"
+                                            onClick={async () => {
+                                              const newAmt = parseFloat(transferEditingEntry!.amount.replace(',', '.'));
+                                              if (legacy) {
+                                                // Legacy: update the cumulative field directly
+                                                const dateISO = transferEditingEntry!.date ? new Date(transferEditingEntry!.date + 'T12:00:00').toISOString() : new Date().toISOString();
+                                                if (entryType === 'mentor') {
+                                                  await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, { hamiltonPaid: newAmt, hamiltonPaidAt: dateISO });
+                                                } else {
+                                                  await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, { vendorCommissionPaid: newAmt, vendorCommissionPaidAt: dateISO });
+                                                }
+                                                queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                                                toast({ title: 'Pagamento atualizado', description: 'Valor alterado com sucesso.' });
+                                              } else {
+                                                await handleEditTransferEntry(reg.id, entry.id, entryType, newAmt, transferEditingEntry!.date);
+                                              }
+                                              setTransferEditingEntry(null);
+                                            }}
+                                          >Salvar</Button>
+                                          <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setTransferEditingEntry(null)}>Cancelar</Button>
+                                        </div>
+                                      ) : (
+                                        <div className="flex gap-1 justify-end">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2"
+                                            onClick={() => setTransferEditingEntry({ regId: reg.id, entryId: entry.id, amount: (entry.amount || 0).toString(), date: entry.date || '' })}
+                                          >Editar</Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            onClick={async () => {
+                                              if (legacy) {
+                                                if (!window.confirm('Tem certeza que deseja excluir este pagamento?')) return;
+                                                if (entryType === 'mentor') {
+                                                  await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, { hamiltonPaid: 0, hamiltonPaidAt: null });
+                                                } else {
+                                                  await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, { vendorCommissionPaid: 0, vendorCommissionPaidAt: null });
+                                                }
+                                                queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
+                                                toast({ title: 'Pagamento excluído', description: 'Registro removido com sucesso.' });
+                                              } else {
+                                                handleDeleteTransferEntry(reg.id, entry.id, entryType);
+                                              }
+                                            }}
+                                          >Excluir</Button>
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            <tfoot>
+                              <tr className={`${bgAccent} font-semibold`}>
+                                <td className="px-3 py-2" colSpan={2}>Total pago</td>
+                                <td className={`px-3 py-2 text-right ${accentClass}`}>
+                                  R$ {totalRegistered.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                                <td colSpan={3}></td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      )}
+
+                      <DialogFooter className="pt-2">
+                        <Button variant="outline" onClick={() => setTransferPaymentModalOpen(false)}>
+                          Fechar
+                        </Button>
+                        <Button
+                          onClick={() => { setTransferEditingEntry(null); setTransferView('new'); }}
+                          className={isHamilton ? 'bg-purple-600 hover:bg-purple-700' : 'bg-amber-600 hover:bg-amber-700'}
+                        >
+                          <Banknote className="w-4 h-4 mr-1" />
+                          Incluir Novo Pagamento
+                        </Button>
+                      </DialogFooter>
+                    </div>
+                  );
+                })()}
+
+                {/* NEW PAYMENT FOOTER */}
+                {transferView === 'new' && (
                 <DialogFooter className="pt-2">
-                  <Button variant="outline" onClick={() => setTransferPaymentModalOpen(false)}>
-                    Cancelar
+                  <Button variant="outline" onClick={() => setTransferView('list')}>
+                    Voltar
                   </Button>
                   <Button
                     disabled={noneSelected || pendingRegs.length === 0}
@@ -2592,7 +2658,10 @@ Qualquer dúvida, estamos à disposição!`;
                         title: transferRecipient === 'hamilton' ? 'Repasse registrado' : 'Pagamento registrado',
                         description: `R$ ${totalPaid.toLocaleString('pt-BR')} registrado para ${selectedItems.length} inscrição(ões) em ${new Date(paymentDateISO).toLocaleDateString('pt-BR')}.`,
                       });
-                      setTransferPaymentModalOpen(false);
+                      // Return to the payment list so the new payment appears alongside the others
+                      setTransferAmounts({});
+                      setTransferNotes('');
+                      setTransferView('list');
                     }}
                     className={isHamilton ? 'bg-purple-600 hover:bg-purple-700' : 'bg-amber-600 hover:bg-amber-700'}
                     data-testid="button-confirm-transfer"
@@ -2605,6 +2674,7 @@ Qualquer dúvida, estamos à disposição!`;
                     )}
                   </Button>
                 </DialogFooter>
+                )}
               </div>
             );
           })()}

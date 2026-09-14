@@ -896,8 +896,10 @@ function MentorshipRegistrationsSection() {
   const [transferPaymentDate, setTransferPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   // Editing a previously registered payment entry within the transfer modal
   const [transferEditingEntry, setTransferEditingEntry] = useState<{ regId: string; entryId: string; amount: string; date: string } | null>(null);
-  // Modal view: 'list' shows past payments (editable), 'new' shows the new-payment form
-  const [transferView, setTransferView] = useState<'list' | 'new'>('list');
+  // Modal view: 'list' shows payment dates, 'detail' shows one date's breakdown, 'new' shows the new-payment form
+  const [transferView, setTransferView] = useState<'list' | 'detail' | 'new'>('list');
+  // Which payment date group is opened in the detail view (YYYY-MM-DD)
+  const [transferSelectedDate, setTransferSelectedDate] = useState<string | null>(null);
   
   // Get current user email and auth token from localStorage
   const currentUserEmail = localStorage.getItem('crm_vendor_email');
@@ -2110,6 +2112,7 @@ Qualquer dúvida, estamos à disposição!`;
                     setTransferAmounts({});
                     setTransferEditingEntry(null);
                     setTransferView('list');
+                    setTransferSelectedDate(null);
                     setTransferPaymentDate(new Date().toISOString().split('T')[0]);
                     const pendingIds = new Set<number>();
                     (registrations || []).forEach(r => {
@@ -2131,6 +2134,7 @@ Qualquer dúvida, estamos à disposição!`;
                     setTransferAmounts({});
                     setTransferEditingEntry(null);
                     setTransferView('list');
+                    setTransferSelectedDate(null);
                     setTransferPaymentDate(new Date().toISOString().split('T')[0]);
                     const pendingIds = new Set<number>();
                     (registrations || []).filter(r => r.vendor === vendorName).forEach(r => {
@@ -2161,7 +2165,9 @@ Qualquer dúvida, estamos à disposição!`;
             </DialogTitle>
             <DialogDescription className="text-gray-600">
               {transferView === 'list'
-                ? 'Pagamentos já realizados. Clique em Editar para alterar o valor de cada mentorado ou inclua um novo pagamento.'
+                ? 'Pagamentos realizados, agrupados por data. Clique em uma data para ver o detalhe por mentorado, ou inclua um novo pagamento.'
+                : transferView === 'detail'
+                ? 'Detalhe do pagamento: valor devido (pela tabela da turma) e valor pago por mentorado. Clique em Editar para ajustar.'
                 : 'Selecione as inscrições que deseja quitar e confirme a data do pagamento.'}
             </DialogDescription>
           </DialogHeader>
@@ -2391,64 +2397,81 @@ Qualquer dúvida, estamos à disposição!`;
                 )}
 
                 {/* PAYMENT LIST VIEW (default) — shows all payments made, editable */}
-                {transferView === 'list' && (() => {
-                  // Collect registered payment entries for this recipient across all source regs.
-                  // Falls back to a synthetic entry derived from the cumulative total for
-                  // legacy payments that predate individual entry tracking.
-                  const listEntries: Array<{ reg: Registration; entry: any; entryType: 'mentor' | 'vendor'; legacy: boolean }> = [];
+                {(transferView === 'list' || transferView === 'detail') && (() => {
+                  // Build the flat list of payment entries for this recipient across all source regs.
+                  // Legacy payments (no individual entries) fall back to a synthetic entry from the total.
+                  type PayItem = { reg: Registration; entry: any; entryType: 'mentor' | 'vendor'; legacy: boolean; due: number };
+                  const items: PayItem[] = [];
                   for (const reg of sourceRegs) {
+                    const bc = rc(reg);
+                    const comms = calculateCommissions(reg, bc);
+                    const paidAmountReais = (reg.paidAmount || 0) / 100;
+                    const ns = (reg.paymentStatus || '').toLowerCase().trim();
+                    const paidRatio = ns === 'pago' ? 1 : ns === 'parcial' && comms.gross > 0 ? paidAmountReais / comms.gross : 0;
+                    const mentorDue = Math.round(comms.hfComm * paidRatio);
+                    const vendorDue = Math.round(comms.vendorComm * paidRatio);
+
                     let payments: any[] = [];
                     try { payments = reg.vendorPayments ? JSON.parse(reg.vendorPayments) : []; } catch { payments = []; }
                     const mentorEntries = payments.filter((p: any) => p.type === 'mentor');
                     const vendorEntries = payments.filter((p: any) => p.type === 'vendor' || !p.type);
 
                     if (transferRecipient === 'vendor') {
-                      // Pure vendor: show vendor entries; legacy fallback from vendorCommissionPaid
-                      if (vendorEntries.length > 0) {
-                        vendorEntries.forEach((p: any) => listEntries.push({ reg, entry: p, entryType: 'vendor', legacy: false }));
-                      } else if ((reg.vendorCommissionPaid || 0) > 0) {
-                        listEntries.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'vendor', legacy: true });
-                      }
+                      if (vendorEntries.length > 0) vendorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'vendor', legacy: false, due: vendorDue }));
+                      else if ((reg.vendorCommissionPaid || 0) > 0) items.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'vendor', legacy: true, due: vendorDue });
                     } else {
-                      // Hamilton: mentor entries + vendor entries when Hamilton is the vendor
-                      if (mentorEntries.length > 0) {
-                        mentorEntries.forEach((p: any) => listEntries.push({ reg, entry: p, entryType: 'mentor', legacy: false }));
-                      } else if ((reg.hamiltonPaid || 0) > 0) {
-                        listEntries.push({ reg, entry: { id: 'legacy-mentor', amount: reg.hamiltonPaid, date: reg.hamiltonPaidAt ? new Date(reg.hamiltonPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'mentor', legacy: true });
-                      }
+                      if (mentorEntries.length > 0) mentorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'mentor', legacy: false, due: mentorDue }));
+                      else if ((reg.hamiltonPaid || 0) > 0) items.push({ reg, entry: { id: 'legacy-mentor', amount: reg.hamiltonPaid, date: reg.hamiltonPaidAt ? new Date(reg.hamiltonPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'mentor', legacy: true, due: mentorDue });
                       if (reg.vendor?.trim() === 'Hamilton Felix') {
-                        if (vendorEntries.length > 0) {
-                          vendorEntries.forEach((p: any) => listEntries.push({ reg, entry: p, entryType: 'vendor', legacy: false }));
-                        } else if ((reg.vendorCommissionPaid || 0) > 0) {
-                          listEntries.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'vendor', legacy: true });
-                        }
+                        if (vendorEntries.length > 0) vendorEntries.forEach((p: any) => items.push({ reg, entry: p, entryType: 'vendor', legacy: false, due: vendorDue }));
+                        else if ((reg.vendorCommissionPaid || 0) > 0) items.push({ reg, entry: { id: 'legacy-vendor', amount: reg.vendorCommissionPaid, date: reg.vendorCommissionPaidAt ? new Date(reg.vendorCommissionPaidAt).toISOString().split('T')[0] : '', method: '—' }, entryType: 'vendor', legacy: true, due: vendorDue });
                       }
                     }
                   }
-                  listEntries.sort((a, b) => (b.entry.date || '').localeCompare(a.entry.date || ''));
-                  const totalRegistered = listEntries.reduce((sum, x) => sum + (x.entry.amount || 0), 0);
 
-                  return (
-                    <div className="space-y-3">
-                      {listEntries.length === 0 ? (
-                        <div className="text-center py-6 text-gray-500 bg-slate-50 rounded-lg">
-                          Nenhum pagamento registrado ainda.
+                  // Group by payment date
+                  const groups = new Map<string, PayItem[]>();
+                  for (const it of items) {
+                    const key = it.entry.date || 'sem-data';
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key)!.push(it);
+                  }
+                  const sortedDates = Array.from(groups.keys()).sort((a, b) => b.localeCompare(a));
+
+                  // ---- DETAIL VIEW: one date group's breakdown per mentorado ----
+                  if (transferView === 'detail' && transferSelectedDate) {
+                    const detailItems = groups.get(transferSelectedDate) || [];
+                    const dateLabel = transferSelectedDate !== 'sem-data'
+                      ? new Date(transferSelectedDate + 'T12:00:00').toLocaleDateString('pt-BR')
+                      : 'Sem data';
+                    const detailTotal = detailItems.reduce((s, x) => s + (x.entry.amount || 0), 0);
+
+                    return (
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => { setTransferEditingEntry(null); setTransferView('list'); setTransferSelectedDate(null); }}
+                          className={`text-xs font-medium ${accentClass} hover:underline flex items-center gap-1`}
+                        >
+                          ← Voltar para lista de pagamentos
+                        </button>
+                        <div>
+                          <Label className="text-gray-700 font-medium">Pagamento de {dateLabel}</Label>
                         </div>
-                      ) : (
                         <div className="border border-slate-200 rounded-lg overflow-hidden">
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="bg-slate-100 text-left">
                                 <th className="px-3 py-2 font-medium text-gray-600">Mentorado</th>
                                 <th className="px-3 py-2 font-medium text-gray-600">Tipo</th>
-                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Valor Pago</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Devido</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Pago</th>
                                 <th className="px-3 py-2 font-medium text-gray-600">Data</th>
-                                <th className="px-3 py-2 font-medium text-gray-600">Forma</th>
                                 <th className="px-3 py-2 font-medium text-gray-600 text-right">Ações</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                              {listEntries.map(({ reg, entry, entryType, legacy }) => {
+                              {detailItems.map(({ reg, entry, entryType, legacy, due }) => {
                                 const isEditing = transferEditingEntry?.regId === reg.id && transferEditingEntry?.entryId === entry.id;
                                 return (
                                   <tr key={`${reg.id}-${entry.id}`} className="hover:bg-slate-50">
@@ -2461,6 +2484,9 @@ Qualquer dúvida, estamos à disposição!`;
                                         {entryType === 'mentor' ? 'Mentor' : 'Comissão'}
                                       </span>
                                     </td>
+                                    <td className="px-3 py-2 text-right text-gray-600">
+                                      R$ {due.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </td>
                                     <td className="px-3 py-2 text-right">
                                       {isEditing ? (
                                         <Input
@@ -2471,7 +2497,7 @@ Qualquer dúvida, estamos à disposição!`;
                                           className="w-24 h-7 text-xs text-right bg-white border-gray-300 ml-auto"
                                         />
                                       ) : (
-                                        `R$ ${(entry.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                        <span className="font-medium">R$ {(entry.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       )}
                                     </td>
                                     <td className="px-3 py-2">
@@ -2483,10 +2509,12 @@ Qualquer dúvida, estamos à disposição!`;
                                           className="w-32 h-7 text-xs bg-white border-gray-300"
                                         />
                                       ) : (
-                                        entry.date ? new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'
+                                        <>
+                                          {entry.date ? new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}
+                                          {legacy && <span className="ml-1 text-[10px] text-gray-400">(antigo)</span>}
+                                        </>
                                       )}
                                     </td>
-                                    <td className="px-3 py-2 text-xs text-gray-500">{entry.method || 'pix'}{legacy && <span className="ml-1 text-[10px] text-gray-400">(antigo)</span>}</td>
                                     <td className="px-3 py-2 text-right">
                                       {isEditing ? (
                                         <div className="flex gap-1 justify-end">
@@ -2496,19 +2524,17 @@ Qualquer dúvida, estamos à disposição!`;
                                             onClick={async () => {
                                               const newAmt = parseFloat(transferEditingEntry!.amount.replace(',', '.'));
                                               if (legacy) {
-                                                // Legacy: update the cumulative field directly
                                                 const dateISO = transferEditingEntry!.date ? new Date(transferEditingEntry!.date + 'T12:00:00').toISOString() : new Date().toISOString();
-                                                if (entryType === 'mentor') {
-                                                  await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, { hamiltonPaid: newAmt, hamiltonPaidAt: dateISO });
-                                                } else {
-                                                  await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, { vendorCommissionPaid: newAmt, vendorCommissionPaidAt: dateISO });
-                                                }
+                                                if (entryType === 'mentor') await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, { hamiltonPaid: newAmt, hamiltonPaidAt: dateISO });
+                                                else await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, { vendorCommissionPaid: newAmt, vendorCommissionPaidAt: dateISO });
                                                 queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
                                                 toast({ title: 'Pagamento atualizado', description: 'Valor alterado com sucesso.' });
                                               } else {
                                                 await handleEditTransferEntry(reg.id, entry.id, entryType, newAmt, transferEditingEntry!.date);
                                               }
                                               setTransferEditingEntry(null);
+                                              // If this was the last entry of the group and its date changed, go back to list
+                                              if (transferEditingEntry!.date !== transferSelectedDate) { setTransferView('list'); setTransferSelectedDate(null); }
                                             }}
                                           >Salvar</Button>
                                           <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setTransferEditingEntry(null)}>Cancelar</Button>
@@ -2528,16 +2554,14 @@ Qualquer dúvida, estamos à disposição!`;
                                             onClick={async () => {
                                               if (legacy) {
                                                 if (!window.confirm('Tem certeza que deseja excluir este pagamento?')) return;
-                                                if (entryType === 'mentor') {
-                                                  await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, { hamiltonPaid: 0, hamiltonPaidAt: null });
-                                                } else {
-                                                  await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, { vendorCommissionPaid: 0, vendorCommissionPaidAt: null });
-                                                }
+                                                if (entryType === 'mentor') await apiRequest('PATCH', `/api/registrations/${reg.id}/hamilton-payment`, { hamiltonPaid: 0, hamiltonPaidAt: null });
+                                                else await apiRequest('PATCH', `/api/registrations/${reg.id}/vendor-commission`, { vendorCommissionPaid: 0, vendorCommissionPaidAt: null });
                                                 queryClient.invalidateQueries({ queryKey: ['/api/registrations'] });
                                                 toast({ title: 'Pagamento excluído', description: 'Registro removido com sucesso.' });
                                               } else {
                                                 handleDeleteTransferEntry(reg.id, entry.id, entryType);
                                               }
+                                              if (detailItems.length <= 1) { setTransferView('list'); setTransferSelectedDate(null); }
                                             }}
                                           >Excluir</Button>
                                         </div>
@@ -2549,11 +2573,72 @@ Qualquer dúvida, estamos à disposição!`;
                             </tbody>
                             <tfoot>
                               <tr className={`${bgAccent} font-semibold`}>
+                                <td className="px-3 py-2" colSpan={3}>Total pago em {dateLabel}</td>
+                                <td className={`px-3 py-2 text-right ${accentClass}`}>
+                                  R$ {detailTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                                <td colSpan={2}></td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+
+                        <DialogFooter className="pt-2">
+                          <Button variant="outline" onClick={() => { setTransferEditingEntry(null); setTransferView('list'); setTransferSelectedDate(null); }}>
+                            Voltar
+                          </Button>
+                        </DialogFooter>
+                      </div>
+                    );
+                  }
+
+                  // ---- LIST VIEW: synthetic list grouped by payment date ----
+                  const totalRegistered = items.reduce((s, x) => s + (x.entry.amount || 0), 0);
+                  return (
+                    <div className="space-y-3">
+                      {sortedDates.length === 0 ? (
+                        <div className="text-center py-6 text-gray-500 bg-slate-50 rounded-lg">
+                          Nenhum pagamento registrado ainda.
+                        </div>
+                      ) : (
+                        <div className="border border-slate-200 rounded-lg overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-slate-100 text-left">
+                                <th className="px-3 py-2 font-medium text-gray-600">Data do Pagamento</th>
+                                <th className="px-3 py-2 font-medium text-gray-600">Mentorados</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Total Pago</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right"></th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {sortedDates.map(dateKey => {
+                                const grp = groups.get(dateKey)!;
+                                const grpTotal = grp.reduce((s, x) => s + (x.entry.amount || 0), 0);
+                                const dateLabel = dateKey !== 'sem-data' ? new Date(dateKey + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data';
+                                return (
+                                  <tr
+                                    key={dateKey}
+                                    className="hover:bg-slate-50 cursor-pointer"
+                                    onClick={() => { setTransferEditingEntry(null); setTransferSelectedDate(dateKey); setTransferView('detail'); }}
+                                  >
+                                    <td className="px-3 py-2 font-medium text-gray-900">{dateLabel}</td>
+                                    <td className="px-3 py-2 text-gray-600">{grp.length} {grp.length === 1 ? 'mentorado' : 'mentorados'}</td>
+                                    <td className={`px-3 py-2 text-right font-medium ${accentClass}`}>
+                                      R$ {grpTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="px-3 py-2 text-right text-xs text-blue-600">Ver detalhes →</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            <tfoot>
+                              <tr className={`${bgAccent} font-semibold`}>
                                 <td className="px-3 py-2" colSpan={2}>Total pago</td>
                                 <td className={`px-3 py-2 text-right ${accentClass}`}>
                                   R$ {totalRegistered.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
-                                <td colSpan={3}></td>
+                                <td></td>
                               </tr>
                             </tfoot>
                           </table>

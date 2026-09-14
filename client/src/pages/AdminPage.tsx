@@ -777,10 +777,22 @@ function resolveConfig(
 
 // Calculate commissions for a registration
 // Order: 1) Tax on gross, 2) Subtract tax + card fee, 3) Vendor 5% if exists, 4) Split MM 2/3, HF 1/3
+// Fixed repasse table for turmas 3 & 4 (per the official pricing spreadsheet).
+// Net after taxes is identical across payment methods; only gross/cardFee/taxes vary.
+const FIXED_T34 = {
+  netAfterTax: 9492.74,
+  vendorComm: 2174.04,
+  mmComm: 4879.38,
+  hfComm: 2439.33,
+  taxes: { pix: 1263.91, installments: 1403.90, installments10: 1523.98 },
+  cardFee: { pix: 0, installments: 1051.43, installments10: 1953.28 },
+};
+
 function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFIG[0]) {
   const isPix = reg.paymentMethod === 'pix';
   const is10x = reg.paymentMethod === 'installments10';
-  
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+
   // Get correct total and card fee based on payment method
   let total: number;
   let cardFee: number;
@@ -795,18 +807,41 @@ function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFI
     total = batchConfig.installmentTotal;
     cardFee = batchConfig.cardFee;
   }
-  
-  // Tax is calculated on GROSS amount (total)
-  // Round to 2 decimals (centavos) — keep precision instead of whole reais
-  const r2 = (v: number) => Math.round(v * 100) / 100;
 
+  // Turmas 3 & 4: use FIXED values from the official spreadsheet (not percentage calc)
+  const isT34 = reg.turma === 'turma_3' || reg.turma === 'turma_4';
+  if (isT34) {
+    const method = isPix ? 'pix' : (is10x ? 'installments10' : 'installments');
+    const taxes = FIXED_T34.taxes[method];
+    const fixedCardFee = FIXED_T34.cardFee[method];
+    const netAfterTax = FIXED_T34.netAfterTax;
+    const hasVendor = !!reg.vendor?.trim();
+    const vendorComm = hasVendor ? FIXED_T34.vendorComm : 0;
+    // With vendor: fixed MM/HF from the table. Without vendor: split the full net (no commission removed).
+    const mmComm = hasVendor ? FIXED_T34.mmComm : r2(netAfterTax * (batchConfig.mmRate ?? (2/3)));
+    const hfComm = hasVendor ? FIXED_T34.hfComm : r2(netAfterTax - mmComm);
+    return {
+      gross: total,
+      total,
+      cardFee: fixedCardFee,
+      netBeforeTax: r2(total - fixedCardFee),
+      taxes,
+      netAfterTax,
+      vendorComm,
+      mmComm,
+      hfComm,
+    };
+  }
+
+  // Other turmas (legacy): percentage-based calculation
+  // Tax is calculated on GROSS amount (total)
   const taxes = r2(total * batchConfig.taxRate);
   
   // Net after deducting tax and card fee
   const netAfterTax = r2(total - taxes - cardFee);
   
   const hasVendor = !!reg.vendor?.trim();
-  // Vendor commission is 5% of net after tax (not gross)
+  // Vendor commission is % of net after tax (not gross)
   const vendorComm = hasVendor ? r2(netAfterTax * batchConfig.vendorRate) : 0;
   
   // Distributable amount after vendor commission
@@ -814,13 +849,13 @@ function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFI
   
   // Split using turma-level rates (default 2/3 MM, 1/3 HF)
   const mmComm = r2(distributableAmount * (batchConfig.mmRate ?? (2/3)));
-  const hfComm = r2(distributableAmount * (batchConfig.hfRate ?? (1/3)));
+  const hfComm = r2(distributableAmount - mmComm);
   
   return {
     gross: total,
     total,
     cardFee,
-    netBeforeTax: total - cardFee,
+    netBeforeTax: r2(total - cardFee),
     taxes,
     netAfterTax,
     vendorComm,

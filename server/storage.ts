@@ -872,7 +872,9 @@ export class DbStorage implements IStorage {
   }
 
   async seedTurmaConfigsIfEmpty(): Promise<void> {
-    const EXPECTED_LOTE3_PIX = 10756.65; // current price on mentoria page
+    const EXPECTED_LOTE3_PIX = 10756.65;      // current PIX price on mentoria page
+    const EXPECTED_LOTE3_CARD5 = 11948.07;    // current 5x card price
+    const EXPECTED_VENDOR_RATE = 0.229;       // vendor commission rate (22.9% of net)
 
     const existing = await db.select().from(turmaConfigs).limit(1);
     if (existing.length > 0) {
@@ -880,16 +882,19 @@ export class DbStorage implements IStorage {
       const firstBatches = existing[0].batches as any[];
       const hasPlans = firstBatches.length > 0 && firstBatches[0].plans;
       if (hasPlans) {
-        // Check if the lote 3 PIX price is already correct
+        // Check if the lote 3 prices AND vendor rate are already correct
         const allConfigs = await db.select().from(turmaConfigs);
         const t3 = allConfigs.find(c => c.turmaId === "turma_3");
         if (t3) {
           const t3Batches = t3.batches as any[];
           const lote3 = t3Batches.find((b: any) => b.batch === 3);
           const pixPlan = lote3?.plans?.find((p: any) => p.id === "pix");
-          const isCorrectPrice = pixPlan?.totalAmount === EXPECTED_LOTE3_PIX;
+          const card5Plan = lote3?.plans?.find((p: any) => p.id === "installments");
+          const isCorrectPix = pixPlan?.totalAmount === EXPECTED_LOTE3_PIX;
+          const isCorrectCard5 = card5Plan?.totalAmount === EXPECTED_LOTE3_CARD5;
+          const isCorrectVendorRate = t3.vendorCommissionRate === EXPECTED_VENDOR_RATE;
           const isSimplified = t3Batches.length === 1; // Only 1 batch (no historical lotes)
-          if (isCorrectPrice && isSimplified) {
+          if (isCorrectPix && isCorrectCard5 && isCorrectVendorRate && isSimplified) {
             return; // Already up-to-date, skip
           }
         }
@@ -920,11 +925,11 @@ export class DbStorage implements IStorage {
       ]},
     ];
 
-    // turma_3 and turma_4 (16.67% vendor) — current pricing, 3 plans only
+    // turma_3 and turma_4 (22.9% vendor) — current pricing, 3 plans only
     const t34Batches: BatchPricingItem[] = [
       { batch: 3, label: "Preços Atuais", deadline: "07/08/2026", plans: [
         { id: "pix", label: "PIX", totalAmount: 10756.65, installments: 1, feeRate: 0, paymentLink: "" },
-        { id: "installments", label: "5x Cartão", totalAmount: 11950, installments: 5, feeRate: 0.088, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00" },
+        { id: "installments", label: "5x Cartão", totalAmount: 11948.07, installments: 5, feeRate: 0.088, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00" },
         { id: "installments10", label: "10x Cartão", totalAmount: 12970, installments: 10, feeRate: 0.1506, paymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00" },
       ]},
     ];
@@ -951,7 +956,7 @@ export class DbStorage implements IStorage {
         taxRate: 0.1175,
         card5FeeRate: 0.088,
         card10FeeRate: 0.1506,
-        vendorCommissionRate: 0.1667,
+        vendorCommissionRate: 0.229,
         mmRate: 0.6667,
         hfRate: 0.3333,
         card5PaymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
@@ -965,7 +970,7 @@ export class DbStorage implements IStorage {
         taxRate: 0.1175,
         card5FeeRate: 0.088,
         card10FeeRate: 0.1506,
-        vendorCommissionRate: 0.1667,
+        vendorCommissionRate: 0.229,
         mmRate: 0.6667,
         hfRate: 0.3333,
         card5PaymentLink: "",

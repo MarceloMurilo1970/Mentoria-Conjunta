@@ -194,7 +194,7 @@ export default function EventPage() {
             {/* Badge — over the gradient at the bottom of the image */}
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-yellow-400 px-3 py-1 rounded-full text-[11px] font-semibold border border-yellow-400/30 whitespace-nowrap">
               <Sparkles className="w-3 h-3" />
-              Mentoria — Turmas 3 e 4
+              Mentoria — Turma 5
             </div>
           </div>
         </div>
@@ -577,10 +577,10 @@ export default function EventPage() {
               {batchesOpen ? 'Inscrições Abertas' : comingSoon ? 'Inscrições em Breve' : 'Inscrições Encerradas'}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Mentoria Turmas 3 e 4
+              Mentoria Turma 5
             </h2>
             <p className="text-xl text-gray-400">
-              Agosto a Outubro de 2026 — 12 sessões ao vivo com Marcelo Murilo e Hamilton Felix
+              Outubro a Dezembro de 2026 — 12 sessões ao vivo com Marcelo Murilo e Hamilton Felix
             </p>
           </div>
 
@@ -601,7 +601,7 @@ export default function EventPage() {
                 </h3>
                 <p className="text-gray-400">
                   {comingSoon
-                    ? 'As Turmas 3 e 4 começam em 10 de Agosto de 2026. Fique atento — as inscrições abrem em breve!'
+                    ? 'A Turma 5 começa em 14 de outubro de 2026. Fique atento — as inscrições abrem em breve!'
                     : 'O período de inscrições foi encerrado.'}
                 </p>
               </CardContent>
@@ -631,8 +631,8 @@ export default function EventPage() {
               <div className="flex items-center gap-3 text-white">
                 <Sparkles className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm sm:text-base font-medium text-center sm:text-left">
-                  <span className="hidden sm:inline">🔴 Turma 3 Esgotada! </span>
-                  Últimas vagas na Turma 4 — Aproveite!
+                  <span className="hidden sm:inline">✨ Inscrições Abertas! </span>
+                  Turma 5 — Quartas-feiras • Garanta a sua vaga!
                 </span>
               </div>
               <Button 
@@ -653,7 +653,7 @@ export default function EventPage() {
               <div className="flex items-center gap-3 text-white">
                 <Clock className="w-5 h-5 flex-shrink-0 text-yellow-400" />
                 <span className="text-sm sm:text-base font-medium text-center sm:text-left">
-                  {comingSoon ? 'Turmas 3 e 4 em breve — início 10/08/2026' : 'Inscrições encerradas — aguarde a próxima turma!'}
+                  {comingSoon ? 'Turma 5 em breve — início 14/10/2026' : 'Inscrições encerradas — aguarde a próxima turma!'}
                 </span>
               </div>
               <Button 

@@ -155,7 +155,7 @@ export default function BatchPricing({ currentDate = new Date(), turmaId = "turm
           <CalendarClock className="w-10 h-10 text-primary mx-auto mb-4" />
           <p className="text-lg font-semibold text-foreground mb-1">Inscrições em breve!</p>
           <p className="text-sm text-muted-foreground mb-6">
-            As Turmas 3 e 4 começam em 10 de Agosto de 2026. As inscrições abrem em breve.
+            A Turma 5 começa em 14 de outubro de 2026. As inscrições abrem em breve.
           </p>
           <CountdownDisplay targetDate={REGISTRATION_START} label="Inscrições abrem em:" />
         </CardContent>
@@ -184,7 +184,7 @@ export default function BatchPricing({ currentDate = new Date(), turmaId = "turm
           Investimento na Sua Carreira
         </h3>
         <p className="text-muted-foreground">
-          Turma 3 esgotada! Restam poucas vagas na Turma 4 — garanta a sua agora
+          Turma 5 — Quartas-feiras • Inscrições abertas! Garanta a sua vaga
         </p>
       </div>
 
@@ -265,7 +265,7 @@ export default function BatchPricing({ currentDate = new Date(), turmaId = "turm
               <Clock className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-semibold text-foreground">Início da Mentoria</p>
-                <p className="text-sm text-muted-foreground">10 de Agosto de 2026 às 19h</p>
+                <p className="text-sm text-muted-foreground">14 de outubro de 2026 às 19h</p>
               </div>
             </div>
             <CountdownDisplay targetDate={MENTORIA_START} label="Começa em:" />

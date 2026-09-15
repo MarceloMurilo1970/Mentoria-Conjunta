@@ -843,7 +843,7 @@ export default function Home() {
                       {comingSoon ? 'Inscrições em breve!' : 'Inscrições Encerradas'}
                     </h3>
                     <p className="text-muted-foreground">
-                      {comingSoon ? 'As Turmas 3 e 4 começam em 10 de Agosto de 2026. As inscrições abrem em breve!' : 'O período de inscrições para as Turmas 3 e 4 foi encerrado.'}
+                      {comingSoon ? 'A Turma 5 começa em 14 de outubro de 2026. As inscrições abrem em breve!' : 'O período de inscrições foi encerrado.'}
                     </p>
                   </CardContent>
                 </Card>

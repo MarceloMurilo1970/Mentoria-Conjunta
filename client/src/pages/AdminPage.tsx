@@ -808,8 +808,8 @@ function calculateCommissions(reg: Registration, batchConfig: typeof BATCH_CONFI
     cardFee = batchConfig.cardFee;
   }
 
-  // Turmas 3 & 4: use FIXED values from the official spreadsheet (not percentage calc)
-  const isT34 = reg.turma === 'turma_3' || reg.turma === 'turma_4';
+  // Turmas 3, 4 & 5: use FIXED values from the official spreadsheet (not percentage calc)
+  const isT34 = reg.turma === 'turma_3' || reg.turma === 'turma_4' || reg.turma === 'turma_5';
   if (isT34) {
     const method = isPix ? 'pix' : (is10x ? 'installments10' : 'installments');
     const taxes = FIXED_T34.taxes[method];
@@ -908,10 +908,10 @@ function MentorshipRegistrationsSection() {
   const [taxRateInput, setTaxRateInput] = useState((getSavedTaxRate() * 100).toFixed(2));
 
   // Turma filter for entire page (single filter)
-  const [turmaFilter, setTurmaFilter] = useState<'todas' | 'turma_2' | 'turma_3' | 'turma_4'>('todas');
+  const [turmaFilter, setTurmaFilter] = useState<'todas' | 'turma_2' | 'turma_3' | 'turma_4' | 'turma_5'>('todas');
   const dreTurmaFilter = turmaFilter; // Same filter for DRE section
   const setDreTurmaFilter = setTurmaFilter;
-  const [manualRegTurma, setManualRegTurma] = useState<'turma_2' | 'turma_3' | 'turma_4'>('turma_4');
+  const [manualRegTurma, setManualRegTurma] = useState<'turma_2' | 'turma_3' | 'turma_4' | 'turma_5'>('turma_5');
   
   // Dynamically computed BATCH_CONFIG based on current tax rate
   const currentBatchConfig = getBatchConfig(taxRate);
@@ -1282,7 +1282,7 @@ function MentorshipRegistrationsSection() {
       totalAmount: number;
       paidAmount: number;
       observations?: string;
-      turma: 'turma_2' | 'turma_3' | 'turma_4';
+      turma: 'turma_2' | 'turma_3' | 'turma_4' | 'turma_5';
     }) => {
       // Include signed auth token for fallback authentication in production
       const authToken = localStorage.getItem('crm_auth_token');
@@ -1317,10 +1317,10 @@ function MentorshipRegistrationsSection() {
     setManualRegRazaoSocial('');
     setManualRegPaymentMethod('pix');
     setManualRegPaymentStatus('pendente');
-    setManualRegTotalAmount('9400');
+    setManualRegTotalAmount('10756.65');
     setManualRegPaidAmount('0');
     setManualRegObservations('');
-    setManualRegTurma('turma_3');
+    setManualRegTurma('turma_5');
   };
 
   const handleManualRegistration = () => {
@@ -1886,6 +1886,7 @@ Qualquer dúvida, estamos à disposição!`;
           ['turma_2', 'Turma 2 (legado)'],
           ['turma_3', 'Turma 3 — Seg'],
           ['turma_4', 'Turma 4 — Qua'],
+          ['turma_5', 'Turma 5 — Qua'],
         ] as const).map(([val, label]) => {
           const count = val === 'todas'
             ? (registrations?.length || 0)
@@ -2067,7 +2068,7 @@ Qualquer dúvida, estamos à disposição!`;
               {/* Turma filter for DRE */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium text-gray-600">Filtrar por turma:</span>
-                {([['todas', 'Todas'], ['turma_2', 'Turma 2'], ['turma_3', 'T3 Seg'], ['turma_4', 'T4 Qua']] as const).map(([val, label]) => (
+                {([['todas', 'Todas'], ['turma_2', 'Turma 2'], ['turma_3', 'T3 Seg'], ['turma_4', 'T4 Qua'], ['turma_5', 'T5 Qua']] as const).map(([val, label]) => (
                   <Button key={val} size="sm" variant={dreTurmaFilter === val ? 'default' : 'outline'} onClick={() => setDreTurmaFilter(val)} className="h-7 text-xs border-gray-300">
                     {label}
                   </Button>
@@ -3038,13 +3039,14 @@ Qualquer dúvida, estamos à disposição!`;
               </div>
               <div className="sm:col-span-2">
                 <Label className="text-gray-700">Turma *</Label>
-                <Select value={manualRegTurma} onValueChange={(v: 'turma_2' | 'turma_3' | 'turma_4') => setManualRegTurma(v)}>
+                <Select value={manualRegTurma} onValueChange={(v: 'turma_2' | 'turma_3' | 'turma_4' | 'turma_5') => setManualRegTurma(v)}>
                   <SelectTrigger className="mt-1 bg-white border-gray-300" data-testid="select-manual-turma">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
-                    <SelectItem value="turma_3">Turma 3 — Segundas-feiras</SelectItem>
-                    <SelectItem value="turma_4">Turma 4 — Quartas-feiras</SelectItem>
+                    <SelectItem value="turma_5">Turma 5 — Quartas-feiras</SelectItem>
+                    <SelectItem value="turma_4">Turma 4 — Quartas-feiras (encerrada)</SelectItem>
+                    <SelectItem value="turma_3">Turma 3 — Segundas-feiras (encerrada)</SelectItem>
                     <SelectItem value="turma_2">Turma 2 (legado)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -3133,7 +3135,8 @@ Qualquer dúvida, estamos à disposição!`;
               {turmaFilter === 'turma_2' ? 'Turma 2 (Legado)'
                 : turmaFilter === 'turma_3' ? 'Turma 3'
                 : turmaFilter === 'turma_4' ? 'Turma 4'
-                : 'Turmas 3 e 4'}
+                : turmaFilter === 'turma_5' ? 'Turma 5'
+                : 'Todas as turmas'}
             </CardTitle>
             <CardDescription className="text-gray-600">
               Agosto a Outubro 2026 · Marcelo Murilo & Hamilton Felix
@@ -3161,8 +3164,8 @@ Qualquer dúvida, estamos à disposição!`;
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="text-gray-400 text-sm font-mono w-6">{index + 1}</span>
                       <span className="text-gray-900 font-medium flex-1 min-w-[150px]">{reg.name}</span>
-                      <Badge className={`text-xs shrink-0 ${reg.turma === 'turma_3' ? 'bg-green-700' : reg.turma === 'turma_4' ? 'bg-teal-700' : 'bg-slate-500'}`}>
-                        {reg.turma === 'turma_3' ? 'T3 Seg' : reg.turma === 'turma_4' ? 'T4 Qua' : 'T2'}
+                      <Badge className={`text-xs shrink-0 ${reg.turma === 'turma_3' ? 'bg-green-700' : reg.turma === 'turma_4' ? 'bg-teal-700' : reg.turma === 'turma_5' ? 'bg-cyan-700' : 'bg-slate-500'}`}>
+                        {reg.turma === 'turma_3' ? 'T3 Seg' : reg.turma === 'turma_4' ? 'T4 Qua' : reg.turma === 'turma_5' ? 'T5 Qua' : 'T2'}
                       </Badge>
                       {editingBatchId === reg.id ? (
                         <div className="flex items-center gap-1">

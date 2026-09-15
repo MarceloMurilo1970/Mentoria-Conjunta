@@ -146,7 +146,7 @@ const testimonials = [
 export default function EventPage() {
   const [showStickyBanner, setShowStickyBanner] = useState(false);
   const registrationRef = useRef<HTMLDivElement>(null);
-  const priceInfo = useBatchPrices("turma_4");
+  const priceInfo = useBatchPrices("turma_5");
   const batchesOpen = isBatchesOpen(new Date());
   const comingSoon = isBatchesComingSoon(new Date());
 
@@ -591,7 +591,7 @@ export default function EventPage() {
 
           {/* Registration Form */}
           {batchesOpen ? (
-            <RegistrationForm priceInfo={priceInfo} />
+            <RegistrationForm priceInfo={priceInfo} defaultTurma="turma_5" />
           ) : (
             <Card className="max-w-2xl mx-auto border-gray-700 bg-gray-900/50">
               <CardContent className="py-12 text-center">

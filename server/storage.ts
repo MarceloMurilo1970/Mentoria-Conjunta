@@ -904,6 +904,7 @@ export class DbStorage implements IStorage {
         // Check if the lote 3 prices AND vendor rate are already correct
         const allConfigs = await db.select().from(turmaConfigs);
         const t3 = allConfigs.find(c => c.turmaId === "turma_3");
+        const t5 = allConfigs.find(c => c.turmaId === "turma_5");
         if (t3) {
           const t3Batches = t3.batches as any[];
           const lote3 = t3Batches.find((b: any) => b.batch === 3);
@@ -913,7 +914,8 @@ export class DbStorage implements IStorage {
           const isCorrectCard5 = card5Plan?.totalAmount === EXPECTED_LOTE3_CARD5;
           const isCorrectVendorRate = t3.vendorCommissionRate === EXPECTED_VENDOR_RATE;
           const isSimplified = t3Batches.length === 1; // Only 1 batch (no historical lotes)
-          if (isCorrectPix && isCorrectCard5 && isCorrectVendorRate && isSimplified) {
+          const hasTurma5 = !!t5; // turma_5 must exist
+          if (isCorrectPix && isCorrectCard5 && isCorrectVendorRate && isSimplified && hasTurma5) {
             return; // Already up-to-date, skip
           }
         }
@@ -985,7 +987,7 @@ export class DbStorage implements IStorage {
       {
         turmaId: "turma_4",
         name: "Turma 4 — Quartas-feiras",
-        active: true,
+        active: false,
         taxRate: 0.1175,
         card5FeeRate: 0.088,
         card10FeeRate: 0.1506,
@@ -994,6 +996,20 @@ export class DbStorage implements IStorage {
         hfRate: 0.3333,
         card5PaymentLink: "",
         card10PaymentLink: "",
+        batches: t34Batches,
+      },
+      {
+        turmaId: "turma_5",
+        name: "Turma 5 — Quartas-feiras",
+        active: true,
+        taxRate: 0.1175,
+        card5FeeRate: 0.088,
+        card10FeeRate: 0.1506,
+        vendorCommissionRate: 0.229,
+        mmRate: 0.6667,
+        hfRate: 0.3333,
+        card5PaymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLTUtSQ-WOHFgM1mHD-11950,00",
+        card10PaymentLink: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
         batches: t34Batches,
       },
     ] as any);

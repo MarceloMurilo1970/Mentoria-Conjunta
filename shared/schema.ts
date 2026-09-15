@@ -236,7 +236,7 @@ export const insertRegistrationSchema = createInsertSchema(registrations).omit({
   paymentMethod: z.enum(["pix", "installments", "installments10"], {
     required_error: "Selecione uma forma de pagamento",
   }),
-  turma: z.enum(["turma_3", "turma_4"], {
+  turma: z.enum(["turma_3", "turma_4", "turma_5"], {
     required_error: "Selecione a turma desejada",
   }),
 });
@@ -259,7 +259,7 @@ export const insertManualRegistrationSchema = createInsertSchema(registrations).
   totalAmount: z.number().min(0, "Valor total deve ser positivo"),
   paidAmount: z.number().min(0, "Valor pago deve ser positivo"),
   observations: z.string().optional().nullable(),
-  turma: z.enum(["turma_2", "turma_3", "turma_4"]).default("turma_3"),
+  turma: z.enum(["turma_2", "turma_3", "turma_4", "turma_5"]).default("turma_5"),
   leadId: z.string().optional().nullable(),
 });
 

@@ -31,7 +31,37 @@ interface Module {
   sessions: Session[];
 }
 
-const modulesByTurma: Record<"segundas" | "quartas", Module[]> = {
+const modulesByTurma: Record<"segundas" | "quartas" | "turma5", Module[]> = {
+  turma5: [
+    {
+      number: 1,
+      title: "Transição para conselhos",
+      instructor: "Marcelo Murilo",
+      duration: "8H",
+      sessions: [
+        { number: 1, date: "14/out", startTime: "19:00", endTime: "20:00", topic: "Definindo seu nicho e propósito" },
+        { number: 2, date: "21/out", startTime: "19:00", endTime: "20:00", topic: "Perfil de conselheiro que vende" },
+        { number: 3, date: "28/out", startTime: "19:00", endTime: "20:00", topic: "Posts que geram oportunidades" },
+        { number: 4, date: "04/nov", startTime: "19:00", endTime: "20:00", topic: "Interações que multiplicam alcance" },
+        { number: 5, date: "11/nov", startTime: "19:00", endTime: "20:00", topic: "Conectando com quem importa" },
+        { number: 6, date: "18/nov", startTime: "19:00", endTime: "20:00", topic: "Vendas e eventos estratégicos" },
+        { number: 7, date: "25/nov", startTime: "19:00", endTime: "20:00", topic: "Aspectos práticos dos conselhos" },
+        { number: 8, date: "02/dez", startTime: "19:00", endTime: "20:00", topic: "Integração e planejamento futuros" },
+      ]
+    },
+    {
+      number: 2,
+      title: "Criando novos conselhos",
+      instructor: "Hamilton Felix",
+      duration: "4H",
+      sessions: [
+        { number: 1, date: "09/dez", startTime: "19:00", endTime: "20:00", topic: "Prospecção de empresas" },
+        { number: 2, date: "09/dez", startTime: "20:00", endTime: "21:00", topic: "Fechamento de Projetos" },
+        { number: 3, date: "16/dez", startTime: "19:00", endTime: "20:00", topic: "Implementando o Conselho" },
+        { number: 4, date: "16/dez", startTime: "20:00", endTime: "21:00", topic: "Evoluindo o Conselho" },
+      ]
+    }
+  ],
   segundas: [
     {
       number: 1,
@@ -308,7 +338,8 @@ const sessionDetails: Record<string, SessionDetail> = {
 
 export default function ProgramSection() {
   const [selectedSession, setSelectedSession] = useState<{ moduleNumber: number; sessionNumber: number } | null>(null);
-  const [turma, setTurma] = useState<"segundas" | "quartas">("quartas");
+  // Only Turma 5 is open now (turmas 3 e 4 encerradas)
+  const turma: "segundas" | "quartas" | "turma5" = "turma5";
 
   const modules = modulesByTurma[turma];
 
@@ -329,43 +360,16 @@ export default function ProgramSection() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             Dois módulos completos com especialistas renomados para transformar sua carreira
           </p>
-          {/* Turma selector */}
+          {/* Turma ativa */}
           <div className="inline-flex items-center gap-1 bg-muted p-1 rounded-lg">
-            <button
-              onClick={() => setTurma("segundas")}
-              data-testid="button-turma-segundas"
-              className={`px-5 py-2 rounded-md text-sm font-semibold transition-colors ${
-                turma === "segundas"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground"
-              }`}
-            >
-              Turma 3 — Segundas-feiras
-            </button>
-            <button
-              onClick={() => setTurma("quartas")}
-              data-testid="button-turma-quartas"
-              className={`px-5 py-2 rounded-md text-sm font-semibold transition-colors ${
-                turma === "quartas"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground"
-              }`}
-            >
-              Turma 4 — Quartas-feiras
-            </button>
+            <span className="px-5 py-2 rounded-md text-sm font-semibold bg-background text-foreground shadow-sm">
+              Turma 5 — Quartas-feiras
+            </span>
           </div>
+          <p className="text-sm text-muted-foreground mt-3">Início: 14 de outubro de 2026 • 19h</p>
         </div>
 
-        {/* Carimbo ESGOTADA para Turma 3 */}
-        {turma === "segundas" && (
-          <div className="relative flex items-center justify-center my-8">
-            <div className="border-4 border-red-600 rounded-lg px-8 py-3 transform -rotate-3">
-              <span className="text-red-600 font-black text-3xl md:text-4xl uppercase tracking-wider">ESGOTADA</span>
-            </div>
-          </div>
-        )}
-
-        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${turma === "segundas" ? "opacity-50" : ""}`}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {modules.map((module) => (
             <Card key={module.number} className="border-card-border" data-testid={`card-module-${module.number}`}>
               <CardHeader className="space-y-1 pb-4">

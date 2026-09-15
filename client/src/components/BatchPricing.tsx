@@ -34,8 +34,8 @@ const FALLBACK_PRICES: PriceInfo = {
 };
 
 const REGISTRATION_START = new Date("2026-06-02T00:00:00-03:00");
-const REGISTRATION_END = new Date("2026-10-15T23:59:59-03:00");
-const MENTORIA_START = new Date("2026-08-10T19:00:00-03:00");
+const REGISTRATION_END = new Date("2026-10-14T19:00:00-03:00"); // Turma 5 começa 14/10
+const MENTORIA_START = new Date("2026-10-14T19:00:00-03:00"); // Turma 5 — 1ª sessão
 
 export function isBatchesOpen(currentDate: Date = new Date()): boolean {
   return currentDate >= REGISTRATION_START && currentDate <= REGISTRATION_END;

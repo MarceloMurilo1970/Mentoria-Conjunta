@@ -26,8 +26,8 @@ interface PriceInfo {
 interface RegistrationFormProps {
   onSuccess?: () => void;
   priceInfo?: PriceInfo;
-  defaultTurma?: "turma_3" | "turma_4";
-  onTurmaChange?: (turma: "turma_3" | "turma_4") => void;
+  defaultTurma?: "turma_3" | "turma_4" | "turma_5";
+  onTurmaChange?: (turma: "turma_3" | "turma_4" | "turma_5") => void;
 }
 
 const DEFAULT_PRICES: PriceInfo = {
@@ -336,33 +336,31 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
           <div className="space-y-4">
             <Label>Turma *</Label>
 
-            {/* Carimbo Turma 3 Esgotada */}
-            <div className="relative flex items-center justify-center">
-              <div className="border-3 border-red-600 rounded px-6 py-1.5 transform -rotate-2">
-                <span className="text-red-600 font-black text-lg uppercase tracking-wider">Turma 3 Esgotada!</span>
-              </div>
-            </div>
-
             <RadioGroup
               defaultValue={defaultTurma}
               onValueChange={(value) => {
-                setValue("turma", value as "turma_3" | "turma_4");
-                onTurmaChange?.(value as "turma_3" | "turma_4");
+                setValue("turma", value as "turma_3" | "turma_4" | "turma_5");
+                onTurmaChange?.(value as "turma_3" | "turma_4" | "turma_5");
               }}
               className="space-y-3"
             >
-              <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 bg-muted/50 opacity-60 cursor-not-allowed`}>
-                <RadioGroupItem value="turma_3" id="turma_3" data-testid="radio-turma3" disabled />
-                <Label htmlFor="turma_3" className="flex-1">
-                  <div className="font-semibold text-foreground">Turma 3 — Segundas-feiras <span className="text-red-600 font-bold ml-2">ESGOTADA</span></div>
-                  <div className="text-sm text-muted-foreground mt-1">Início: 11 de Agosto de 2026 • 19h</div>
+              <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${watch("turma") === "turma_5" ? "border-primary bg-primary/5" : "border-border hover-elevate"}`}>
+                <RadioGroupItem value="turma_5" id="turma_5" data-testid="radio-turma5" />
+                <Label htmlFor="turma_5" className="flex-1 cursor-pointer">
+                  <div className="font-semibold text-foreground">Turma 5 — Quartas-feiras <span className="text-orange-600 font-semibold ml-2">Inscrições abertas!</span></div>
+                  <div className="text-sm text-muted-foreground mt-1">Início: 14 de outubro de 2026 • 19h</div>
                 </Label>
               </div>
-              <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-colors ${watch("turma") === "turma_4" ? "border-primary bg-primary/5" : "border-border hover-elevate"}`}>
-                <RadioGroupItem value="turma_4" id="turma_4" data-testid="radio-turma4" />
-                <Label htmlFor="turma_4" className="flex-1 cursor-pointer">
-                  <div className="font-semibold text-foreground">Turma 4 — Quartas-feiras <span className="text-orange-600 font-semibold ml-2">Últimas vagas!</span></div>
-                  <div className="text-sm text-muted-foreground mt-1">Início: 13 de Agosto de 2026 • 19h</div>
+              <div className="flex items-start space-x-3 p-4 rounded-lg border-2 bg-muted/50 opacity-60 cursor-not-allowed">
+                <RadioGroupItem value="turma_4" id="turma_4" data-testid="radio-turma4" disabled />
+                <Label htmlFor="turma_4" className="flex-1">
+                  <div className="font-semibold text-foreground">Turma 4 — Quartas-feiras <span className="text-red-600 font-bold ml-2">ENCERRADA</span></div>
+                </Label>
+              </div>
+              <div className="flex items-start space-x-3 p-4 rounded-lg border-2 bg-muted/50 opacity-60 cursor-not-allowed">
+                <RadioGroupItem value="turma_3" id="turma_3" data-testid="radio-turma3" disabled />
+                <Label htmlFor="turma_3" className="flex-1">
+                  <div className="font-semibold text-foreground">Turma 3 — Segundas-feiras <span className="text-red-600 font-bold ml-2">ENCERRADA</span></div>
                 </Label>
               </div>
             </RadioGroup>

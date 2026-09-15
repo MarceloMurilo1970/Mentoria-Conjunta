@@ -683,7 +683,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     totalAmount: z.number().min(100, "Valor total deve ser pelo menos R$ 100"),
     paidAmount: z.number().min(0),
     observations: z.string().optional().nullable(),
-    turma: z.enum(["turma_2", "turma_3", "turma_4"]).default("turma_3"),
+    turma: z.enum(["turma_2", "turma_3", "turma_4", "turma_5"]).default("turma_5"),
     leadId: z.string().optional().nullable(),
   }).refine((data) => {
     // Validate payment status coherence
@@ -776,7 +776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalAmount: Math.round(validatedData.totalAmount * 100),
         paidAmount: Math.round(validatedData.paidAmount * 100),
         observations: validatedData.observations,
-        turma: validatedData.turma || 'turma_3',
+        turma: validatedData.turma || 'turma_5',
         leadId: validatedData.leadId,
         vendor: vendorName,
       });

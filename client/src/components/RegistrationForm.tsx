@@ -363,6 +363,18 @@ export default function RegistrationForm({ onSuccess, priceInfo = DEFAULT_PRICES
                   <div className="font-semibold text-foreground">Turma 3 — Segundas-feiras <span className="text-red-600 font-bold ml-2">ENCERRADA</span></div>
                 </Label>
               </div>
+              <div className="flex items-start space-x-3 p-4 rounded-lg border-2 bg-muted/50 opacity-60 cursor-not-allowed">
+                <RadioGroupItem value="turma_2" id="turma_2" data-testid="radio-turma2" disabled />
+                <Label htmlFor="turma_2" className="flex-1">
+                  <div className="font-semibold text-foreground">Turma 2 <span className="text-red-600 font-bold ml-2">ENCERRADA</span></div>
+                </Label>
+              </div>
+              <div className="flex items-start space-x-3 p-4 rounded-lg border-2 bg-muted/50 opacity-60 cursor-not-allowed">
+                <RadioGroupItem value="turma_1" id="turma_1" data-testid="radio-turma1" disabled />
+                <Label htmlFor="turma_1" className="flex-1">
+                  <div className="font-semibold text-foreground">Turma 1 <span className="text-red-600 font-bold ml-2">ENCERRADA</span></div>
+                </Label>
+              </div>
             </RadioGroup>
             {errors.turma && (
               <p className="text-sm text-destructive">{errors.turma.message}</p>

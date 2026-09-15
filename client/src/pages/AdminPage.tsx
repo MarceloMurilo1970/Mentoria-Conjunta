@@ -3634,7 +3634,7 @@ Qualquer dúvida, estamos à disposição!`;
               <div className="flex items-center justify-between">
                 <CardTitle className="text-gray-900 flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-green-600" />
-                  Tabela de Comissões por Lote
+                  Tabela de Valores por Turma
                 </CardTitle>
                 {commissionTableOpen ? (
                   <ChevronUp className="h-5 w-5 text-gray-400" />
@@ -3643,69 +3643,13 @@ Qualquer dúvida, estamos à disposição!`;
                 )}
               </div>
               <CardDescription className="text-gray-400">
-                Taxa de cartão: parcelado apenas | Impostos: {(taxRate * 100).toFixed(2)}% | MM: 63,3% | HF: 31,7% | Comissão Vendedor: 5%
+                Valores completos por tipo de pagamento — bruto, taxas, líquido, impostos, comissão e distribuição
               </CardDescription>
             </CardHeader>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-gray-700">
-                      <TableHead className="text-gray-400">Lote</TableHead>
-                      <TableHead className="text-gray-400">Prazo</TableHead>
-                      <TableHead className="text-gray-400">Tipo</TableHead>
-                      <TableHead className="text-gray-400">Parcelas</TableHead>
-                      <TableHead className="text-gray-400">Valor</TableHead>
-                      <TableHead className="text-gray-400">Total</TableHead>
-                      <TableHead className="text-gray-400">Taxa Cartão</TableHead>
-                      <TableHead className="text-gray-400">Líquido s/ Impostos</TableHead>
-                      <TableHead className="text-gray-400">Impostos ({(taxRate * 100).toFixed(2)}%)</TableHead>
-                      <TableHead className="text-gray-400">Líquido c/ Impostos</TableHead>
-                      <TableHead className="text-blue-400">MM (63,3%)</TableHead>
-                      <TableHead className="text-purple-400">HF (31,7%)</TableHead>
-                      <TableHead className="text-yellow-400">Vendedor (5%)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentBatchConfig.map((batch) => (
-                      <Fragment key={batch.batch}>
-                        <TableRow className="border-gray-800">
-                          <TableCell className="text-white font-medium">{batch.batch}</TableCell>
-                          <TableCell className="text-gray-300">{batch.deadline}</TableCell>
-                          <TableCell><Badge className="bg-blue-600">PIX</Badge></TableCell>
-                          <TableCell className="text-gray-300">1</TableCell>
-                          <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-white font-medium">R$ {batch.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-gray-500">-</TableCell>
-                          <TableCell className="text-gray-300">R$ {batch.pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-red-400">- R$ {Math.round(batch.pixPrice * batch.taxRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-green-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-blue-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-purple-400">R$ {Math.round(batch.pixPrice * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-yellow-400">R$ {Math.round(batch.pixPrice * batch.vendorRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                        </TableRow>
-                        <TableRow key={`${batch.batch}-card`} className="border-gray-800">
-                          <TableCell className="text-white font-medium">{batch.batch}</TableCell>
-                          <TableCell className="text-gray-300">{batch.deadline}</TableCell>
-                          <TableCell><Badge className="bg-gray-600">Cartão</Badge></TableCell>
-                          <TableCell className="text-gray-300">5</TableCell>
-                          <TableCell className="text-gray-300">R$ {batch.installmentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-white font-medium">R$ {batch.installmentTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-red-400">- R$ {batch.cardFee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-gray-300">R$ {(batch.installmentTotal - batch.cardFee).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-red-400">- R$ {Math.round((batch.installmentTotal - batch.cardFee) * batch.taxRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-green-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-blue-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.mmRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-purple-400">R$ {Math.round((batch.installmentTotal - batch.cardFee) * (1 - batch.taxRate) * batch.hfRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell className="text-yellow-400">R$ {Math.round(batch.installmentTotal * batch.vendorRate).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                        </TableRow>
-                      </Fragment>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <TurmaValueTables turmaConfigsList={turmaConfigsList} />
             </CardContent>
           </CollapsibleContent>
         </Card>
@@ -5984,6 +5928,141 @@ function AnalyticsSection() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// TurmaValueTables — abas por turma com o detalhamento completo de valores
+// ─────────────────────────────────────────────────────────────────────────────
+function TurmaValueTables({ turmaConfigsList }: { turmaConfigsList: TurmaConfig[] }) {
+  const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+
+  // Fixed spreadsheet values for turmas 3/4/5
+  const isFixed = (turmaId: string) => turmaId === 'turma_3' || turmaId === 'turma_4' || turmaId === 'turma_5';
+  const FIXED = {
+    netAfterTax: 9492.74, vendorComm: 2174.04, mmComm: 4879.38, hfComm: 2439.33,
+    taxes: { pix: 1263.91, installments: 1403.90, installments10: 1523.98 } as Record<string, number>,
+    cardFee: { pix: 0, installments: 1051.43, installments10: 1953.28 } as Record<string, number>,
+  };
+
+  if (!turmaConfigsList || turmaConfigsList.length === 0) {
+    return <p className="text-sm text-gray-500 py-4">Nenhuma configuração de turma encontrada. Reinicie o servidor para gerar as configurações.</p>;
+  }
+
+  // Sort: active turmas first, then by turmaId desc (turma_5, 4, 3, 2...)
+  const sorted = [...turmaConfigsList].sort((a, b) => {
+    if (a.active !== b.active) return a.active ? -1 : 1;
+    return b.turmaId.localeCompare(a.turmaId);
+  });
+
+  // Compute a full breakdown row for a payment plan
+  const computeRow = (turma: TurmaConfig, plan: PaymentPlan) => {
+    const total = plan.totalAmount;
+    const method = plan.id; // 'pix' | 'installments' | 'installments10'
+    let cardFee: number, taxes: number, netAfterTax: number, vendorComm: number, mmComm: number, hfComm: number;
+
+    if (isFixed(turma.turmaId)) {
+      cardFee = FIXED.cardFee[method] ?? r2(total * plan.feeRate);
+      taxes = FIXED.taxes[method] ?? r2(total * turma.taxRate);
+      netAfterTax = FIXED.netAfterTax;
+      vendorComm = FIXED.vendorComm;
+      mmComm = FIXED.mmComm;
+      hfComm = FIXED.hfComm;
+    } else {
+      cardFee = r2(total * plan.feeRate);
+      taxes = r2(total * turma.taxRate);
+      netAfterTax = r2(total - taxes - cardFee);
+      vendorComm = r2(netAfterTax * turma.vendorCommissionRate);
+      const dist = r2(netAfterTax - vendorComm);
+      mmComm = r2(dist * turma.mmRate);
+      hfComm = r2(dist - mmComm);
+    }
+    const netBeforeTax = r2(total - cardFee);
+    return { total, cardFee, netBeforeTax, taxes, netAfterTax, vendorComm, mmComm, hfComm };
+  };
+
+  return (
+    <Tabs defaultValue={sorted[0].turmaId} className="w-full">
+      <TabsList className="flex flex-wrap w-full gap-1 bg-gray-100 border border-gray-200 h-auto p-1 mb-4">
+        {sorted.map(t => (
+          <TabsTrigger key={t.turmaId} value={t.turmaId} className="data-[state=active]:bg-white text-xs px-3 py-1.5">
+            {t.name}{!t.active && <span className="ml-1 text-[10px] text-gray-400">(encerrada)</span>}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+      {sorted.map(turma => {
+        const batches = (turma.batches as BatchPricingItem[]) || [];
+        return (
+          <TabsContent key={turma.turmaId} value={turma.turmaId}>
+            <div className="mb-3 text-xs text-gray-500">
+              Imposto: {(turma.taxRate * 100).toFixed(2)}% · Comissão Vendedor: {(turma.vendorCommissionRate * 100).toFixed(1)}% · MM: {(turma.mmRate * 100).toFixed(1)}% · HF: {(turma.hfRate * 100).toFixed(1)}%
+            </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-gray-200">
+                    <TableHead className="text-gray-500">Lote</TableHead>
+                    <TableHead className="text-gray-500">Plano</TableHead>
+                    <TableHead className="text-gray-500 text-right">Parcelas</TableHead>
+                    <TableHead className="text-gray-500 text-right">Valor Parcela</TableHead>
+                    <TableHead className="text-gray-500 text-right">Bruto</TableHead>
+                    <TableHead className="text-gray-500 text-right">Taxa Cartão</TableHead>
+                    <TableHead className="text-gray-500 text-right">Impostos</TableHead>
+                    <TableHead className="text-gray-500 text-right">Líquido</TableHead>
+                    <TableHead className="text-amber-600 text-right">Comissão</TableHead>
+                    <TableHead className="text-blue-600 text-right">MM</TableHead>
+                    <TableHead className="text-purple-600 text-right">HF</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {batches.map(batch => {
+                    const plans = (batch as any).plans as PaymentPlan[] | undefined;
+                    if (!plans) return null;
+                    return (
+                      <Fragment key={batch.batch}>
+                        {plans.map((plan, pi) => {
+                          const row = computeRow(turma, plan);
+                          const parcela = plan.installments > 0 ? r2(plan.totalAmount / plan.installments) : plan.totalAmount;
+                          return (
+                            <TableRow key={`${batch.batch}-${plan.id}`} className="border-gray-100">
+                              {pi === 0 ? (
+                                <TableCell className="text-gray-900 font-medium align-top" rowSpan={plans.length}>
+                                  <div>{batch.label}</div>
+                                  <div className="text-[10px] text-gray-400">{batch.deadline}</div>
+                                </TableCell>
+                              ) : null}
+                              <TableCell>
+                                <Badge className={plan.id === 'pix' ? 'bg-blue-600' : plan.id === 'installments10' ? 'bg-purple-600' : 'bg-gray-600'}>
+                                  {plan.label}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right text-gray-600">{plan.installments}x</TableCell>
+                              <TableCell className="text-right text-gray-600">R$ {fmt(parcela)}</TableCell>
+                              <TableCell className="text-right text-gray-900 font-medium">R$ {fmt(row.total)}</TableCell>
+                              <TableCell className="text-right text-red-500">{row.cardFee > 0 ? `- R$ ${fmt(row.cardFee)}` : '-'}</TableCell>
+                              <TableCell className="text-right text-red-500">- R$ {fmt(row.taxes)}</TableCell>
+                              <TableCell className="text-right text-emerald-700 font-medium">R$ {fmt(row.netAfterTax)}</TableCell>
+                              <TableCell className="text-right text-amber-700">R$ {fmt(row.vendorComm)}</TableCell>
+                              <TableCell className="text-right text-blue-700">R$ {fmt(row.mmComm)}</TableCell>
+                              <TableCell className="text-right text-purple-700">R$ {fmt(row.hfComm)}</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2">
+              Comissão e distribuição (MM/HF) consideram que há um vendedor atribuído. Sem vendedor, a comissão é redistribuída aos sócios.
+            </p>
+          </TabsContent>
+        );
+      })}
+    </Tabs>
   );
 }
 

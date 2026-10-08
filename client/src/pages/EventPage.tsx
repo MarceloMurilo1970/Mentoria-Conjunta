@@ -601,7 +601,7 @@ export default function EventPage() {
                 </h3>
                 <p className="text-gray-400">
                   {comingSoon
-                    ? 'A Turma 5 começa em 14 de outubro de 2026. Fique atento — as inscrições abrem em breve!'
+                    ? 'As inscrições para a próxima turma serão abertas em 2027. Fique atento — em breve, mais novidades!'
                     : 'O período de inscrições foi encerrado.'}
                 </p>
               </CardContent>
@@ -653,7 +653,7 @@ export default function EventPage() {
               <div className="flex items-center gap-3 text-white">
                 <Clock className="w-5 h-5 flex-shrink-0 text-yellow-400" />
                 <span className="text-sm sm:text-base font-medium text-center sm:text-left">
-                  {comingSoon ? 'Turma 5 em breve — início 14/10/2026' : 'Inscrições encerradas — aguarde a próxima turma!'}
+                  {comingSoon ? 'Nova turma em 2027 — inscrições em breve!' : 'Inscrições encerradas — aguarde a próxima turma!'}
                 </span>
               </div>
               <Button 

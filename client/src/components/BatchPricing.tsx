@@ -33,15 +33,21 @@ const FALLBACK_PRICES: PriceInfo = {
   paymentLink10: "https://link.infinitepay.io/mentoria-mm/VC1DLUEtSQ-Z62S8A2tl5-12970,00",
 };
 
-const REGISTRATION_START = new Date("2026-06-02T00:00:00-03:00");
-const REGISTRATION_END = new Date("2026-10-14T19:00:00-03:00"); // Turma 5 começa 14/10
-const MENTORIA_START = new Date("2026-10-14T19:00:00-03:00"); // Turma 5 — 1ª sessão
+// Turma 5 encerrada. Site em modo "em breve — nova turma em 2027".
+// Para reabrir inscrições: coloque REGISTRATION_CLOSED = false e ajuste as datas.
+const REGISTRATION_CLOSED = true;
+
+const REGISTRATION_START = new Date("2027-02-01T00:00:00-03:00"); // próxima turma (2027)
+const REGISTRATION_END = new Date("2027-04-30T23:59:59-03:00");
+const MENTORIA_START = new Date("2027-02-01T19:00:00-03:00");
 
 export function isBatchesOpen(currentDate: Date = new Date()): boolean {
+  if (REGISTRATION_CLOSED) return false;
   return currentDate >= REGISTRATION_START && currentDate <= REGISTRATION_END;
 }
 
 export function isBatchesComingSoon(currentDate: Date = new Date()): boolean {
+  if (REGISTRATION_CLOSED) return true;
   return currentDate < REGISTRATION_START;
 }
 
@@ -154,10 +160,9 @@ export default function BatchPricing({ currentDate = new Date(), turmaId = "turm
         <CardContent className="py-10 text-center">
           <CalendarClock className="w-10 h-10 text-primary mx-auto mb-4" />
           <p className="text-lg font-semibold text-foreground mb-1">Inscrições em breve!</p>
-          <p className="text-sm text-muted-foreground mb-6">
-            A Turma 5 começa em 14 de outubro de 2026. As inscrições abrem em breve.
+          <p className="text-sm text-muted-foreground">
+            As inscrições para a próxima turma serão abertas em 2027. Em breve, mais novidades.
           </p>
-          <CountdownDisplay targetDate={REGISTRATION_START} label="Inscrições abrem em:" />
         </CardContent>
       </Card>
     );
